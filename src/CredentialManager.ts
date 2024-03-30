@@ -130,6 +130,7 @@ class CredentialManager {
 
       const dbCollection = this.dbConnection.collection('apiKeys');
       const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
+      console.log(JSON.stringify(credentials, null, 2));
 
       // Process each document to extract services and accumulate total credentials count
       credentialsList = credentials.map(doc => {
@@ -157,6 +158,5 @@ class CredentialManager {
       databaseName,
     };
   }
-  
 }
 export { CredentialManager };
