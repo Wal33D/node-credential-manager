@@ -94,29 +94,35 @@ class CredentialManager {
     }
   }
 
-  async listAllCredentials(): Promise<any> {
+  async getAllCredentials(): Promise<{ status: boolean; credentialsList: any[]; message: string; count: number }> {
+    let status = false;
+    let credentialsList: any[] = [];
+    let message = '';
+    let count = 0;
+  
     try {
       // Ensure the DB initialization is complete before proceeding
       await this.ensureDBInit();
   
       if (!this.dbConnection) {
-        console.error('Database connection is not initialized.');
-        return;
+        message = 'Database connection is not initialized.';
+        return { status, credentialsList, message, count }; 
       }
   
       const dbCollection = this.dbConnection.collection('apiKeys');
-      // Use projection to exclude the _id field
       const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
   
       // Extract services arrays and flatten the array by one level
-      const servicesList = credentials.map(doc => doc.services).flat();
-      return servicesList;
+      credentialsList = credentials.map(doc => doc.services).flat();
+      status = true; 
+      message = 'Credentials listed successfully.';
+      count = credentialsList.length;
     } catch (error) {
-      console.error(`Failed to list credentials: ${error}`);
-      return []; // Return an empty array in case of an error to maintain consistent return type
+      message = `Failed to list credentials: ${error}`;
     }
-  }
   
+    return { status, credentials:credentialsList, message, count };
+  }
 }
 
 export { CredentialManager };

@@ -7,7 +7,7 @@ async function viewCredentials() {
   await credentialManager.ensureDBInit();
 
   // Now it's safe to proceed with database operations
-  const creds = await credentialManager.listAllCredentials();
+  const creds = await credentialManager.getAllCredentials();
   console.log(creds);
 }
 
