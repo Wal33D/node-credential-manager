@@ -157,5 +157,6 @@ class CredentialManager {
       databaseName,
     };
   }
+  
 }
 export { CredentialManager };

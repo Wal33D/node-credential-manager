@@ -1,8 +1,7 @@
 import readline from 'readline';
 import { CredentialManager } from "./CredentialManager";
 
-async function viewCredentials() {
-  const credentialManager = new CredentialManager();
+async function viewCredentials({credentialManager = new CredentialManager()}:{credentialManager?: CredentialManager}) {
   await credentialManager.ensureDBInit();
   const result = await credentialManager.getAllCredentials();
 
@@ -36,7 +35,7 @@ async function viewCredentials() {
   const action = await promptMenu();
   const continueApp = await performAction(credentialManager, action);
   if (continueApp) {
-    await viewCredentials();
+    await viewCredentials({credentialManager});
   } else {
     process.exit(0);
   }
@@ -83,4 +82,4 @@ async function performAction(credentialManager: CredentialManager, action: unkno
 }
 
 
-viewCredentials();
+viewCredentials({});
