@@ -94,7 +94,7 @@ class CredentialManager {
     }
   }
 
-  async getAllCredentials(): Promise<{ status: boolean; credentialsList: any[]; message: string; count: number }> {
+  async getAllCredentials(): Promise<{ status: boolean; credentials: any[]; message: string; count: number }> {
     let status = false;
     let credentialsList: any[] = [];
     let message = '';
@@ -106,7 +106,7 @@ class CredentialManager {
   
       if (!this.dbConnection) {
         message = 'Database connection is not initialized.';
-        return { status, credentialsList, message, count }; 
+        return { status, credentials:credentialsList, message, count }; 
       }
   
       const dbCollection = this.dbConnection.collection('apiKeys');

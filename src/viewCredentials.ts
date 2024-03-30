@@ -7,8 +7,22 @@ async function viewCredentials() {
   await credentialManager.ensureDBInit();
 
   // Now it's safe to proceed with database operations
-  const creds = await credentialManager.getAllCredentials();
-  console.log(creds);
+  const result = await credentialManager.getAllCredentials();
+
+  if (result.status) {
+    if (result.count > 0) {
+      console.log(`${result.message} Total credentials: ${result.count}`);
+      result.credentials.forEach((cred, index) => {
+        console.log(`Credential #${index + 1}:`);
+        console.log(`Name: ${cred.name}`);
+        console.log('Keys:', cred.keys); // Assuming 'keys' is an array you want to print out directly
+      });
+    } else {
+      console.log("No credentials found.");
+    }
+  } else {
+    console.log(`Failed to retrieve credentials: ${result.message}`);
+  }
 }
 
 viewCredentials();
