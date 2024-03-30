@@ -93,13 +93,28 @@ async function performAction(credentialManager: CredentialManager, action: any, 
         break;
       case '4':
         console.log('Option to search for a specific key selected.');
-        const serviceNameResult = await promptForServiceName(credentialManager, rl);
-        const keyResult = await promptForKeyType(credentialManager, rl);
-//console.log(keyResult, serviceNameResult)
-        if (keyResult === null) {
-          return true;
-        }
-        console.log(keyResult);
+        let serviceNameResult, keyResult;
+
+        do {
+          serviceNameResult = await promptForServiceName(credentialManager, rl) as any;
+          if (!serviceNameResult || serviceNameResult.status === false) {
+            console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
+            if (!serviceNameResult) return true; // Exit if user chose to exit
+            // Otherwise, loop to retry
+          }
+        } while (!serviceNameResult || serviceNameResult.status === false);
+
+        do {
+          keyResult = await promptForKeyType(credentialManager, rl) as any;
+          if (!keyResult || keyResult.status === false) {
+            console.log(keyResult ? keyResult.message : 'Exiting to main menu...');
+            if (!keyResult) return true; // Exit if user chose to exit
+            // Otherwise, loop to retry
+          }
+        } while (!keyResult || keyResult.status === false);
+
+        // Now that both service name and key type are validated, proceed to your specific logic
+        console.log(`Service: ${JSON.stringify(serviceNameResult.result,null,2)}, Key Type: ${keyResult}`);
         break;
       case '5':
         console.log('Option to search by service name and key selected.');
