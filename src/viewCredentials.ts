@@ -1,8 +1,7 @@
 import readline from 'readline';
 import { CredentialManager } from "./CredentialManager";
-import { findServiceByName } from './utils/findServiceByName';
-import { findSpecificKeyForService } from './utils/findSpecificKeyForService';
-
+import { promptForServiceName } from './utils/promptForServiceName';
+import { promptForSpecificKey } from './utils/promptForSpecificKey';
 
 async function viewCredentials({ credentialManager = new CredentialManager() }: { credentialManager?: CredentialManager }) {
   await credentialManager.ensureDBInit();
@@ -63,124 +62,38 @@ async function promptMenu() {
     );
   });
 }
-async function promptForServiceName(credentialManager: CredentialManager) {
-  const rl = createReadlineInterface();
-  const question = 'Enter the service name you want to add a credential for (or type "exit" to return to the menu): ';
-
-  return new Promise((resolve) => {
-    rl.question(question, async (serviceName) => {
-      if (serviceName.toLowerCase() === "exit") {
-        console.log('Exiting to main menu...');
-        rl.close();
-        resolve(null); 
-        return;
-      }
-
-      const val = await findServiceByName({ serviceName, dbConnection: credentialManager.dbConnection });
-      if (!val.status) {
-        console.log(val.message + ' Please try again.');
-        rl.close(); // Close the current interface
-        resolve(await promptForServiceName(credentialManager));
-      } else {
-        rl.close();
-        resolve(val);
-      }
-    });
-  });
-}
-async function promptForSpecificKey(credentialManager: CredentialManager) {
-  return new Promise(async (resolve) => {
-    const rl = createReadlineInterface();
-    const serviceNameQuestion = 'Enter the service name you want to retrieve the key for (or type "exit" to return to the menu): ';
-
-    rl.question(serviceNameQuestion, async (input) => {
-      if (input.toLowerCase() === "exit") {
-        console.log('Exiting to main menu...');
-        rl.close();
-        resolve(null); 
-        return;
-      }
-
-      // Adjusted to include case-insensitive check and provide feedback
-      const serviceValidation = await findServiceByName({
-        serviceName: input,
-        dbConnection: credentialManager.dbConnection
-      });
-
-      if (!serviceValidation.status) {
-        console.log(serviceValidation.message + ' Please try again.');
-        rl.close(); // Close the current interface
-        resolve(await promptForSpecificKey(credentialManager)); // Recursive call to ask again
-        return;
-      } else {
-        rl.close();
-        const keyType = await promptForKeyType(credentialManager);
-        if (keyType === null) {
-          resolve(null); // Handle early exit or invalid key type selection
-          return;
-        }
-
-        const { credential } = await findSpecificKeyForService({
-          serviceName: input, // Assuming case sensitivity is not required here
-          keyType: keyType as string,
-          dbConnection: credentialManager.dbConnection
-        });
-
-        resolve(credential); // Resolve with the found credential
-      }
-    });
-  });
-}
-
-async function promptForKeyType(credentialManager: CredentialManager) {
-  return new Promise((resolve) => {
-    const rlKeyType = createReadlineInterface();
-    const keyTypeQuestion = 'Enter the key type ("Primary" or "Secondary") you want to retrieve (or type "exit" to return to the menu): ';
-
-    rlKeyType.question(keyTypeQuestion, (input) => {
-      if (input.toLowerCase() === "exit") {
-        console.log('Exiting to main menu...');
-        rlKeyType.close();
-        resolve(null);
-      } else if (["primary", "secondary"].includes(input.toLowerCase())) {
-        rlKeyType.close();
-        resolve(input.charAt(0).toUpperCase() + input.slice(1).toLowerCase()); // Format to "Primary" or "Secondary"
-      } else {
-        console.log('Invalid key type. Please enter "Primary" or "Secondary".');
-        rlKeyType.close();
-        resolve(promptForKeyType(credentialManager)); // Recursive call to prompt again
-      }
-    });
-  });
-}
-
-
 
 async function performAction(credentialManager: CredentialManager, action: string) {
-  switch (action) {
-    case '1':
-      console.log('Option to add a new credential selected.');
-      const serviceInfo = await promptForSpecificKey(credentialManager);
-      if (serviceInfo === null) {
-        return true; // User chose to exit, return to continue the application (back to the menu)
-      }
-      console.log(serviceInfo);
-      break;
-    case '2':
-      console.log('Option to update an existing credential selected.');
-
-      break;
-    case '3':
-      console.log('Option to delete a credential selected.');
-      break;
-    case '4':
-      console.log('Exiting...');
-      return false; // Signal to exit the application
-    default:
-      console.log('Invalid option selected. Please try again.');
-      return true; // Continue the application to allow re-selection
+  const rl = createReadlineInterface(); // Create a single readline interface
+  try {
+    switch (action) {
+      case '1':
+        console.log('Option to add a new credential selected.');
+        const serviceInfo = await promptForSpecificKey(credentialManager, rl); // Pass the readline interface
+        if (serviceInfo === null) {
+          return true;
+        }
+        console.log(serviceInfo);
+        break;
+      case '2':
+        console.log('Option to update an existing credential selected.');
+        // If you have a function for updating, you would also pass rl there
+        break;
+      case '3':
+        console.log('Option to delete a credential selected.');
+        // Similarly, pass rl to any prompts involved in deletion
+        break;
+      case '4':
+        console.log('Exiting...');
+        return false;
+      default:
+        console.log('Invalid option selected. Please try again.');
+        return true;
+    }
+    return true;
+  } finally {
+    rl.close(); // Ensure the readline interface is always closed when done
   }
-  return true; // Continue the application
 }
 
 viewCredentials({});
