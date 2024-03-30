@@ -10,6 +10,7 @@ async function viewCredentials() {
 
   console.log(`\nCREDENTIALS & KEYS: ${result.message}`);
   if (result.status) {
+    console.log(`-Database: ${result.databaseName}`);
     console.log(`-Total services managed: ${result.servicesCount}`);
     console.log(`-Total credentials stored: ${result.totalCredentials}\n`);
     result.credentials.forEach((cred) => {

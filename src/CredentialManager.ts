@@ -94,25 +94,43 @@ class CredentialManager {
     }
   }
 
-  async getAllCredentials(): Promise<{ status: boolean; credentials: any[], message: string; servicesCount: number, totalCredentials: number }> {
+  async getAllCredentials(): Promise<{
+    status: boolean;
+    credentials: any[];
+    message: string;
+    servicesCount: number;
+    totalCredentials: number;
+    databaseName: string;
+  }> {
     let status = false;
     let credentialsList: any[] = [];
     let message = '';
     let servicesCount = 0; // Count of services
     let totalCredentials = 0; // Total count of individual credentials across all services
-  
+    let databaseName = ''; // Initialize the database name variable
+
     try {
       // Ensure the DB initialization is complete before proceeding
       await this.ensureDBInit();
-  
+
       if (!this.dbConnection) {
         message = 'Database connection is not initialized.';
-        return { status, credentials: credentialsList, message, servicesCount, totalCredentials };
+        return {
+          status,
+          credentials: credentialsList,
+          message,
+          servicesCount,
+          totalCredentials,
+          databaseName,
+        };
       }
-  
+
+      // Capture the database name from the connection
+      databaseName = this.dbConnection.databaseName;
+
       const dbCollection = this.dbConnection.collection('apiKeys');
       const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
-  
+
       // Process each document to extract services and accumulate total credentials count
       credentialsList = credentials.map(doc => {
         if (doc.services) {
@@ -121,16 +139,23 @@ class CredentialManager {
         }
         return doc.services;
       }).flat(); // Flatten the array by one level
-  
+
       status = true;
       message = 'Credentials listed successfully.';
       servicesCount = credentialsList.length; // This reflects the number of services, not individual keys
     } catch (error) {
       message = `Failed to list credentials: ${error}`;
     }
-  
-    // Return the status, list of credentials, message, count of services, and total count of individual credentials
-    return { status, credentials: credentialsList, message, servicesCount, totalCredentials };
+
+    // Return the status, list of credentials, message, count of services, total count of individual credentials, and the database name
+    return {
+      status,
+      credentials: credentialsList,
+      message,
+      servicesCount,
+      totalCredentials,
+      databaseName,
+    };
   }
-}  
+}
 export { CredentialManager };
