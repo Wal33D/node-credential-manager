@@ -1,7 +1,8 @@
 import readline from 'readline';
 import { CredentialManager } from "./CredentialManager";
+import { findServiceByName } from './utils/findServiceByName';
 
-async function viewCredentials({credentialManager = new CredentialManager()}:{credentialManager?: CredentialManager}) {
+async function viewCredentials({ credentialManager = new CredentialManager() }: { credentialManager?: CredentialManager }) {
   await credentialManager.ensureDBInit();
   const result = await credentialManager.getAllCredentials();
 
@@ -35,7 +36,7 @@ async function viewCredentials({credentialManager = new CredentialManager()}:{cr
   const action = await promptMenu();
   const continueApp = await performAction(credentialManager, action);
   if (continueApp) {
-    await viewCredentials({credentialManager});
+    await viewCredentials({ credentialManager });
   } else {
     process.exit(0);
   }
@@ -54,7 +55,7 @@ async function promptMenu() {
     rl.question(
       'What would you like to do next?\n1. Add a new credential\n2. Update an existing credential\n3. Delete a credential\n4. Exit\nPlease enter your choice (1-4): ',
       (answer) => {
-        rl.close(); // Make sure to close the readline interface here
+        rl.close();
         resolve(answer);
       }
     );
@@ -64,8 +65,10 @@ async function promptMenu() {
 async function performAction(credentialManager: CredentialManager, action: unknown) {
   switch (action) {
     case '1':
+     const val = await findServiceByName({ serviceName: 'OpenAi', dbConnection: credentialManager.dbConnection });
+     console.log(val);
       console.log('Option to add a new credential selected.');
-      break;
+//      break;
     case '2':
       console.log('Option to update an existing credential selected.');
       break;
