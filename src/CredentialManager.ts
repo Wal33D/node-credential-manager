@@ -94,35 +94,43 @@ class CredentialManager {
     }
   }
 
-  async getAllCredentials(): Promise<{ status: boolean; credentials: any[]; message: string; count: number }> {
+  async getAllCredentials(): Promise<{ status: boolean; credentials: any[], message: string; servicesCount: number, totalCredentials: number }> {
     let status = false;
     let credentialsList: any[] = [];
     let message = '';
-    let count = 0;
-
+    let servicesCount = 0; // Count of services
+    let totalCredentials = 0; // Total count of individual credentials across all services
+  
     try {
       // Ensure the DB initialization is complete before proceeding
       await this.ensureDBInit();
-
+  
       if (!this.dbConnection) {
         message = 'Database connection is not initialized.';
-        return { status, credentials: credentialsList, message, count };
+        return { status, credentials: credentialsList, message, servicesCount, totalCredentials };
       }
-
+  
       const dbCollection = this.dbConnection.collection('apiKeys');
       const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
-
-      // Extract services arrays and flatten the array by one level
-      credentialsList = credentials.map(doc => doc.services).flat();
+  
+      // Process each document to extract services and accumulate total credentials count
+      credentialsList = credentials.map(doc => {
+        if (doc.services) {
+          // Add to totalCredentials for each key in each service
+          totalCredentials += doc.services.reduce((acc: any, service: { keys: string | any[]; }) => acc + service.keys.length, 0);
+        }
+        return doc.services;
+      }).flat(); // Flatten the array by one level
+  
       status = true;
       message = 'Credentials listed successfully.';
-      count = credentialsList.length;
+      servicesCount = credentialsList.length; // This reflects the number of services, not individual keys
     } catch (error) {
       message = `Failed to list credentials: ${error}`;
     }
-
-    return { status, credentials: credentialsList, message, count };
+  
+    // Return the status, list of credentials, message, count of services, and total count of individual credentials
+    return { status, credentials: credentialsList, message, servicesCount, totalCredentials };
   }
-}
-
+}  
 export { CredentialManager };
