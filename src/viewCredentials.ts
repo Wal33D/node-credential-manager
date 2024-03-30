@@ -5,9 +5,11 @@ import { promptForSpecificKey } from './utils/promptForSpecificKey';
 
 async function viewCredentials({ credentialManager = new CredentialManager() }) {
   await credentialManager.ensureDBInit();
-  const rl = createReadlineInterface(); // Create a single readline interface here
 
+  
   while (true) { // Start an infinite loop to repeatedly show the menu until the user exits
+    const rl = createReadlineInterface();
+
     const result = await credentialManager.getAllCredentials();
 
     if (!result.status) {
@@ -64,9 +66,9 @@ async function promptMenu(rl:any) {
       '1. Add a new credential\n' +
       '2. Update an existing credential\n' +
       '3. Delete a credential\n' +
-      '5. Search for a specific key\n' +
-      '6. Search by service name and key\n' +
-      '4. Exit\nPlease enter your choice (1-6): ',
+      '4. Search for a specific key\n' +
+      '5. Search by service name and key\n' +
+      '6. Exit\nPlease enter your choice (1-6): ',
       (answer:any) => {
         resolve(answer); // No need to close rl here; it will be reused
       }
@@ -88,7 +90,7 @@ async function performAction(credentialManager: CredentialManager, action: any, 
         console.log('Option to delete a credential selected.');
         // Implementation...
         break;
-      case '5':
+      case '4':
         console.log('Option to search for a specific key selected.');
         const specificKeyInfo = await promptForSpecificKey(credentialManager, rl);
         if (specificKeyInfo === null) {
@@ -96,7 +98,7 @@ async function performAction(credentialManager: CredentialManager, action: any, 
         }
         console.log(specificKeyInfo);
         break;
-      case '6':
+      case '5':
         console.log('Option to search by service name and key selected.');
         const serviceInfo = await promptForServiceName(credentialManager, rl);
         if (serviceInfo === null) {
@@ -104,7 +106,7 @@ async function performAction(credentialManager: CredentialManager, action: any, 
         }
         console.log(serviceInfo);
         break;
-      case '4':
+      case '6':
         console.log('Exiting...');
         return false;
       default:
