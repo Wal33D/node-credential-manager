@@ -94,26 +94,29 @@ class CredentialManager {
     }
   }
 
-  // Example operation method
   async listAllCredentials(): Promise<any> {
     try {
-
       // Ensure the DB initialization is complete before proceeding
       await this.ensureDBInit();
-
+  
       if (!this.dbConnection) {
         console.error('Database connection is not initialized.');
         return;
       }
-
+  
       const dbCollection = this.dbConnection.collection('apiKeys');
-      const credentials = await dbCollection.find({}).toArray();
-      return credentials
+      // Use projection to exclude the _id field
+      const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
+  
+      // Extract services arrays and flatten the array by one level
+      const servicesList = credentials.map(doc => doc.services).flat();
+      return servicesList;
     } catch (error) {
       console.error(`Failed to list credentials: ${error}`);
+      return []; // Return an empty array in case of an error to maintain consistent return type
     }
   }
-
+  
 }
 
 export { CredentialManager };
