@@ -92,32 +92,42 @@ async function performAction(credentialManager: CredentialManager, action: any, 
         console.log('Option to delete a credential selected.');
         // Implementation...
         break;
-      case '4':
-        console.log('Option to search for a specific key selected.');
-
-        const serviceNameResult = await promptForServiceName(credentialManager, rl) as any;
-        if (!serviceNameResult || serviceNameResult.status === false) {
-          console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
-          return true; // Exit if no valid service name is provided
-        }
-
-        const keyTypeResult = await promptForKeyType(credentialManager, rl) as any;
-        if (!keyTypeResult || keyTypeResult.status === false) {
-          console.log(keyTypeResult ? keyTypeResult.message : 'Exiting to main menu...');
-          return true; // Exit if no valid key type is provided
-        }
-
-        // Now that valid service name and key type are obtained, use them to find the specific key
-        const { status, credential, message } = await findSpecificKeyForService({
-          serviceName: serviceNameResult.serviceName, // Assuming the result contains the validated service name
-          keyType: keyTypeResult.result, // Assuming the result contains the validated key type
-          dbConnection: credentialManager.dbConnection
-        });
-
-        // Log the result of findSpecificKeyForService
-        console.log('Key details:', { status, credential, message});
-
-        break;
+        case '4':
+          console.log('Option to search for a specific key selected.');
+        
+          const serviceNameResult = await promptForServiceName(credentialManager, rl) as any;
+          if (!serviceNameResult || serviceNameResult.status === false) {
+            console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
+            return true; // Exit if no valid service name is provided
+          }
+        
+          let keyTypeResult:any;
+          let findKeyResult = { status: false, credential: null, message: '' };
+        
+          while (!findKeyResult.status) {
+            keyTypeResult = await promptForKeyType(credentialManager, rl);
+            if (!keyTypeResult || keyTypeResult.status === false || keyTypeResult.result.toLowerCase() === "back") {
+              console.log(keyTypeResult ? keyTypeResult.message : 'Exiting to main menu...');
+              return true; // Exit or go back if no valid key type is provided or "back" is entered
+            }
+        
+            // Attempt to find the specific key with the given service name and key type
+            findKeyResult = await findSpecificKeyForService({
+              serviceName: serviceNameResult.serviceName, // Use the validated service name
+              keyType: keyTypeResult.result, // Use the user-provided key type
+              dbConnection: credentialManager.dbConnection
+            });
+        
+            // If the key is not found, inform the user and the loop will prompt for the key type again
+            if (!findKeyResult.status) {
+              console.log(findKeyResult.message);
+            }
+          }
+        
+          // If the loop exits because a key is found (status: true), log the key details
+          console.log('Key details:', findKeyResult.credential);
+          break
+        
       case '5':
         console.log('Option to search by service name and key selected.');
         const serviceInfo = await promptForServiceName(credentialManager, rl);
