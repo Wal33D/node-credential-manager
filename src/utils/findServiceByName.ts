@@ -1,6 +1,6 @@
 import { Db } from "mongodb";
 
-export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db| any }) => {
+export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }) => {
     let status = false;
     let result = null;
     let message = '';
@@ -14,22 +14,27 @@ export const findServiceByName = async ({ serviceName, dbConnection }: { service
         const document = await dbCollection.findOne({}); // Fetch the single document
 
         if (document && document.services) {
-            const service = document.services.find((service: { name: string; }) => service.name.toLowerCase() === serviceName.toLowerCase());
+            // First, try to find a case-sensitive match
+            const exactMatchService = document.services.find((service: { name: string; }) => service.name === serviceName);
 
-            if (service) {
-                if (service.name !== serviceName) {
-                    console.error(`Did you mean this service '${service.name}'?`);
+            // If no case-sensitive match, try to find a case-insensitive match to suggest the correct casing
+            if (!exactMatchService) {
+                const caseInsensitiveMatchService = document.services.find((service: { name: string; }) => service.name.toLowerCase() === serviceName.toLowerCase());
+
+                if (caseInsensitiveMatchService) {
+                    message = `Did you mean this service '${caseInsensitiveMatchService.name}'? Service name is case-sensitive.`;
+                } else {
+                    message = `Service ${serviceName} not found.`;
                 }
-                status = true;
-                result = service.keys;
-                message = `Keys for service ${serviceName} retrieved successfully.`;
             } else {
-                throw new Error(`Service ${serviceName} not found.`);
+                status = true;
+                result = exactMatchService.keys;
+                message = `Keys for service ${exactMatchService.name} retrieved successfully.`;
             }
         } else {
             throw new Error('No services found in the database.');
         }
-    } catch (error:any) {
+    } catch (error: any) {
         message = `Error: ${error.message}`;
     }
 
