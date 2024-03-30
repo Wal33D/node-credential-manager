@@ -1,0 +1,11 @@
+# Ignore MacOS system files
+.DS_Store
+
+# Ignore Visual Studio Code folder
+.vscode/*
+
+# Ignore zip archives
+*.zip
+
+# Ignore build directory (if not already ignored in .gitignore)
+dist/

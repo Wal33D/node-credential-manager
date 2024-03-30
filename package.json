@@ -1,0 +1,46 @@
+{
+  "name": "node-credential-manager",
+  "version": "0.1.0",
+  "description": "A Node.js library for secure credential storage and management, supporting various encryption methods for robust security in application authentication processes.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "view": "ts-node path/to/viewCredentials.ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "credentials",
+    "security",
+    "nodejs-library",
+    "authentication",
+    "encryption",
+    "secure-storage",
+    "credential-manager",
+    "npm-package",
+    "typescript"
+  ],
+  "author": "Wal33d",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mongodb": "^6.5.0",
+    "node-forge": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/our-node-packages/node-credential-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/our-node-packages/node-credential-manager/issues"
+  },
+  "homepage": "https://github.com/our-node-packages/node-credential-manager",
+  "publishConfig": {
+    "@our-node-packages:registry": "https://npm.pkg.github.com/our-node-packages"
+  }
+}

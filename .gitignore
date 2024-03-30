@@ -1,0 +1,26 @@
+# Ignore MacOS system files
+.DS_Store
+
+# Ignore Visual Studio Code workspace settings
+.vscode/
+
+# Ignore Node.js modules directory
+# node_modules folders contain your project's npm dependencies
+node_modules/
+
+# Ignore the build directory
+# dist/ typically contains the output from your TypeScript or JavaScript build process
+dist/**
+!dist/.gitkeep
+
+# Ignore zip files, often used for archiving or distribution
+*.zip
+
+# Ignore .npmrc file containing sensitive information
+.npmrc
+
+# Ignore private directory (assuming it contains sensitive information)
+/private
+
+.env.local
+.env
