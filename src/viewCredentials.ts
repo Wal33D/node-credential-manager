@@ -132,14 +132,16 @@ async function promptForSpecificKey(credentialManager: CredentialManager) {
   if (keyType === null) return null; // Early exit or re-prompt for key type
 
   // Find and return the specific key
-  const result = await findSpecificKeyForService({
+  const { credential } = await findSpecificKeyForService({
     serviceName: serviceName,
     keyType: keyType,
     dbConnection: credentialManager.dbConnection
   });
 
-  return result;
+  return credential;
 }
+
+
 async function performAction(credentialManager: CredentialManager, action: string) {
   switch (action) {
     case '1':
