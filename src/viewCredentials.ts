@@ -25,13 +25,12 @@ async function viewCredentials() {
         console.log("   Secondary: <Add Key Now>");
       }
     });
-
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
     });
-
-    rl.question('What would you like to do next?\n1. Add a new credential\n2. Update an existing credential\n3. Delete a credential\n4. Exit\nPlease enter your choice (1-4): ', function(answer) {
+    console.log('\n');
+    rl.question('What would you like to do next?\n1. Add a new credential\n2. Update an existing credential\n3. Delete a credential\n4. Exit\nPlease enter your choice (1-4): ', function (answer) {
       switch (answer) {
         case '1':
           console.log('Option to add a new credential selected.');
@@ -54,7 +53,7 @@ async function viewCredentials() {
       rl.close();
     });
 
-    rl.on('close', function() {
+    rl.on('close', function () {
       process.exit(0);
     });
   } else {
