@@ -1,6 +1,7 @@
 import readline from 'readline';
 import { CredentialManager } from "./CredentialManager";
 import { findServiceByName } from './utils/findServiceByName';
+import { findSpecificKeyForService } from './utils/findSpecificKeyForService';
 
 
 async function viewCredentials({ credentialManager = new CredentialManager() }: { credentialManager?: CredentialManager }) {
@@ -88,11 +89,62 @@ async function promptForServiceName(credentialManager: CredentialManager) {
   });
 }
 
+async function promptForSpecificKey(credentialManager: CredentialManager) {
+  const rl = createReadlineInterface();
+
+  // Prompt for the service name
+  const serviceNameQuestion = 'Enter the service name you want to retrieve the key for (or type "exit" to return to the menu): ';
+  const serviceName = await new Promise<string | null>((resolve) => {
+    rl.question(serviceNameQuestion, (input) => {
+      if (input.toLowerCase() === "exit") {
+        console.log('Exiting to main menu...');
+        rl.close();
+        resolve(null);
+      } else {
+        rl.close();
+        resolve(input);
+      }
+    });
+  });
+
+  if (serviceName === null) return null; // Early exit to main menu
+
+  // Prompt for the key type
+  const keyTypeQuestion = 'Enter the key type ("Primary" or "Secondary") you want to retrieve (or type "exit" to return to the menu): ';
+  const keyType = await new Promise<string | null>((resolve) => {
+    const rlKeyType = createReadlineInterface();
+    rlKeyType.question(keyTypeQuestion, (input) => {
+      if (input.toLowerCase() === "exit") {
+        console.log('Exiting to main menu...');
+        rlKeyType.close();
+        resolve(null);
+      } else if (["primary", "secondary"].includes(input.toLowerCase())) {
+        rlKeyType.close();
+        resolve(input.charAt(0).toUpperCase() + input.slice(1).toLowerCase()); // Format to "Primary" or "Secondary"
+      } else {
+        console.log('Invalid key type. Please enter "Primary" or "Secondary".');
+        rlKeyType.close();
+        resolve(null); // Prompt again for the key type
+      }
+    });
+  });
+
+  if (keyType === null) return null; // Early exit or re-prompt for key type
+
+  // Find and return the specific key
+  const result = await findSpecificKeyForService({
+    serviceName: serviceName,
+    keyType: keyType,
+    dbConnection: credentialManager.dbConnection
+  });
+
+  return result;
+}
 async function performAction(credentialManager: CredentialManager, action: string) {
   switch (action) {
     case '1':
       console.log('Option to add a new credential selected.');
-      const serviceInfo = await promptForServiceName(credentialManager);
+      const serviceInfo = await promptForSpecificKey(credentialManager);
       if (serviceInfo === null) {
         return true; // User chose to exit, return to continue the application (back to the menu)
       }
@@ -100,6 +152,7 @@ async function performAction(credentialManager: CredentialManager, action: strin
       break;
     case '2':
       console.log('Option to update an existing credential selected.');
+
       break;
     case '3':
       console.log('Option to delete a credential selected.');
