@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "view": "ts-node path/to/viewCredentials.ts",
-    "test": "jest"
+    "test": "jest",
+    "view": "yarn build && node dist/viewCredentials.js"
   },
   "keywords": [
     "credentials",

@@ -10,7 +10,10 @@
     "declaration": true
   },
   "include": [
-    "src/**/*"
-, "src/__tests__"  ],
-  "exclude": ["node_modules"]
+    "src/**/*",
+    "global.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

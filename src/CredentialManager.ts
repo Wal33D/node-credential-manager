@@ -1,18 +1,44 @@
-import { MongoClient } from 'mongodb';
+require('dotenv').config({ path: './.env.local' });
+
+import { Db } from 'mongodb';
+import { initializeMongo } from './utils/initializeMongo';
 import { storeCredentials } from './utils/storeCredentials';
 import { updateCredentials } from './utils/updateCredentials';
 import { encryptCredentials } from './utils/encryptCredentials';
 import { decryptCredentials } from './utils/decryptCredentials';
 import { retrieveCredentials } from './utils/retrieveCredentials';
 import { validateCredentials } from './utils/validateCredentials';
+import { InitializeMongoResponse } from './types';
 
 class CredentialManager {
-  
-  private dbConnection: MongoClient;
+  dbConnection: Db | null = null;
+  initDBPromise: Promise<void>;
 
-  constructor(dbConnection: MongoClient) {
-    this.dbConnection = dbConnection;
+  constructor() {
+    this.initDBPromise = this.initializeDB();
   }
+
+  private async initializeDB(): Promise<void> {
+    try {
+      const response: InitializeMongoResponse = await initializeMongo();
+      if (response.status && response.mongoDatabase) {
+        this.dbConnection = response.mongoDatabase;
+        console.log(response.message); // Optional: log the success message
+      } else {
+        console.error('Database initialization failed:', response.message);
+        throw new Error(response.message);
+      }
+    } catch (err: any) {
+      console.error("Database initialization error:", err);
+      throw err; // Rethrow or handle as needed
+    }
+  }
+
+  // Ensure DB is initialized before proceeding
+  public async ensureDBInit(): Promise<void> {
+    await this.initDBPromise;
+  }
+
   // Method to store credentials
   async storeCredentials(credentials: any): Promise<any> {
     const validationResponse = validateCredentials({ credentials });
@@ -68,13 +94,21 @@ class CredentialManager {
     }
   }
 
-  async listAllCredentials(): Promise<void> {
+  // Example operation method
+  async listAllCredentials(): Promise<any> {
     try {
-      const dbCollection = this.dbConnection.db().collection('apiKeys');
-      const credentials = await dbCollection.find({}).toArray();
 
-      console.log('Listing all credentials:');
-      console.log(credentials);
+      // Ensure the DB initialization is complete before proceeding
+      await this.ensureDBInit();
+
+      if (!this.dbConnection) {
+        console.error('Database connection is not initialized.');
+        return;
+      }
+
+      const dbCollection = this.dbConnection.collection('apiKeys');
+      const credentials = await dbCollection.find({}).toArray();
+      return credentials
     } catch (error) {
       console.error(`Failed to list credentials: ${error}`);
     }

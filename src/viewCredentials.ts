@@ -1,16 +1,14 @@
-import { MongoClient } from 'mongodb';
-import { CredentialManager } from './path/to/CredentialManager';
-import { initializeMongo } from './path/to/yourMongoConnectionInitializer';
+import { CredentialManager } from "./CredentialManager";
 
 async function viewCredentials() {
-  try {
-    const dbConnection = await initializeMongo(); // Assumed this function connects to your MongoDB and returns the client
-    const credentialManager = new CredentialManager(dbConnection);
+  const credentialManager = new CredentialManager();
 
-    await credentialManager.listAllCredentials();
-  } catch (error) {
-    console.error('Error listing credentials:', error);
-  }
+  // Ensure database initialization is complete before listing credentials
+  await credentialManager.ensureDBInit();
+
+  // Now it's safe to proceed with database operations
+  const creds = await credentialManager.listAllCredentials();
+  console.log(creds);
 }
 
 viewCredentials();
