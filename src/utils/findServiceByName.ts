@@ -29,6 +29,7 @@ export const findServiceByName = async ({ serviceName, dbConnection }: { service
             } else {
                 status = true;
                 result = exactMatchService.keys;
+                serviceName = exactMatchService.name;
                 message = `Keys for service ${exactMatchService.name} retrieved successfully.`;
             }
         } else {
@@ -38,5 +39,5 @@ export const findServiceByName = async ({ serviceName, dbConnection }: { service
         message = `Error: ${error.message}`;
     }
 
-    return { status, result, message };
+    return { status, result, serviceName, message };
 };
