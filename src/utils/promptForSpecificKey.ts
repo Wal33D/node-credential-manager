@@ -11,59 +11,62 @@ function createReadlineInterface() {
     output: process.stdout,
   });
 }
+export async function promptForSpecificKey(credentialManager: CredentialManager, rl: readline.Interface) {
+  let serviceName = '';
+  let keyType = '';
+  let retryServiceName = true;
 
-export async function promptForSpecificKey(credentialManager: CredentialManager, rl: readline.Interface = createReadlineInterface()) {
-  return new Promise((resolve) => {
-    const serviceNameQuestion = 'Enter the service name you want to retrieve the key for (or type "exit" to return to the menu): ';
+  while (retryServiceName) {
+      const serviceNameQuestion = 'Enter the service name you want to retrieve the key for (or type "exit" to return to the menu): ';
+      serviceName = await new Promise((resolve) => {
+          rl.question(serviceNameQuestion, (input) => {
+              if (input.toLowerCase() === "exit") {
+                  console.log('Exiting to main menu...');
+                  resolve(null as any);
+              } else {
+                  resolve(input);
+              }
+          });
+      });
 
-    rl.question(serviceNameQuestion, async (input) => {
-      if (input.toLowerCase() === "exit") {
-        console.log('Exiting to main menu...');
-        rl.close();
-        resolve(null);
-        return;
-      }
+      if (!serviceName) return null; // Exit the function if user decides to exit
 
+      // Use findServiceByName to validate the service name
       const serviceValidation = await findServiceByName({
-        serviceName: input,
-        dbConnection: credentialManager.dbConnection
+          serviceName: serviceName,
+          dbConnection: credentialManager.dbConnection
       });
 
       if (!serviceValidation.status) {
-        console.log(serviceValidation.message + ' Please try again.');
-        // No need to close rl here if it will be reused
-        resolve(await promptForSpecificKey(credentialManager, rl)); // Recursive call to ask again
-        return;
+          console.log(serviceValidation.message);
+          // Offer user a chance to re-enter the service name directly here
+          // If your application logic requires, prompt the user if they want to retry
+          // For simplicity, assume retry
+          continue;
       } else {
-        // Here we shouldn't close rl if it's going to be reused
-        const keyType = await promptForKeyType(credentialManager, rl);
-        if (keyType === null) {
-          console.log(serviceValidation.message + ' Please try again.');
-          
-          resolve(await promptForSpecificKey(credentialManager, rl)); // Recursive call to ask again
-          return;
-        }
-
-        const { credential } = await findSpecificKeyForService({
-          serviceName: input,
-          keyType: keyType as string,
-          dbConnection: credentialManager.dbConnection
-        });
-
-        if (!credentialResult.status) {
-          console.log(credentialResult.message + ' Please try again.');
-          // Optionally ask the user if they want to try again or exit.
-          // For simplicity, this example assumes they'll retry automatically.
-          // Implement your logic here if you want to offer a choice.
-      } else {
-          console.log(credentialResult.message); // Key found, display success message
-          retry = false; // Exit loop if the key is found
+          console.log(`Service '${serviceName}' found.`);
+          retryServiceName = false; // Exit the loop on successful service name validation
       }
   }
 
-  if (credentialResult && credentialResult.status) {
-      return credentialResult.credential; // Return the found credential
+  // Proceed to request key type from the user
+  // Assuming promptForKeyType function does not require modifications for this part
+  keyType = await promptForKeyType(credentialManager, rl) as any;
+  if (!keyType) return null; // Handle case where user exits during key type selection
+
+  // Continue with finding the specific key
+  const { status, credential, message } = await findSpecificKeyForService({
+      serviceName: serviceName,
+      keyType: keyType,
+      dbConnection: credentialManager.dbConnection
+  });
+
+  console.log(message); // Display the message from findSpecificKeyForService
+  if (status) {
+      // Key found successfully
+      return credential;
   } else {
-      return null; // Return null if no credential was found or if the user exited
+      // Handle the case where the key wasn't found as needed
+      return null;
   }
 }
