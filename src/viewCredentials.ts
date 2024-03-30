@@ -2,6 +2,7 @@ import readline from 'readline';
 import { CredentialManager } from "./CredentialManager";
 import { promptForServiceName } from './utils/promptForServiceName';
 import { promptForSpecificKey } from './utils/promptForSpecificKey';
+import { promptForKeyType } from './utils/promptForKeyType';
 
 async function viewCredentials({ credentialManager = new CredentialManager() }) {
   await credentialManager.ensureDBInit();
@@ -92,13 +93,13 @@ async function performAction(credentialManager: CredentialManager, action: any, 
         break;
       case '4':
         console.log('Option to search for a specific key selected.');
-        const serviceInfo = await promptForServiceName(credentialManager, rl);
-
-        const specificKeyInfo = await promptForSpecificKey(credentialManager, rl);
-        if (specificKeyInfo === null) {
+        const serviceNameResult = await promptForServiceName(credentialManager, rl);
+        const keyResult = await promptForKeyType(credentialManager, rl);
+//console.log(keyResult, serviceNameResult)
+        if (keyResult === null) {
           return true;
         }
-        console.log(specificKeyInfo);
+        console.log(keyResult);
         break;
       case '5':
         console.log('Option to search by service name and key selected.');
