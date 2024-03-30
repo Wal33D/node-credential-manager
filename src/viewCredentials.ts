@@ -3,45 +3,52 @@ import { CredentialManager } from "./CredentialManager";
 import { promptForServiceName } from './utils/promptForServiceName';
 import { promptForSpecificKey } from './utils/promptForSpecificKey';
 
-async function viewCredentials({ credentialManager = new CredentialManager() }: { credentialManager?: CredentialManager }) {
+async function viewCredentials({ credentialManager = new CredentialManager() }) {
   await credentialManager.ensureDBInit();
-  const result = await credentialManager.getAllCredentials();
+  const rl = createReadlineInterface(); // Create a single readline interface here
 
-  if (!result.status) {
-    console.log("No credentials found.");
-    return;
-  }
+  while (true) { // Start an infinite loop to repeatedly show the menu until the user exits
+    const result = await credentialManager.getAllCredentials();
 
-  console.log(`\nCREDENTIALS & KEYS: ${result.message}`);
-  console.log(`-Database: ${result.databaseName}`);
-  console.log(`-Total services managed: ${result.servicesCount}`);
-  console.log(`-Total credentials stored: ${result.totalCredentials}\n`);
-  console.log(`[CREDENTIALS]`);
+    if (!result.status) {
+      console.log("No credentials found.");
+      return; // Exit if no credentials are found or if you want to stop the loop for any reason
+    }
 
-  result.credentials.forEach((cred) => {
+    // Display the credentials
+    console.log(`\nCREDENTIALS & KEYS: ${result.message}`);
+    console.log(`-Database: ${result.databaseName}`);
+    console.log(`-Total services managed: ${result.servicesCount}`);
+    console.log(`-Total credentials stored: ${result.totalCredentials}\n`);
+    console.log(`[CREDENTIALS]`);
 
-    console.log(` -${cred.name}`);
-    cred.keys.forEach((key: { keyName: any; apiKey: any; }) => {
-      console.log(`   ${key.keyName}: ${key.apiKey}`);
+    result.credentials.forEach((cred) => {
+      console.log(` -${cred.name}`);
+      cred.keys.forEach((key: { keyName: any; apiKey: any; }) => {
+        console.log(`   ${key.keyName}: ${key.apiKey}`);
+      });
+
+      if (!cred.keys.some((key: { keyName: string; }) => key.keyName === 'Primary')) {
+        console.log("   Primary: <Add Key Now>");
+      }
+      if (!cred.keys.some((key: { keyName: string; }) => key.keyName === 'Secondary')) {
+        console.log("   Secondary: <Add Key Now>");
+      }
     });
 
-    if (!cred.keys.some((key: { keyName: string; }) => key.keyName === 'Primary')) {
-      console.log("   Primary: <Add Key Now>");
-    }
-    if (!cred.keys.some((key: { keyName: string; }) => key.keyName === 'Secondary')) {
-      console.log("   Secondary: <Add Key Now>");
-    }
-  });
+    console.log('\n');
 
-  console.log('\n');
-  const action = await promptMenu();
-  const continueApp = await performAction(credentialManager, action as any);
-  if (continueApp) {
-    await viewCredentials({ credentialManager });
-  } else {
-    process.exit(0);
+    // Await the user's action choice
+    const action = await promptMenu(rl); // Pass the readline interface to promptMenu
+    // Perform the chosen action and break the loop if the action returns false (e.g., to exit)
+    const continueApp = await performAction(credentialManager, action, rl);
+    if (!continueApp) break; // Exit loop if continueApp is false
   }
+
+  console.log('Exiting application...');
+  process.exit(0); // Ensure the application exits after breaking out of the loop
 }
+
 
 function createReadlineInterface() {
   return readline.createInterface({
@@ -50,38 +57,52 @@ function createReadlineInterface() {
   });
 }
 
-async function promptMenu() {
-  const rl = createReadlineInterface();
+async function promptMenu(rl:any) {
   return new Promise((resolve) => {
     rl.question(
-      'What would you like to do next?\n1. Add a new credential\n2. Update an existing credential\n3. Delete a credential\n4. Exit\nPlease enter your choice (1-4): ',
-      (answer) => {
-        rl.close();
-        resolve(answer);
+      'What would you like to do next?\n' +
+      '1. Add a new credential\n' +
+      '2. Update an existing credential\n' +
+      '3. Delete a credential\n' +
+      '5. Search for a specific key\n' +
+      '6. Search by service name and key\n' +
+      '4. Exit\nPlease enter your choice (1-6): ',
+      (answer:any) => {
+        resolve(answer); // No need to close rl here; it will be reused
       }
     );
   });
 }
 
-async function performAction(credentialManager: CredentialManager, action: string) {
-  const rl = createReadlineInterface(); // Create a single readline interface
+async function performAction(credentialManager: CredentialManager, action: any, rl:any) {
   try {
     switch (action) {
       case '1':
         console.log('Option to add a new credential selected.');
-        const serviceInfo = await promptForSpecificKey(credentialManager, rl); // Pass the readline interface
+        break;
+      case '2':
+        console.log('Option to update an existing credential selected.');
+        // Implementation...
+        break;
+      case '3':
+        console.log('Option to delete a credential selected.');
+        // Implementation...
+        break;
+      case '5':
+        console.log('Option to search for a specific key selected.');
+        const specificKeyInfo = await promptForSpecificKey(credentialManager, rl);
+        if (specificKeyInfo === null) {
+          return true;
+        }
+        console.log(specificKeyInfo);
+        break;
+      case '6':
+        console.log('Option to search by service name and key selected.');
+        const serviceInfo = await promptForServiceName(credentialManager, rl);
         if (serviceInfo === null) {
           return true;
         }
         console.log(serviceInfo);
-        break;
-      case '2':
-        console.log('Option to update an existing credential selected.');
-        // If you have a function for updating, you would also pass rl there
-        break;
-      case '3':
-        console.log('Option to delete a credential selected.');
-        // Similarly, pass rl to any prompts involved in deletion
         break;
       case '4':
         console.log('Exiting...');
@@ -92,8 +113,9 @@ async function performAction(credentialManager: CredentialManager, action: strin
     }
     return true;
   } finally {
-    rl.close(); // Ensure the readline interface is always closed when done
+    rl.close();
   }
 }
+
 
 viewCredentials({});
