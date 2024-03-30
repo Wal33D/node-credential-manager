@@ -8,18 +8,31 @@ async function viewCredentials() {
   const result = await credentialManager.getAllCredentials();
 
   if (result.status) {
-    if (result.count > 0) {
-      console.log(`${result.message} Total credentials: ${result.count}`);
-      result.credentials.forEach((cred) => {
-        console.log(`Name: ${cred.name}`);
-        console.log('Keys:', cred.keys); 
-        console.log(`\n`);
+    console.log(`${result.message} Total credentials: ${result.count}`);
+    result.credentials.forEach((cred) => {
+      console.log(`Name: ${cred.name}`);
+
+      // Determine if there's a Primary or Secondary key missing
+      const hasPrimary = cred.keys.some((key: { keyName: string; }) => key.keyName === 'Primary');
+      const hasSecondary = cred.keys.some((key: { keyName: string; }) => key.keyName === 'Secondary');
+
+      // Display existing keys
+      cred.keys.forEach((key: { keyName: any; apiKey: any; }) => {
+        console.log(`-${key.apiKey}`);
       });
-    } else {
-      console.log("No credentials found.");
-    }
+
+      // Prompt to add missing keys
+      if (!hasPrimary) {
+        console.log("  Primary: Add Key Now");
+      }
+      if (!hasSecondary) {
+        console.log("  Secondary: Add Key Now");
+      }
+
+      console.log("\n"); // Add a newline for spacing
+    });
   } else {
-    console.log(`Failed to retrieve credentials: ${result.message}`);
+    console.log("No credentials found.");
   }
 }
 
