@@ -105,12 +105,11 @@ class CredentialManager {
     let status = false;
     let credentialsList: any[] = [];
     let message = '';
-    let servicesCount = 0; // Count of services
-    let totalCredentials = 0; // Total count of individual credentials across all services
-    let databaseName = ''; // Initialize the database name variable
+    let servicesCount = 0; 
+    let totalCredentials = 0; 
+    let databaseName = ''; 
 
     try {
-      // Ensure the DB initialization is complete before proceeding
       await this.ensureDBInit();
 
       if (!this.dbConnection) {
@@ -125,30 +124,25 @@ class CredentialManager {
         };
       }
 
-      // Capture the database name from the connection
       databaseName = this.dbConnection.databaseName;
 
       const dbCollection = this.dbConnection.collection('apiKeys');
       const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
-      console.log(JSON.stringify(credentials, null, 2));
 
-      // Process each document to extract services and accumulate total credentials count
       credentialsList = credentials.map(doc => {
         if (doc.services) {
-          // Add to totalCredentials for each key in each service
           totalCredentials += doc.services.reduce((acc: any, service: { keys: string | any[]; }) => acc + service.keys.length, 0);
         }
         return doc.services;
-      }).flat(); // Flatten the array by one level
+      }).flat(); 
 
       status = true;
       message = 'Credentials listed successfully.';
-      servicesCount = credentialsList.length; // This reflects the number of services, not individual keys
+      servicesCount = credentialsList.length; 
     } catch (error) {
       message = `Failed to list credentials: ${error}`;
     }
 
-    // Return the status, list of credentials, message, count of services, total count of individual credentials, and the database name
     return {
       status,
       credentials: credentialsList,

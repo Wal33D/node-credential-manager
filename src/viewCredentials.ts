@@ -2,6 +2,7 @@ import readline from 'readline';
 import { CredentialManager } from "./CredentialManager";
 import { findServiceByName } from './utils/findServiceByName';
 
+
 async function viewCredentials({ credentialManager = new CredentialManager() }: { credentialManager?: CredentialManager }) {
   await credentialManager.ensureDBInit();
   const result = await credentialManager.getAllCredentials();
@@ -34,7 +35,7 @@ async function viewCredentials({ credentialManager = new CredentialManager() }: 
 
   console.log('\n');
   const action = await promptMenu();
-  const continueApp = await performAction(credentialManager, action);
+  const continueApp = await performAction(credentialManager, action as any);
   if (continueApp) {
     await viewCredentials({ credentialManager });
   } else {
@@ -61,14 +62,42 @@ async function promptMenu() {
     );
   });
 }
+async function promptForServiceName(credentialManager: CredentialManager) {
+  const rl = createReadlineInterface();
+  const question = 'Enter the service name you want to add a credential for (or type "exit" to return to the menu): ';
 
-async function performAction(credentialManager: CredentialManager, action: unknown) {
+  return new Promise((resolve) => {
+    rl.question(question, async (serviceName) => {
+      if (serviceName.toLowerCase() === "exit") {
+        console.log('Exiting to main menu...');
+        rl.close();
+        resolve(null); // Resolve with null to indicate exit
+        return; // Exit the function early
+      }
+
+      const val = await findServiceByName({ serviceName, dbConnection: credentialManager.dbConnection });
+      if (!val.status) {
+        console.log(val.message + ' Please try again.');
+        rl.close(); // Close the current interface
+        resolve(await promptForServiceName(credentialManager)); // Recursive call to ask again
+      } else {
+        rl.close();
+        resolve(val); // Resolve with the found service
+      }
+    });
+  });
+}
+
+async function performAction(credentialManager: CredentialManager, action: string) {
   switch (action) {
     case '1':
-     const val = await findServiceByName({ serviceName: 'OpenAi', dbConnection: credentialManager.dbConnection });
-     console.log(val);
       console.log('Option to add a new credential selected.');
-//      break;
+      const serviceInfo = await promptForServiceName(credentialManager);
+      if (serviceInfo === null) {
+        return true; // User chose to exit, return to continue the application (back to the menu)
+      }
+      console.log(serviceInfo);
+      break;
     case '2':
       console.log('Option to update an existing credential selected.');
       break;
@@ -80,9 +109,9 @@ async function performAction(credentialManager: CredentialManager, action: unkno
       return false; // Signal to exit the application
     default:
       console.log('Invalid option selected. Please try again.');
+      return true; // Continue the application to allow re-selection
   }
   return true; // Continue the application
 }
-
 
 viewCredentials({});
