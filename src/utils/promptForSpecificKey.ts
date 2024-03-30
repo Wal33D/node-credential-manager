@@ -38,7 +38,9 @@ export async function promptForSpecificKey(credentialManager: CredentialManager,
         // Here we shouldn't close rl if it's going to be reused
         const keyType = await promptForKeyType(credentialManager, rl);
         if (keyType === null) {
-          resolve(null); // Handle early exit or invalid key type selection
+          console.log(serviceValidation.message + ' Please try again.');
+          
+          resolve(await promptForSpecificKey(credentialManager, rl)); // Recursive call to ask again
           return;
         }
 
@@ -48,8 +50,20 @@ export async function promptForSpecificKey(credentialManager: CredentialManager,
           dbConnection: credentialManager.dbConnection
         });
 
-        resolve(credential); // Resolve with the found credential
+        if (!credentialResult.status) {
+          console.log(credentialResult.message + ' Please try again.');
+          // Optionally ask the user if they want to try again or exit.
+          // For simplicity, this example assumes they'll retry automatically.
+          // Implement your logic here if you want to offer a choice.
+      } else {
+          console.log(credentialResult.message); // Key found, display success message
+          retry = false; // Exit loop if the key is found
       }
-    });
-  });
+  }
+
+  if (credentialResult && credentialResult.status) {
+      return credentialResult.credential; // Return the found credential
+  } else {
+      return null; // Return null if no credential was found or if the user exited
+  }
 }

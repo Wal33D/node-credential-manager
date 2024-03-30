@@ -12,17 +12,16 @@ export const findSpecificKeyForService = async ({
     let status = false;
     let credential = null;
     let message = '';
-  
+
     try {
       if (!dbConnection) {
         throw new Error('Database connection is not initialized.');
       }
-  
+
       const dbCollection = dbConnection.collection('apiKeys');
-      const document = await dbCollection.findOne({}); // Fetch the single document
-  
+      const document = await dbCollection.findOne({}); // Assume this fetches the document relevant to this context
+
       if (document && document.services) {
-        // Case-insensitive search for service
         const caseInsensitiveMatchService = document.services.find((service: { name: string; }) => service.name.toLowerCase() === serviceName.toLowerCase());
   
         if (!caseInsensitiveMatchService) {
@@ -30,16 +29,12 @@ export const findSpecificKeyForService = async ({
           return { status, credential, message };
         }
   
-        // Case-sensitive validation
         if (caseInsensitiveMatchService.name !== serviceName) {
           message = `Did you mean this service '${caseInsensitiveMatchService.name}'? Service names are case-sensitive.`;
           return { status, credential, message };
         }
   
-        // At this point, caseInsensitiveMatchService.name === serviceName
-        const service = caseInsensitiveMatchService; // No need to find again, reuse caseInsensitiveMatchService
-  
-        // Search for the key based on keyType
+        const service = caseInsensitiveMatchService;
         const key = service.keys.find((key: { keyName: string; }) => key.keyName === keyType);
   
         if (key) {
@@ -47,7 +42,16 @@ export const findSpecificKeyForService = async ({
           credential = key;
           message = `${keyType} key for service ${serviceName} retrieved successfully.`;
         } else {
-          message = `${keyType} key for service '${serviceName}' not found.`;
+          // Enhanced message hint if the key was not found
+          let hint = "";
+          if (keyType === "Primary" || keyType === "Secondary") {
+            const alternativeKeyType = keyType === "Primary" ? "Secondary" : "Primary";
+            const alternativeKey = service.keys.find((key: { keyName: string; }) => key.keyName === alternativeKeyType);
+            if (alternativeKey) {
+              hint = ` However, a ${alternativeKeyType} key is available.`;
+            }
+          }
+          message = `${keyType} key for service '${serviceName}' not found.${hint}`;
         }
       } else {
         throw new Error('No services found in the database.');
@@ -55,7 +59,6 @@ export const findSpecificKeyForService = async ({
     } catch (error: any) {
       message = `Error: ${error.message}`;
     }
-  
+
     return { status, credential, message };
   };
-  
