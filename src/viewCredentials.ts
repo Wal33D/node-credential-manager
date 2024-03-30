@@ -8,9 +8,11 @@ async function viewCredentials() {
   const result = await credentialManager.getAllCredentials();
 
   if (result.status) {
-    console.log(`${result.message} Total credentials: ${result.count}`);
+    console.log(`\n${result.message}`);
+    console.log(`Total Services: ${result.count}\n`);
+
     result.credentials.forEach((cred) => {
-      console.log(`Name: ${cred.name}`);
+      console.log(`-${cred.name}`);
 
       // Determine if there's a Primary or Secondary key missing
       const hasPrimary = cred.keys.some((key: { keyName: string; }) => key.keyName === 'Primary');
@@ -18,7 +20,7 @@ async function viewCredentials() {
 
       // Display existing keys
       cred.keys.forEach((key: { keyName: any; apiKey: any; }) => {
-        console.log(`-${key.apiKey}`);
+        console.log(`  ${key.keyName}: ${key.apiKey}`);
       });
 
       // Prompt to add missing keys

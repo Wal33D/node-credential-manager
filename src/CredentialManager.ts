@@ -99,29 +99,29 @@ class CredentialManager {
     let credentialsList: any[] = [];
     let message = '';
     let count = 0;
-  
+
     try {
       // Ensure the DB initialization is complete before proceeding
       await this.ensureDBInit();
-  
+
       if (!this.dbConnection) {
         message = 'Database connection is not initialized.';
-        return { status, credentials:credentialsList, message, count }; 
+        return { status, credentials: credentialsList, message, count };
       }
-  
+
       const dbCollection = this.dbConnection.collection('apiKeys');
       const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
-  
+
       // Extract services arrays and flatten the array by one level
       credentialsList = credentials.map(doc => doc.services).flat();
-      status = true; 
+      status = true;
       message = 'Credentials listed successfully.';
       count = credentialsList.length;
     } catch (error) {
       message = `Failed to list credentials: ${error}`;
     }
-  
-    return { status, credentials:credentialsList, message, count };
+
+    return { status, credentials: credentialsList, message, count };
   }
 }
 
