@@ -10,7 +10,7 @@ Promise<{ status: boolean; message: string; credential?: any }> => {
     let credential = null;
 
     try {
-        const serviceNameQuestion = 'Enter the service name you want to retrieve the key for (or type "exit" to return to the menu): ';
+        const serviceNameQuestion = 'Enter the service name you want to retrieve the key for (or type "exit" to return to the menu):\n ';
         const serviceName = await new Promise((resolve) => {
             rl.question(serviceNameQuestion, (input) => {
                 if (input.toLowerCase() === "exit") {

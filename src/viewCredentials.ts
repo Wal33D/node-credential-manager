@@ -137,7 +137,7 @@ const performAction = async ({
         status = serviceStatus;
 
         console.log(`- Service: ${serviceNameKey} | Status: ${status}`);
-        console.log(`- Message: ${message}`);
+        console.log(`- Message: ${message}\n`);
         console.log(value);
 
         break;

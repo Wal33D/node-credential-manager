@@ -19,7 +19,7 @@ export async function promptForKeyType(credentialManager: CredentialManager, rl?
     }
 
     return new Promise((resolve) => {
-        const keyTypeQuestion = 'Enter the key type ("Primary" or "Secondary") you want to retrieve (or type "exit" to return to the menu): ';
+        const keyTypeQuestion = 'Enter the key type ("Primary" or "Secondary") you want to retrieve (or type "exit" to return to the menu):\n ';
 
         readlineInterface.question(keyTypeQuestion, (input:any) => {
             if (input.toLowerCase() === "exit") {
