@@ -6,6 +6,7 @@ import { viewAllCredentials } from './viewAllCredentials';
 import { promptForNewServiceName } from './promptForNewServiceName';
 import { promptForNewCollectionName } from './promptForNewCollectionName';
 import { promptForCollectionDeletion } from './promptForCollectionDeletion';
+import { promptForCollectionNameChange } from './promptForCollectionNameChange';
 
 export const performAction = async ({ action, readLineInterface, credentialManager, }: { action: string, readLineInterface?: any, credentialManager: CredentialManager, }): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
     let status = false;
@@ -67,34 +68,13 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 message = addServiceResult.message;
 
                 break;
-            case '8':
-                const { status: promptStatus, newName, message: promptMessage } = await promptForNewCollectionName({ credentialManager, readLineInterface });
-
-                if (promptStatus && newName) {
-                    const { status: setCollectionStatus, oldName, message: setCollectionMessage } = credentialManager.setCollectionName(newName);
-                    const { status, existed } = await credentialManager.createCredentialsCollection(newName);
-
-                    message = `Failed to change collection name.`;
-
-                    if (setCollectionStatus) {
-                        if (status) {
-                            if (existed) {
-                                message = `Collection name changed from '${oldName}' to '${newName}'.`;
-                            } else {
-                                message = `Collection name changed from '${oldName}' to '${newName}'. A new collection '${newName}' was created successfully.`;
-                            }
-                        }
-                    } else {
-                        message = setCollectionMessage;
-                    }
-                    console.log(message);
-                } else {
-                    message = promptMessage;
-                    status = false;
-                    console.log(message);
-                }
-
-                break;
+                case '8':
+                    const collectionNameChangeResult = await promptForCollectionNameChange({ credentialManager, readLineInterface });
+                    console.log(collectionNameChangeResult.message);
+                    status = collectionNameChangeResult.status;
+                    message = collectionNameChangeResult.message;
+                    break;
+                
             case '9':
                 const deleteProcessResult = await promptForCollectionDeletion({ credentialManager, readLineInterface });
                 console.log(deleteProcessResult.message);
