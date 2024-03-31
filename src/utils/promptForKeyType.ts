@@ -1,10 +1,19 @@
 import readline from 'readline';
-import { PromptForKeyTypeResult } from '../types';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 
-export async function promptForKeyType(credentialManager: CredentialManager, readLineInterface?: readline.Interface): Promise<PromptForKeyTypeResult> {
-    let readlineInterface: readline.Interface | null = readLineInterface ?? null;
+export const promptForKeyType = async ({
+    credentialManager,
+    readLineInterface
+}: {
+    credentialManager: CredentialManager,
+    readLineInterface?: readline.Interface
+}): Promise<{
+    status: boolean;
+    result?: string;
+    message: string;
+}> => {
+    let readlineInterface: any = readLineInterface;
     let createdInternally = false;
 
     if (!readlineInterface) {
@@ -18,7 +27,7 @@ export async function promptForKeyType(credentialManager: CredentialManager, rea
     }
 
     try {
-        return await new Promise<PromptForKeyTypeResult>((resolve) => {
+        return await new Promise<any>((resolve) => {
             const keyTypeQuestion = 'Enter the key type ("Primary" or "Secondary") you want to retrieve (or type "exit" to return to the menu):\n';
             readlineInterface!.question(keyTypeQuestion, (input: string) => {
                 if (input.toLowerCase() === "exit") {
@@ -32,7 +41,7 @@ export async function promptForKeyType(credentialManager: CredentialManager, rea
                     });
                 } else {
                     console.log('Invalid key type. Please enter "Primary" or "Secondary".');
-                    resolve(promptForKeyType(credentialManager, readlineInterface as any));
+                    resolve(promptForKeyType({credentialManager, readLineInterface }));
                 }
             });
         });

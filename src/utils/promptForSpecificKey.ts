@@ -1,13 +1,18 @@
 import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
-import { ReadlineInterfaceResult } from '../types'; 
+import { ReadlineInterfaceResult } from '../types';
 import { promptForKeyType } from './promptForKeyType';
 import { findSpecificKeyForService } from './findSpecificKeyForService';
 
-export async function promptForSpecificKey(credentialManager: CredentialManager, rl?: readline.Interface): 
-Promise<{ status: boolean; message: string; credential?: any }> {
-    let readlineInterface: readline.Interface | null = rl ?? null;
+export const promptForSpecificKey = async ({
+    credentialManager,
+    readLineInterface
+}: {
+    credentialManager: CredentialManager,
+    readLineInterface?: readline.Interface
+}): Promise<{ status: boolean; message: string; credential?: any }> => {
+    let readlineInterface: any = readLineInterface;
     let createdInternally = false;
     let message = ''; // Initialize message variable for dynamic updates
 
@@ -40,7 +45,7 @@ Promise<{ status: boolean; message: string; credential?: any }> {
             return { status: true, message: 'User exited to main menu.', credential: null };
         }
 
-        const keyType = await promptForKeyType(credentialManager, readlineInterface);
+        const keyType = await promptForKeyType({credentialManager, readLineInterface});
         if (!keyType.status) {
             return { status: false, message: keyType.message, credential: null }; // Use the message from promptForKeyType
         }

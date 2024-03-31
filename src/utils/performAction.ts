@@ -6,7 +6,7 @@ import { viewAllCredentials } from './viewAllCredentials';
 import { ViewCredentialsResult } from '../types';
 import { promptForNewServiceName } from './promptForNewServiceName';
 
-const collectionName = 'testKeys';
+const collectionName = 'CredentialManager';
 
 export const performAction = async ({
     action,
@@ -43,7 +43,7 @@ export const performAction = async ({
 
                     let keyTypeResult;
                     do {
-                        keyTypeResult = await promptForKeyType(credentialManager, readLineInterface);
+                        keyTypeResult = await promptForKeyType({credentialManager, readLineInterface});
                         if (!keyTypeResult || !keyTypeResult.status || keyTypeResult.result?.toLowerCase() === "back") {
                             console.log(keyTypeResult?.message || 'Exiting to main menu...');
                             return { status: true, message: '' };
@@ -69,9 +69,6 @@ export const performAction = async ({
                 break;
             case '7':
                 const serviceNameResult = await promptForNewServiceName({ credentialManager, readLineInterface }) as any
-                // Check if service already exists
-
-                // If all checks pass, add the service
                 const addServiceResult = await credentialManager.addService(serviceNameResult.serviceName);
                 console.log(addServiceResult.message);
                 status = addServiceResult.status;
