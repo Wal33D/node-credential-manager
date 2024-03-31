@@ -104,21 +104,13 @@ class CredentialManager {
     if (!this.dbConnection) {
         return { status: false, message: "Database connection is not initialized." };
     }
-    if (serviceName.includes(' ')) {
-        return { status: false, message: "Service name should not contain spaces. Please try again with a valid name." };
-    }
+
     const dbCollection = this.dbConnection.collection(this.collectionName);
     
-    const serviceExists = await dbCollection.findOne({ name: serviceName });
-    if (serviceExists) {
-        return { status: false, message: `Service '${serviceName}' already exists in the '${this.collectionName}' collection.` };
-    } else {
-        // If the service does not exist, add it to the collection
-        await dbCollection.insertOne({ name: serviceName, credentials: [] });
-        return { status: true, message: `Service '${serviceName}' added successfully to the '${this.collectionName}' collection.` };
-    }
+    // Assume service does not exist and proceed to add it
+    await dbCollection.insertOne({ name: serviceName, credentials: [] });
+    return { status: true, message: `Service '${serviceName}' added successfully to the '${this.collectionName}' collection.` };
 }
-
 
   setCollectionName(newCollectionName: string): void {
     this.collectionName = newCollectionName;

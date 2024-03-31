@@ -3,17 +3,19 @@ import { createReadlineInterface } from './createReadlineInterface';
 import { ReadlineInterfaceResult } from '../types';
 
 export const promptForNewServiceName = async ({
-    readLineInterface
+    readLineInterface,
+    credentialManager 
 }: {
-    readLineInterface?: readline.Interface
+    readLineInterface?: readline.Interface | any,
+    credentialManager: any 
 }): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
     let message = 'Failed to prompt for new service name.';
     let status = false;
     let serviceName: string | undefined = undefined;
-    let continueApp = true; // Default to true, indicating the app should continue.
+    let continueApp = true;
 
     try {
-        let readlineInterface: readline.Interface | undefined = readLineInterface;
+        let readlineInterface: readline.Interface | any;
         let createdInternally = false;
 
         if (!readlineInterface) {
@@ -25,25 +27,40 @@ export const promptForNewServiceName = async ({
             createdInternally = true;
         }
 
-        serviceName = await new Promise<string | undefined>((resolve, reject) => {
-            const question = 'Enter the name of the new service you want to add:\n';
+        // Ensure database connection is initialized
+        await credentialManager.ensureDBInit();
+        if (!credentialManager.dbConnection) {
+            throw new Error("Database connection is not initialized.");
+        }
 
-            readlineInterface?.question(question, (input: string) => {
+        serviceName = await new Promise<string | undefined>((resolve) => {
+            const question = 'Enter the name of the new service you want to add:\n';
+            readlineInterface?.question(question, async (input: string) => {
                 if (input.toLowerCase() === "exit") {
                     console.log('Exiting to main menu...');
-                    continueApp = false; // Set continueApp to false when user types "exit".
-                    resolve(undefined); // Resolve with undefined to indicate cancellation.
+                    continueApp = false;
+                    resolve(undefined);
+                } else if (input.includes(' ')) {
+                    message = "Service name should not contain spaces. Please try again with a valid name.";
+                    resolve(undefined);
                 } else {
-                    resolve(input); // Resolve with the actual service name.
+                    // Check if service already exists
+                    const dbCollection = credentialManager.dbConnection.collection(credentialManager.collectionName);
+                    const serviceExists = await dbCollection.findOne({ name: input });
+                    if (serviceExists) {
+                        message = `Service '${input}' already exists in the '${credentialManager.collectionName}' collection.`;
+                        resolve(undefined);
+                    } else {
+                        status = true;
+                        message = 'Service name validated and ready for addition.';
+                        resolve(input);
+                    }
                 }
             });
         });
 
         if (!serviceName && !continueApp) {
-            message = 'Exited to main menu.';
-        } else if (serviceName) {
-            status = true;
-            message = 'Service name received.';
+            message = 'Exited to main menu or validation failed.';
         }
 
         if (createdInternally && readlineInterface) {
@@ -51,7 +68,7 @@ export const promptForNewServiceName = async ({
         }
     } catch (error: any) {
         message = `Error: ${error.message}`;
-        continueApp = false; // In case of an error, potentially stop the application.
+        continueApp = false;
     }
 
     return { status, serviceName, message, continueApp };
