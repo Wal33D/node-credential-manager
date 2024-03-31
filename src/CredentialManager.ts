@@ -6,6 +6,9 @@ import { addServiceFunction } from './functions/addServiceFunction';
 import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
 import { createCredentialsCollectionFunction } from './functions/createCredentialsCollectionFunction';
 import { deleteCredentialsCollectionFunction } from './functions/deleteCredentialsCollectionFunction';
+
+const defaultCollectionName = 'CredentialManager';
+
 class CredentialManager {
   dbConnection: Db | null = null;
   initDBPromise: Promise<{ status: boolean; message: string }>;
@@ -79,6 +82,17 @@ class CredentialManager {
 
     return { status, oldName, newName, message }
   };
+  
+  public resetCollectionNameToDefault(): { status: boolean; oldName: string; newName: string; message: string; } {
+    const oldName = this.collectionName;
+    this.collectionName = defaultCollectionName; // Reset to default
+    const newName = this.collectionName;
+    const message = `Collection name reset from '${oldName}' to the default '${newName}'.`;
+    const status = true; // Assuming resetting to default always succeeds
+
+    return { status, oldName, newName, message };
+}
+
 }
 
 export { CredentialManager };

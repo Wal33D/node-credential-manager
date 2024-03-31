@@ -52,7 +52,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 ({ status, message } = await serviceActionHandler());
                 break;
             case '6':
-                const initResult = await credentialManager.createCredentialsCollection(collectionName);
+                const initResult = await credentialManager.createCredentialsCollection(credentialManager.collectionName);
                 console.log(initResult.message);
                 status = initResult.status;
                 message = initResult.message;
@@ -89,26 +89,29 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                     status = false;
                     console.log(message);
                 }
-                break;
 
-                case '9': // New case for deleting a collection
-                const deleteCollectionName = await promptForNewCollectionName({ credentialManager, readLineInterface }); // Assuming this function exists and prompts the user for the collection name to delete
-                if (deleteCollectionName) {
-                    const deleteResult = await credentialManager.deleteCredentialsCollection(newName);
+                break;
+            case '9':
+                const deleteCollection = await promptForNewCollectionName({ credentialManager, readLineInterface });
+                if (deleteCollection.status) {
+                    const deleteResult = await credentialManager.deleteCredentialsCollection(deleteCollection.newName);
                     console.log(deleteResult.message);
                     status = deleteResult.status;
                     message = deleteResult.message;
+                    if(deleteResult.status){
+                        await credentialManager.resetCollectionNameToDefault();
+                    }
                 } else {
                     message = "Deletion canceled or invalid collection name provided.";
                     status = false;
                     console.log(message);
                 }
-                
+
                 break;
             case '10': // Updated case number for exiting
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };
-            
+
             default:
                 console.log('Invalid option selected. Please try again.');
                 message = 'Invalid option selected';
