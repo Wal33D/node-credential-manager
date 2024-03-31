@@ -25,7 +25,7 @@ export const promptForServiceName = async ({
   }
 
   return new Promise((resolve) => {
-    const question = 'Enter the service name you want to add a credential for (or type "exit" to return to the menu):\n ';
+    const question = 'Enter the service name you want to search for (or type "exit" to return to the menu):\n';
 
     readlineInterface.question(question, async (serviceName:string) => {
       if (serviceName.toLowerCase() === "exit") {

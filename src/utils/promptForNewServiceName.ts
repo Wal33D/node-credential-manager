@@ -8,10 +8,9 @@ export const promptForNewServiceName = async ({
 }: {
     credentialManager: CredentialManager,
     readLineInterface?: readline.Interface
-}): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; } | null> => {
+}): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
     let readlineInterface: any = readLineInterface;
     let createdInternally = false;
-    let message = 'Beginning service name validation...';
 
     if (!readlineInterface) {
         const interfaceCreationResult = createReadlineInterface();
@@ -19,34 +18,37 @@ export const promptForNewServiceName = async ({
             readlineInterface = interfaceCreationResult.interfaceInstance;
             createdInternally = true;
         } else {
-            console.error(interfaceCreationResult.message);
-            return null;
+            console.error(interfaceCreationResult.message); // Early feedback if the readline interface cannot be created
+            return { status: false, message: interfaceCreationResult.message, continueApp: false };
         }
     }
 
-    const promptLoop = async (): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; } | null> => {
+    const promptLoop = async (): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
         return new Promise((resolve) => {
             const question = 'Enter the name of the new service you want to add (or type "exit" to return to the menu):\n';
             readlineInterface.question(question, async (input: string) => {
+                let message = ''; // Reset message for each iteration
                 if (input.toLowerCase() === "exit") {
                     message = 'Exiting to main menu...';
                     resolve({ status: false, message, continueApp: false });
                 } else if (input.includes(' ')) {
                     message = "Service name should not contain spaces. Please try again.";
-                    resolve(await promptLoop()); // Recursively call promptLoop for another attempt
+                    console.log(message); // Immediate feedback before re-prompting
+                    resolve(await promptLoop());
                 } else {
                     // Ensure database connection is initialized
                     await credentialManager.ensureDBInit();
                     if (!credentialManager.dbConnection) {
                         message = "Database connection is not initialized.";
-                        resolve({ status: false, message: "Database connection is not initialized.", continueApp: false });
+                        console.log(message); // Immediate feedback if DB connection isn't initialized
+                        resolve({ status: false, message, continueApp: false });
                     } else {
-                        // Check if service already exists
                         const dbCollection = credentialManager.dbConnection.collection(credentialManager.collectionName);
                         const serviceExists = await dbCollection.findOne({ name: input });
                         if (serviceExists) {
                             message = `Service '${input}' already exists. Please try again.`;
-                            resolve(await promptLoop()); // Recursively call promptLoop for another attempt
+                            console.log(message); // Immediate feedback if service exists
+                            resolve(await promptLoop());
                         } else {
                             message = 'Service name validated and ready for addition.';
                             resolve({ status: true, serviceName: input, message, continueApp: true });

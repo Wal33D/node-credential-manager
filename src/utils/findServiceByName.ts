@@ -1,5 +1,5 @@
 import { Db } from "mongodb";
-const collectionName = 'testKeys';
+const collectionName = 'CredentialManager';
 
 export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }):
     Promise<{

@@ -70,12 +70,6 @@ export const performAction = async ({
             case '7':
                 const serviceNameResult = await promptForNewServiceName({ credentialManager, readLineInterface }) as any
                 // Check if service already exists
-                const dbCollection = credentialManager.dbConnection?.collection(credentialManager.collectionName);
-                const serviceExists = await dbCollection?.findOne({ name: serviceNameResult.serviceName });
-                if (serviceExists) {
-                    console.log(`Service '${serviceNameResult.serviceName}' already exists in the '${credentialManager.collectionName}' collection.`);
-                    break;
-                }
 
                 // If all checks pass, add the service
                 const addServiceResult = await credentialManager.addService(serviceNameResult.serviceName);

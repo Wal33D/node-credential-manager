@@ -1,5 +1,5 @@
 import { Db } from "mongodb";
-const collectionName = 'testKeys';
+const collectionName = 'CredentialManager';
 
 export const findSpecificKeyForService = async ({
   serviceName,

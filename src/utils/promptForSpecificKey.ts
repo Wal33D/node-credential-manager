@@ -1,7 +1,7 @@
 import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
-import { PromptForKeyTypeResult, ReadlineInterfaceResult, SpecificKeySearchResult } from '../types'; 
+import { ReadlineInterfaceResult } from '../types'; 
 import { promptForKeyType } from './promptForKeyType';
 import { findSpecificKeyForService } from './findSpecificKeyForService';
 
@@ -9,12 +9,14 @@ export async function promptForSpecificKey(credentialManager: CredentialManager,
 Promise<{ status: boolean; message: string; credential?: any }> {
     let readlineInterface: readline.Interface | null = rl ?? null;
     let createdInternally = false;
+    let message = ''; // Initialize message variable for dynamic updates
 
     if (!readlineInterface) {
         const interfaceCreationResult: ReadlineInterfaceResult = createReadlineInterface();
         if (!interfaceCreationResult.status) {
-            console.error(interfaceCreationResult.message);
-            return { status: false, message: "Failed to create readline interface." };
+            message = interfaceCreationResult.message;
+            console.error(message); // Provide immediate feedback if unable to create readline interface
+            return { status: false, message };
         }
         readlineInterface = interfaceCreationResult.interfaceInstance as readline.Interface;
         createdInternally = true;
@@ -25,7 +27,8 @@ Promise<{ status: boolean; message: string; credential?: any }> {
         const serviceName = await new Promise<string | null>((resolve) => {
             readlineInterface!.question(serviceNameQuestion, (input: string) => {
                 if (input.toLowerCase() === "exit") {
-                    console.log('Exiting to main menu...');
+                    message = 'Exiting to main menu...';
+                    console.log(message); // Provide immediate feedback for exit
                     resolve(null);
                 } else {
                     resolve(input);
@@ -34,30 +37,30 @@ Promise<{ status: boolean; message: string; credential?: any }> {
         });
 
         if (!serviceName) {
-            return { status: true, message: 'User exited to main menu', credential: null };
+            return { status: true, message: 'User exited to main menu.', credential: null };
         }
 
-        const keyType: any = await promptForKeyType(credentialManager, readlineInterface);
+        const keyType = await promptForKeyType(credentialManager, readlineInterface);
         if (!keyType.status) {
-            return { status: true, message: 'User exited to main menu', credential: null };
+            return { status: false, message: keyType.message, credential: null }; // Use the message from promptForKeyType
         }
 
-        const keySearchResult: any = await findSpecificKeyForService({
+        const keySearchResult = await findSpecificKeyForService({
             serviceName: serviceName,
             credentialName: keyType.result!,
             dbConnection: credentialManager.dbConnection as any,
         });
 
-        console.log(keySearchResult.message);
-
-        if (keySearchResult.status) {
-
-            return { status: true, message: 'Key retrieved successfully.', credential: { name: keySearchResult.credential.name, credentials: keySearchResult.credential.value } };
-        } else {
-            return { status: false, message: 'No key retrieved.', credential: null };
+        if (!keySearchResult.status) {
+            return { status: false, message: keySearchResult.message, credential: null };
         }
+
+        // If everything goes well, return success status, message, and credential
+        return { status: true, message: 'Key retrieved successfully.', credential: { name: keySearchResult?.credential?.name, value: keySearchResult?.credential?.value } };
     } catch (error: any) {
-        return { status: false, message: `An error occurred: ${error.message}` };
+        message = `An error occurred: ${error.message}`;
+        console.error(message); // Provide immediate feedback for error
+        return { status: false, message };
     } finally {
         if (createdInternally && readlineInterface) {
             readlineInterface.close();
