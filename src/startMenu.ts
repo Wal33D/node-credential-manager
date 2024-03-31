@@ -26,10 +26,6 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
     console.log(`\nCREDENTIALS & KEYS`);
     console.log(`- Database: ${result.databaseName} | Collection: ${result.collectionName}`);
     console.log(`- Services: ${result.servicesCount} | Credentials: ${result.totalCredentials}`);
-    console.log(`- Credentials: ${JSON.stringify(result.credentials,null,2)}\n`);
-
-  
-    console.log('\n');
 
     // Await the user's action choice
     const menuResult = await promptMenu({ rl });
