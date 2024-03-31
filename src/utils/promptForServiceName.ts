@@ -26,7 +26,7 @@ export const promptForServiceName = async ({ credentialManager, readLineInterfac
         console.log('Exiting to main menu...');
         resolve({ status: false, message: 'User exited.', value: '', serviceName: '' });
       } else {
-        const findServiceByNameResult = await findServiceByName({ serviceName: serviceName, dbConnection: credentialManager.dbConnection });
+        const findServiceByNameResult = await findServiceByName({ serviceName: serviceName, dbConnection: credentialManager.dbConnection as any });
         if (!findServiceByNameResult.status) {
           console.log(findServiceByNameResult.message + ' Please try again.');
           resolve({ status: false, message: findServiceByNameResult.message });
