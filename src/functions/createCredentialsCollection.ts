@@ -1,28 +1,28 @@
 import { Db } from 'mongodb';
 
-export async function createCredentialsCollection(dbConnection: Db | null, collectionName: string): Promise<{ status: boolean; message: string; logMessage?: string }> {
+export async function createCredentialsCollection(dbConnection: Db | null, collectionName: string): Promise<{ status: boolean; message: string; }> {
+    let status = false;
+    let message = '';
+
     if (!dbConnection) {
-        return { status: false, message: "Database connection is not initialized." };
+        status = false
+        message = 'Database connection is not initialized.'
+        return { status, message };
     }
 
     try {
         const collections = await dbConnection.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
         if (collections.length === 0) {
             await dbConnection.createCollection(collectionName);
-            return {
-                status: true,
-                message: `Collection '${collectionName}' created successfully.`,
-                logMessage: `INFO: Collection '${collectionName}' was created as it did not exist.`
-            };
+            message = `INFO: Collection '${collectionName}' was created as it did not exist.`
+            status = true;
+
         } else {
-            return {
-                status: true,
-                message: `Collection '${collectionName}' already exists, no changes made.`,
-                logMessage: `INFO: Collection '${collectionName}' already exists, no action required.`
-            };
+            message = `INFO: Collection '${collectionName}' was created as it did not exist.`
+            return { status: true, message, };
         }
     } catch (error) {
-        console.error(`Failed to create or verify the '${collectionName}' collection: ${error}`);
-        return { status: false, message: `Failed to create or verify the collection: ${error}` };
+        message: `Failed to create or verify the '${collectionName}' collection: ${error}`
+        return { status: false, message };
     }
 }
