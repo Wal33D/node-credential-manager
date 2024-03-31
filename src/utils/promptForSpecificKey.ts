@@ -5,13 +5,7 @@ import { ReadlineInterfaceResult } from '../types';
 import { promptForKeyType } from './promptForKeyType';
 import { findSpecificKeyForService } from './findSpecificKeyForService';
 
-export const promptForSpecificKey = async ({
-    credentialManager,
-    readLineInterface
-}: {
-    credentialManager: CredentialManager,
-    readLineInterface?: readline.Interface
-}): Promise<{ status: boolean; message: string; credential?: any }> => {
+export const promptForSpecificKey = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; message: string; credential?: any }> => {
     let readlineInterface: any = readLineInterface;
     let createdInternally = false;
     let message = ''; // Initialize message variable for dynamic updates

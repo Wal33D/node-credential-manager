@@ -1,15 +1,7 @@
 import { Db } from "mongodb";
 const collectionName = 'CredentialManager';
 
-export const findSpecificKeyForService = async ({
-  serviceName,
-  credentialName,
-  dbConnection
-}: {
-  serviceName: string,
-  credentialName: string,
-  dbConnection: Db
-}) => {
+export const findSpecificKeyForService = async ({ serviceName, credentialName, dbConnection }: { serviceName: string, credentialName: string, dbConnection: Db }) => {
   let status = false;
   let credential = null;
   let message = '';

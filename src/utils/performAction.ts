@@ -7,16 +7,7 @@ import { ViewCredentialsResult } from '../types';
 import { promptForNewServiceName } from './promptForNewServiceName';
 
 const collectionName = 'CredentialManager';
-
-export const performAction = async ({
-    action,
-    readLineInterface,
-    credentialManager,
-}: {
-    action: string,
-    readLineInterface: any,
-    credentialManager: CredentialManager,
-}): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
+export const performAction = async ({ action, readLineInterface, credentialManager, }: { action: string, readLineInterface?: any, credentialManager: CredentialManager, }): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
     let status = false;
     let message = '';
     let continueApp = true;

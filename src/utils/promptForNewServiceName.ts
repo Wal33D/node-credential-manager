@@ -2,13 +2,7 @@ import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 
-export const promptForNewServiceName = async ({
-    credentialManager,
-    readLineInterface
-}: {
-    credentialManager: CredentialManager,
-    readLineInterface?: readline.Interface
-}): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
+export const promptForNewServiceName = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
     let readlineInterface: any = readLineInterface;
     let createdInternally = false;
 

@@ -2,8 +2,7 @@ import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 
-export const viewAllCredentials = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }):
-  Promise<{ status: boolean; message: string; credentialsMessage?: string; credentials?: any; }> => {
+export const viewAllCredentials = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; message: string; credentialsMessage?: string; credentials?: any; }> => {
   let status = false;
   let message = '';
   let credentialsMessage = '';

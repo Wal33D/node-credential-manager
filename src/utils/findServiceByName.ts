@@ -1,13 +1,6 @@
 import { Db } from "mongodb";
 const collectionName = 'CredentialManager';
-
-export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }):
-    Promise<{
-        status: boolean;
-        serviceName: string;
-        credentials: any[];
-        message: string;
-    }> => {
+export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }): Promise<{ status: boolean; serviceName: string; credentials: any[]; message: string; }> => {
     let status = false;
     let credentials = [];
     let message = '';
