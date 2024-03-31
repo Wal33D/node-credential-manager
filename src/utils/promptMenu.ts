@@ -20,26 +20,28 @@ export const promptMenu = async ({ readLineInterface }: { readLineInterface?: re
 
     try {
         choice = await new Promise((resolve) => {
-            // Use the reassigned readLineInterface with non-null assertion here, since we know it's not null
             readLineInterface!.question(
                 'What would you like to do next?\n' +
-                ' 1. Add a new credential\n' +
-                ' 2. Update an existing credential\n' +
-                ' 3. View all credentials\n' +
-                ' 4. Search for a specific key\n' +
-                ' 5. Search by service name\n' +
-                ' 6. Initialize DB with default structure\n' +
-                ' 7. Add a new service\n' +
-                ' 8. Create and Switch to a collection\n' +
-                ' 9. Delete a collection\n' +
-                '10. Reset collection name to default\n' + // New option for resetting collection name
-                '11. Exit\n' + // Adjusted for new option
-                'Please enter your choice (1-11):\n',
-                (answer: string) => {
+                '\n[Database Operations]\n' +
+                ' 1. Initialize DB with default structure\n' +
+                ' 2. Create and Switch to a collection\n' +
+                ' 3. Delete a collection\n' +
+                ' 4. Reset collection name to default\n' +
+                '\n[Credential Management]\n' +
+                ' 5. Add a new credential\n' +
+                ' 6. View all credentials\n' +
+                ' 7. Search for a specific key\n' +
+                ' 8. Search by service name\n' +
+                '\n[Service Management]\n' +
+                ' 9. Add a new service\n' +
+                '\n[General Options]\n' +
+                '10. Exit\n' +
+                '\nPlease enter your choice (1-10):\n',
+                (answer) => {
                     resolve(answer); 
                 }
             );
-        });
+        });        
         status = true;
         message = 'Input received successfully';
     } catch (error: any) {
