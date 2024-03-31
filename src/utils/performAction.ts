@@ -69,27 +69,9 @@ export const performAction = async ({
                 break;
                 case '7':
                     const serviceNameResult = await promptForNewServiceName({ readLineInterface, credentialManager }) as any
-                    if (!serviceNameResult || !serviceNameResult.status) {
-                        console.log(serviceNameResult?.message || 'Failed to get service name. Exiting to main menu...');
-                        break;
-                    }
-                
-                    // Validate service name does not contain spaces
-                    if (serviceNameResult.serviceName.includes(' ')) {
-                        console.log("Service name should not contain spaces. Please try again with a valid name.");
-                        break;
-                    }
-                
-                    // Ensure database connection is initialized
-                    await credentialManager.ensureDBInit();
-                    if (!credentialManager.dbConnection) {
-                        console.log("Database connection is not initialized.");
-                        break;
-                    }
-                
                     // Check if service already exists
-                    const dbCollection = credentialManager.dbConnection.collection(credentialManager.collectionName);
-                    const serviceExists = await dbCollection.findOne({ name: serviceNameResult.serviceName });
+                    const dbCollection = credentialManager.dbConnection?.collection(credentialManager.collectionName);
+                    const serviceExists = await dbCollection?.findOne({ name: serviceNameResult.serviceName });
                     if (serviceExists) {
                         console.log(`Service '${serviceNameResult.serviceName}' already exists in the '${credentialManager.collectionName}' collection.`);
                         break;
