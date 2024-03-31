@@ -14,7 +14,7 @@ export const performAction = async ({
     credentialManager: CredentialManager,
     action: string,
     readLineInterface: any
-}): Promise<{ status: boolean, message: string, continue: boolean }> => {
+}): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
     let status = false;
     let message = '';
     let continueApp = true;
@@ -70,6 +70,13 @@ export const performAction = async ({
                 message = 'Exit option selected';
                 continueApp = false;
                 break;
+            case '7':
+                const initResult = await credentialManager.initializeCredentialsCollection('testKeys'); // Use your collection name
+                console.log(initResult.message);
+                status = initResult.status;
+                message = initResult.message;
+                break;
+
             default:
                 console.log('Invalid option selected. Please try again.');
                 status = true;
@@ -82,5 +89,5 @@ export const performAction = async ({
         readLineInterface.close();
     }
 
-    return { status, message, continue: continueApp };
+    return { status, message, continueApp };
 };

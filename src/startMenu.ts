@@ -36,7 +36,7 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
 
     const action = menuResult.choice;
 
-    const continueApp = await performAction({ credentialManager, action, readLineInterface });
+    const {continueApp} = await performAction({ credentialManager, action, readLineInterface });
     if (!continueApp) break;
   }
 
