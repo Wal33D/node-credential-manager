@@ -1,17 +1,14 @@
-import { Db } from "mongodb";
-const collectionName = 'CredentialManager';
-
-export const findServiceByName = async ({ serviceName, dbConnection, credentialManager }: { serviceName: string, dbConnection: Db }): Promise<{ status: boolean; serviceName: string; credentials: any[]; message: string; }> => {
+export const findServiceByName = async ({ serviceName, credentialManager }: { serviceName: string, credentialManager: any }): Promise<{ status: boolean; serviceName: string; credentials: any[]; message: string; }> => {
     let status = false;
     let credentials = [];
     let message = '';
 
     try {
-        if (!dbConnection) {
+        if (!credentialManager.dbConnection) {
             throw new Error('Database connection is not initialized.');
         }
-
-        const dbCollection = dbConnection.collection(collectionName);
+        const collectionName = credentialManager.collectionName;
+        const dbCollection = credentialManager.dbConnection.collection(collectionName);
         const serviceDocument = await dbCollection.findOne({ name: serviceName });
 
         if (!serviceDocument) {
@@ -26,8 +23,8 @@ export const findServiceByName = async ({ serviceName, dbConnection, credentialM
             }
         } else {
             status = true;
-            credentials = serviceDocument.credentials; 
-            serviceName = serviceDocument.name; 
+            credentials = serviceDocument.credentials;
+            serviceName = serviceDocument.name;
             message = `Credentials for service '${serviceDocument.name}' retrieved successfully.`;
         }
     } catch (error: any) {
