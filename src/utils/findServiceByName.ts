@@ -18,16 +18,28 @@ export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serv
         }
 
         const dbCollection = dbConnection.collection(collectionName);
-        // Adjusted to directly query the service by name, considering each document represents a service now
+        // Attempt a case-sensitive search first
         const serviceDocument = await dbCollection.findOne({ name: serviceNameKey });
 
-        if (serviceDocument) {
-            status = true;
-            credentials = serviceDocument.credentials; // Updated field name
-            message = `Credentials for service ${serviceDocument.name} retrieved successfully.`;
+        if (!serviceDocument) {
+            // If not found, attempt a case-insensitive search to provide a hint
+            const caseInsensitiveService = await dbCollection.findOne({
+                name: { $regex: new RegExp("^" + serviceNameKey + "$", "i") }
+            });
+
+            if (caseInsensitiveService) {
+                // Found a case-insensitive match; provide a hint
+                message = `Service '${serviceNameKey}' not found.\nHint: Did you mean '${caseInsensitiveService.name}'? Service name is case-sensitive.\n`;
+            } else {
+                // No case-insensitive match found either
+                message = `Service '${serviceNameKey}' not found.`;
+            }
         } else {
-            // If service not found, providing an adjusted message
-            message = `Service ${serviceNameKey} not found.`;
+            // Found a case-sensitive match; proceed normally
+            status = true;
+            credentials = serviceDocument.credentials; // Assume the updated structure
+            serviceNameKey = serviceDocument.name; // This line might be redundant if serviceNameKey is not meant to be mutated
+            message = `Credentials for service '${serviceDocument.name}' retrieved successfully.`;
         }
     } catch (error: any) {
         message = `Error: ${error.message}`;

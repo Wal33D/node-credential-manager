@@ -49,7 +49,7 @@ export const performAction = async ({
 
                     findKeyResult = await findSpecificKeyForService({
                         serviceName: serviceNameResult.serviceNameKey,
-                        keyType: keyTypeResult.result as string,
+                        credentialName: keyTypeResult.result as string,
                         dbConnection: credentialManager.dbConnection as any,
                     });
 

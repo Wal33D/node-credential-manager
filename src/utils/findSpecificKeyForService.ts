@@ -3,11 +3,11 @@ const collectionName = 'testKeys';
 
 export const findSpecificKeyForService = async ({
   serviceName,
-  keyType,
+  credentialName,
   dbConnection
 }: {
   serviceName: string,
-  keyType: string,
+  credentialName: string,
   dbConnection: Db
 }) => {
   let status = false;
@@ -29,24 +29,24 @@ export const findSpecificKeyForService = async ({
     }
 
     // Updated to reflect new structure: keys are now under 'credentials', and their 'keyName' is now 'name'
-    const key = serviceDocument.credentials.find((cred: { name: string; }) => cred.name === keyType);
+    const key = serviceDocument.credentials.find((cred: { name: string; }) => cred.name === credentialName);
 
     if (key) {
       status = true;
       // Updated to reflect that 'apiKey' is now 'credentials'
-      credential = { name: key.name, credentials: key.credentials };
-      message = `${keyType} key for service ${serviceName} retrieved successfully.`;
+      credential = { name: key.name, value: key.value };
+      message = `${credential.name} key for service ${credential.value} retrieved successfully.`;
     } else {
       // Enhanced message hint if the key was not found
       let hint = "";
-      if (keyType === "Primary" || keyType === "Secondary") {
-        const alternativeKeyType = keyType === "Primary" ? "Secondary" : "Primary";
-        const alternativeKey = serviceDocument.credentials.find((cred: { name: string; }) => cred.name === alternativeKeyType);
+      if (credentialName === "Primary" || credentialName === "Secondary") {
+        const alternativecredentialName = credentialName === "Primary" ? "Secondary" : "Primary";
+        const alternativeKey = serviceDocument.credentials.find((cred: { name: string; }) => cred.name === alternativecredentialName);
         if (alternativeKey) {
-          hint = ` However, a ${alternativeKeyType} key is available.`;
+          hint = ` However, a ${alternativecredentialName} key is available.`;
         }
       }
-      message = `${keyType} key for service '${serviceName}' not found.${hint}`;
+      message = `${credentialName} key for service '${serviceName}' not found.${hint}`;
     }
   } catch (error: any) {
     message = `Error: ${error.message}`;

@@ -37,14 +37,14 @@ Promise<{ status: boolean; message: string; credential?: any }> {
             return { status: true, message: 'User exited to main menu', credential: null };
         }
 
-        const keyType: PromptForKeyTypeResult = await promptForKeyType(credentialManager, readlineInterface);
+        const keyType: any = await promptForKeyType(credentialManager, readlineInterface);
         if (!keyType.status) {
             return { status: true, message: 'User exited to main menu', credential: null };
         }
 
         const keySearchResult: any = await findSpecificKeyForService({
             serviceName: serviceName,
-            keyType: keyType.result!,
+            credentialName: keyType.result!,
             dbConnection: credentialManager.dbConnection as any,
         });
 
