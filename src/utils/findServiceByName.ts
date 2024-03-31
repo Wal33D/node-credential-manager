@@ -1,5 +1,5 @@
 import { Db } from "mongodb";
-
+const collectionName = 'testKeys';
 export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serviceNameKey: string, dbConnection: Db | any }):
     Promise<{
         status: boolean;
@@ -16,7 +16,7 @@ export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serv
             throw new Error('Database connection is not initialized.');
         }
 
-        const dbCollection = dbConnection.collection('apiKeys');
+        const dbCollection = dbConnection.collection(collectionName);
         const document = await dbCollection.findOne({}); // Fetch the single document
 
         if (document && document.services) {

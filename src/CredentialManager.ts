@@ -4,7 +4,7 @@ import { Db } from 'mongodb';
 import { initializeMongo } from './utils/initializeMongo';
 import { InitializeMongoResponse } from './types';
 
-let collectionName = 'apiKeys';
+let collectionName = 'testKeys';
 
 class CredentialManager {
   dbConnection: Db | null = null;
@@ -43,59 +43,36 @@ class CredentialManager {
     databaseName: string;
     collectionName: string;
   }> {
+    await this.ensureDBInit();
     let status = false;
-    let credentialsList: any[] = [];
     let message = '';
-    let servicesCount = 0;
-    let totalCredentials = 0;
     let databaseName = '';
-
+    let credentialsList:any = [];
+  
+    if (!this.dbConnection) {
+      message = 'Database connection is not initialized.';
+      return { status, message, credentials: credentialsList, servicesCount: 0, totalCredentials: 0, databaseName, collectionName };
+    }
+  
+    databaseName = this.dbConnection.databaseName;
+  
     try {
-      await this.ensureDBInit();
-
-      if (!this.dbConnection) {
-        message = 'Database connection is not initialized.';
-        return {
-          status,
-          credentials: credentialsList,
-          message,
-          servicesCount,
-          totalCredentials,
-          databaseName,
-          collectionName,
-        };
-      }
-
-      databaseName = this.dbConnection.databaseName;
-
       const dbCollection = this.dbConnection.collection(collectionName);
-      const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
-      console.log(JSON.stringify(credentials, null, 2));
-
-      credentialsList = credentials.map(doc => {
-        if (doc.services) {
-          totalCredentials += doc.services.reduce((acc: any, service: { keys: string | any[]; }) => acc + service.keys.length, 0);
-        }
-        return doc.services;
-      }).flat();
-
+      const services = await dbCollection.find({}).toArray();
+  
+      credentialsList = services; // Each document is a service with its keys.
+      const servicesCount = services.length;
+      const totalCredentials = services.reduce((acc, service) => acc + service.keys.length, 0);
+  
       status = true;
       message = 'Loaded successfully.';
-      servicesCount = credentialsList.length;
+      return { status, credentials: credentialsList, message, servicesCount, totalCredentials, databaseName, collectionName };
     } catch (error) {
-      message = `Failed to load credentials: ${error}`;
+      console.error(`Failed to load credentials: ${error}`);
+      return { status, credentials: [], message: `Failed to load credentials: ${error}`, servicesCount: 0, totalCredentials: 0, databaseName, collectionName };
     }
-
-    return {
-      status,
-      credentials: credentialsList,
-      message,
-      servicesCount,
-      totalCredentials,
-      databaseName,
-      collectionName,
-    };
   }
+  
 
   async initializeCredentialsCollection(collectionName: string): Promise<{ status: boolean; message: string }> {
     await this.ensureDBInit(); // Ensure the DB is initialized

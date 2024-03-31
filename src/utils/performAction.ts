@@ -64,13 +64,13 @@ export const performAction = async ({
                 console.log(`- Service: ${serviceResult.serviceNameKey} | Status: ${status}\n- Message: ${message}\n`);
                 console.log(serviceResult.value);
                 break;
-            case '6':
+            case '7':
                 console.log('Exiting...');
                 status = true;
                 message = 'Exit option selected';
                 continueApp = false;
                 break;
-            case '7':
+            case '6':
                 const initResult = await credentialManager.initializeCredentialsCollection('testKeys'); // Use your collection name
                 console.log(initResult.message);
                 status = initResult.status;
