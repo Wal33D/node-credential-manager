@@ -65,9 +65,18 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
                 break;
 
-            case '8':
+                case '8': // This now corresponds to changing the collection name
+                const newCollectionName = await promptForNewCollectionName({ credentialManager, readLineInterface });
+                const { oldName, newName } = credentialManager.setCollectionName(newCollectionName);
+                console.log(`Collection name changed from '${oldName}' to '${newName}'.`);
+                status = true;
+                message = `Collection name changed successfully.`;
+                break;
+
+            case '9': // Updated to '9' for exiting
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };
+
             default:
                 console.log('Invalid option selected. Please try again.');
                 message = 'Invalid option selected';
@@ -81,3 +90,5 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
     return { status, message, continueApp };
 };
+
+

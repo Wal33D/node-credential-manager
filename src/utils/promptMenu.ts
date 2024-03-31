@@ -30,8 +30,9 @@ export const promptMenu = async ({ readLineInterface }: { readLineInterface?: re
                 ' 5. Search by service name\n' +
                 ' 6. Initialize DB with default structure\n' +
                 ' 7. Add a new service\n' +
-                ' 8. Exit\n' +
-                'Please enter your choice (1-8):\n',
+                ' 8. Change the collection name\n' + // Added this line
+                ' 9. Exit\n' + // Updated this line
+                'Please enter your choice (1-9):\n', // Updated this line
                 (answer: string) => {
                     resolve(answer); 
                 }

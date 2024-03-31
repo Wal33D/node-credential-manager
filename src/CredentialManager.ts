@@ -5,10 +5,9 @@ import { initializeMongo } from './utils/initializeMongo';
 import { addServiceFunction } from './functions/addServiceFunction';
 import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
 import { createCredentialsCollectionFunction } from './functions/createCredentialsCollectionFunction';
-
 class CredentialManager {
   dbConnection: Db | null = null;
-  initDBPromise: Promise<void>;
+  initDBPromise:  Promise<{ status: boolean; message: string }>;
   collectionName: string;
 
   constructor(collectionName: string = 'CredentialManager') {
@@ -16,57 +15,63 @@ class CredentialManager {
     this.initDBPromise = this.initializeDB();
   }
 
-  private async initializeDB(): Promise<void> {
+  private async initializeDB(): Promise<{ status: boolean; message: string }> {
     let message = '';
-    let status= false;
-    
+    let status = false;
+
     try {
-      const { status:mongoDBStatus, mongoDatabase, message:initMessage } = await initializeMongo();
-      const { status:mongoDBStatus, mongoDatabase, message } = await   this.createCredentialsCollection((this.collectionName));
+      const { status: mongoDBStatus, mongoDatabase } = await initializeMongo();
+      if (!mongoDBStatus) {
+        throw new Error('Failed to initialize MongoDB connection.');
+      }
       this.dbConnection = mongoDatabase;
+      const { status: credStatus, message: credMessage } = await createCredentialsCollectionFunction({ dbConnection: mongoDatabase as any, collectionName: this.collectionName });
+
+      console.log(credStatus, credMessage);
       status = true;
       message = 'Database initialized successfully.';
     } catch (error: any) {
       status = false;
       message = `Database initialization error: ${error.message}`;
-      throw error;
     }
+    return { status, message };
   }
 
   public async ensureDBInit(): Promise<void> {
     await this.initDBPromise;
   }
 
-
   public async getAllCredentials(): Promise<{ status: boolean; message: string; credentials: any[]; databaseName: string; collectionName: string; servicesCount: number; totalCredentials: number; }> {
-
     await this.ensureDBInit();
-
     return getAllCredentialsAndStatsFunction({ dbConnection: this.dbConnection, collectionName: this.collectionName });
   }
 
   public async addService(serviceName: string): Promise<{ status: boolean; message: string }> {
-
     await this.ensureDBInit();
-
-    return addServiceFunction({ dbConnection: this.dbConnection as any, collectionName: this.collectionName, serviceName });
+    return addServiceFunction({ dbConnection: this.dbConnection as Db, collectionName: this.collectionName, serviceName });
   }
 
   public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; message: string }> {
     await this.ensureDBInit();
-
     if (!this.dbConnection) {
       return { status: false, message: "Database connection is not initialized." };
     }
-
     const targetCollectionName = customCollectionName || this.collectionName;
-
     return createCredentialsCollectionFunction({
       dbConnection: this.dbConnection,
       collectionName: targetCollectionName,
     });
   }
 
+  public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string } {
+    const oldName = this.collectionName;
+    this.collectionName = newCollectionName;
+    const newName = this.collectionName;
+
+    const status = true;
+
+    return { status, oldName, newName };
+}
 
 }
 
