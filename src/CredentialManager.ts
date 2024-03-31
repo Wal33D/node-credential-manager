@@ -3,7 +3,7 @@ require('dotenv').config({ path: './.env.local' });
 import { Db } from 'mongodb';
 import { initializeMongo } from './utils/initializeMongo';
 import { addServiceFunction } from './functions/addServiceFunction';
-import { getAllCredentialsFunction } from './functions/getAllCredentialsFunction';
+import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
 import { createCredentialsCollectionFunction } from './functions/createCredentialsCollectionFunction';
 
 class CredentialManager {
@@ -17,32 +17,27 @@ class CredentialManager {
   }
 
   private async initializeDB(): Promise<void> {
+    let message = '';
+    let status= false;
+    
     try {
-      const { status, mongoDatabase, message } = await initializeMongo();
-      if (!status || !mongoDatabase) {
-        console.error('Database initialization failed:', message);
+      const { status:mongoDBStatus, mongoDatabase, message:initMessage } = await initializeMongo();
+
+      if (!mongoDBStatus || !mongoDatabase) {
+        message = `Database initialization failed: ${initMessage}`;
         throw new Error(message);
       }
-      
+
       this.dbConnection = mongoDatabase;
-      
-      const createCollectionResponse = await createCredentialsCollectionFunction({
-        dbConnection: this.dbConnection,
-        collectionName: this.collectionName
-      });
-  
-      if (!createCollectionResponse.status) {
-        console.error('Creating credentials collection failed:', createCollectionResponse.message);
-        throw new Error(createCollectionResponse.message);
-      }
-      
-      console.log(createCollectionResponse.message);
+      status = true;
+      message = 'Database initialized successfully.';
     } catch (error: any) {
-      console.error("Database initialization error:", error.message);
+      status = false;
+      message = `Database initialization error: ${error.message}`;
       throw error;
     }
   }
-  
+
   public async ensureDBInit(): Promise<void> {
     await this.initDBPromise;
   }
@@ -52,7 +47,7 @@ class CredentialManager {
 
     await this.ensureDBInit();
 
-    return getAllCredentialsFunction({ dbConnection: this.dbConnection, collectionName: this.collectionName });
+    return getAllCredentialsAndStatsFunction({ dbConnection: this.dbConnection, collectionName: this.collectionName });
   }
 
   public async addService(serviceName: string): Promise<{ status: boolean; message: string }> {

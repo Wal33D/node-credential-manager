@@ -1,6 +1,6 @@
 import { Db } from 'mongodb';
 
-export const getAllCredentialsFunction = async ({
+export const getAllCredentialsAndStatsFunction = async ({
   dbConnection,
   collectionName,
 }: {
