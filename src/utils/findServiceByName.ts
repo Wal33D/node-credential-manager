@@ -2,7 +2,7 @@ import { Db } from "mongodb";
 
 export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }) => {
     let status = false;
-    let result = null;
+    let keyType = '';
     let message = '';
 
     try {
@@ -28,7 +28,7 @@ export const findServiceByName = async ({ serviceName, dbConnection }: { service
                 }
             } else {
                 status = true;
-                result = exactMatchService.keys;
+                keyType = exactMatchService.keys;
                 serviceName = exactMatchService.name;
                 message = `Keys for service ${exactMatchService.name} retrieved successfully.`;
             }
@@ -39,5 +39,5 @@ export const findServiceByName = async ({ serviceName, dbConnection }: { service
         message = `Error: ${error.message}`;
     }
 
-    return { status, result, serviceName, message };
+    return { status, keyType, serviceName, message };
 };
