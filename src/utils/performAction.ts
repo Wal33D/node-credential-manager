@@ -5,8 +5,8 @@ import { findSpecificCredentialForService } from '../utils/findSpecificCredentia
 import { viewAllCredentials } from './viewAllCredentials';
 import { promptForNewServiceName } from './promptForNewServiceName';
 import { promptForNewCollectionName } from './promptForNewCollectionName';
+import { promptForCollectionDeletion } from './promptForCollectionDeletion';
 
-const collectionName = 'CredentialManager';
 export const performAction = async ({ action, readLineInterface, credentialManager, }: { action: string, readLineInterface?: any, credentialManager: CredentialManager, }): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
     let status = false;
     let message = '';
@@ -94,22 +94,12 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
                 break;
             case '9':
-                const deleteCollection = await promptForNewCollectionName({ credentialManager, readLineInterface });
-                if (deleteCollection.status) {
-                    const deleteResult = await credentialManager.deleteCredentialsCollection(deleteCollection.newName);
-                    console.log(deleteResult.message);
-                    status = deleteResult.status;
-                    message = deleteResult.message;
-                    if (deleteResult.status) {
-                        await credentialManager.resetCollectionNameToDefault();
-                    }
-                } else {
-                    message = "Deletion canceled or invalid collection name provided.";
-                    status = false;
-                    console.log(message);
-                }
-
+                const deleteProcessResult = await promptForCollectionDeletion({ credentialManager, readLineInterface });
+                console.log(deleteProcessResult.message);
+                status = deleteProcessResult.status;
+                message = deleteProcessResult.message;
                 break;
+
             case '10':
                 const resetResult = credentialManager.resetCollectionNameToDefault();
                 console.log(resetResult.message);
@@ -134,5 +124,3 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
     return { status, message, continueApp };
 };
-
-
