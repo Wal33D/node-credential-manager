@@ -1,73 +1,11 @@
-import { promptMenu } from "./utils/promptMenu";
-import { promptForKeyType } from './utils/promptForKeyType';
-import { CredentialManager } from "./CredentialManager";
-import { promptForServiceName } from './utils/promptForServiceName';
-import { createReadlineInterface } from './utils/createReadlineInterface';
-import { findSpecificKeyForService } from './utils/findSpecificKeyForService';
+import { promptForKeyType } from '../utils/promptForKeyType';
+import { CredentialManager } from "../CredentialManager";
+import { promptForServiceName } from '../utils/promptForServiceName';
+import { findSpecificKeyForService } from '../utils/findSpecificKeyForService';
 
-async function viewCredentials({ credentialManager = new CredentialManager() }) {
-  await credentialManager.ensureDBInit();
-
-  while (true) {
-    const readlineInterfaceResult = createReadlineInterface();
-
-    if (!readlineInterfaceResult.status) {
-      console.error(`Failed to create readline interface: ${readlineInterfaceResult.message}`);
-      process.exit(1); // Exit the application if unable to create the readline interface
-    }
-
-    const rl = readlineInterfaceResult.interfaceInstance;
-    const result = await credentialManager.getAllCredentials();
-
-    if (!result.status) {
-      console.log("No credentials found.");
-      return; // Exit if no credentials are found or if you want to stop the loop for any reason
-    }
-
-    // Display the credentials
-    console.log(`\nCREDENTIALS & KEYS`);
-    console.log(`- Database: ${result.databaseName} | Collection: ${result.collectionName}`);
-    console.log(`- Services: ${result.servicesCount} | Credentials: ${result.totalCredentials}`);
-    console.log(`- Credentials: ${result.message}\n`);
-
-    result.credentials.forEach((cred) => {
-      console.log(` -${cred.name}`);
-      cred.keys.forEach((key: { keyName: any; apiKey: any; }) => {
-        console.log(`   ${key.keyName}: ${key.apiKey}`);
-      });
-
-      if (!cred.keys.some((key: { keyName: string; }) => key.keyName === 'Primary')) {
-        console.log("   Primary: <Add Key Now>");
-      }
-      if (!cred.keys.some((key: { keyName: string; }) => key.keyName === 'Secondary')) {
-        console.log("   Secondary: <Add Key Now>");
-      }
-    });
-
-    console.log('\n');
-
-    // Await the user's action choice
-    const menuResult = await promptMenu({ rl }); // Updated to match the refactored promptMenu function
-    if (!menuResult.status) {
-      console.error(`Error in menu selection: ${menuResult.message}`);
-      continue; // Or handle the error as needed
-    }
-
-    const action = menuResult.choice;
-    // Perform the chosen action and break the loop if the action returns false (e.g., to exit)
-    const continueApp = await performAction({credentialManager, action, rl});
-    if (!continueApp) break; // Exit loop if continueApp is false
-  }
-
-  console.log('Exiting application...');
-  process.exit(0); // Ensure the application exits after breaking out of the loop
-}
-
-
-
-const performAction = async ({
-  credentialManager, 
-  action, 
+export const performAction = async ({
+    credentialManager,
+    action, 
   rl
 }: { 
   credentialManager: CredentialManager, 
@@ -160,5 +98,3 @@ const performAction = async ({
 
     return { status, message, continue: continueApp };
   };
-
-  viewCredentials({});

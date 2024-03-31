@@ -25,14 +25,13 @@ class CredentialManager {
       const response: InitializeMongoResponse = await initializeMongo();
       if (response.status && response.mongoDatabase) {
         this.dbConnection = response.mongoDatabase;
-        console.log(response.message); // Optional: log the success message
       } else {
         console.error('Database initialization failed:', response.message);
         throw new Error(response.message);
       }
-    } catch (err: any) {
-      console.error("Database initialization error:", err);
-      throw err; // Rethrow or handle as needed
+    } catch (error: any) {
+      console.error("Database initialization error:", error.message);
+      throw error; // Rethrow or handle as needed
     }
   }
 
@@ -56,7 +55,7 @@ class CredentialManager {
     let servicesCount = 0;
     let totalCredentials = 0;
     let databaseName = '';
-    
+
     try {
       await this.ensureDBInit();
 
@@ -86,10 +85,10 @@ class CredentialManager {
       }).flat();
 
       status = true;
-      message = 'Credentials listed successfully.';
+      message = 'Loaded successfully.';
       servicesCount = credentialsList.length;
     } catch (error) {
-      message = `Failed to list credentials: ${error}`;
+      message = `Failed to load credentials: ${error}`;
     }
 
     return {
