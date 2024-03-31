@@ -9,7 +9,7 @@ export const promptForServiceName = async ({
 }: {
   credentialManager: CredentialManager,
   readLineInterface?: readline.Interface
-}): Promise<{ status: boolean; value?: string; serviceNameKey?: string; message: string; } | null> => {
+}): Promise<{ status: boolean; value?: string; serviceName?: string; message: string; } | null> => {
   let readlineInterface:any = readLineInterface;
   let createdInternally = false;
 
@@ -32,7 +32,7 @@ export const promptForServiceName = async ({
         console.log('Exiting to main menu...');
         resolve(null);
       } else {
-        const findServiceByNameResult = await findServiceByName({ serviceNameKey: serviceName, dbConnection: credentialManager.dbConnection });
+        const findServiceByNameResult = await findServiceByName({ serviceName: serviceName, dbConnection: credentialManager.dbConnection });
         if (!findServiceByNameResult.status) {
           console.log(findServiceByNameResult.message + ' Please try again.');
           resolve(await promptForServiceName({credentialManager, readLineInterface: readlineInterface}));

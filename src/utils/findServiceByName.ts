@@ -1,10 +1,10 @@
 import { Db } from "mongodb";
 const collectionName = 'testKeys';
 
-export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serviceNameKey: string, dbConnection: Db | any }):
+export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }):
     Promise<{
         status: boolean;
-        serviceNameKey: string;
+        serviceName: string;
         credentials: any[];
         message: string;
     }> => {
@@ -19,31 +19,31 @@ export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serv
 
         const dbCollection = dbConnection.collection(collectionName);
         // Attempt a case-sensitive search first
-        const serviceDocument = await dbCollection.findOne({ name: serviceNameKey });
+        const serviceDocument = await dbCollection.findOne({ name: serviceName });
 
         if (!serviceDocument) {
             // If not found, attempt a case-insensitive search to provide a hint
             const caseInsensitiveService = await dbCollection.findOne({
-                name: { $regex: new RegExp("^" + serviceNameKey + "$", "i") }
+                name: { $regex: new RegExp("^" + serviceName + "$", "i") }
             });
 
             if (caseInsensitiveService) {
                 // Found a case-insensitive match; provide a hint
-                message = `Service '${serviceNameKey}' not found.\n - Hint: Did you mean '${caseInsensitiveService.name}'? Service name is case-sensitive.\n`;
+                message = `Service '${serviceName}' not found.\n - Hint: Did you mean '${caseInsensitiveService.name}'? Service name is case-sensitive.\n`;
             } else {
                 // No case-insensitive match found either
-                message = `Service '${serviceNameKey}' not found.`;
+                message = `Service '${serviceName}' not found.`;
             }
         } else {
             // Found a case-sensitive match; proceed normally
             status = true;
             credentials = serviceDocument.credentials; // Assume the updated structure
-            serviceNameKey = serviceDocument.name; // This line might be redundant if serviceNameKey is not meant to be mutated
+            serviceName = serviceDocument.name; // This line might be redundant if serviceName is not meant to be mutated
             message = `Credentials for service '${serviceDocument.name}' retrieved successfully.`;
         }
     } catch (error: any) {
         message = `Error: ${error.message}`;
     }
 
-    return { status, serviceNameKey, credentials, message };
+    return { status, serviceName, credentials, message };
 };

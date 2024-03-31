@@ -4,8 +4,9 @@ import { promptForServiceName } from '../utils/promptForServiceName';
 import { findSpecificKeyForService } from '../utils/findSpecificKeyForService';
 import { viewAllCredentials } from './viewAllCredentials';
 import { ViewCredentialsResult } from '../types';
+import { promptForNewServiceName } from './promptForNewServiceName';
 
-const collectionName = 'testKeys'; 
+const collectionName = 'testKeys';
 
 export const performAction = async ({
     credentialManager,
@@ -48,7 +49,7 @@ export const performAction = async ({
                     }
 
                     findKeyResult = await findSpecificKeyForService({
-                        serviceName: credentialNameResult.serviceNameKey,
+                        serviceName: credentialNameResult.serviceName,
                         credentialName: credNameResult.result as string,
                         dbConnection: credentialManager.dbConnection as any,
                     });
@@ -69,22 +70,37 @@ export const performAction = async ({
                 message = serviceResult.message;
                 status = serviceResult.status;
 
-                console.log(`- Service: ${serviceResult.serviceNameKey} | Status: ${status}\n- Message: ${message}\n`);
+                console.log(`- Service: ${serviceResult.serviceName} | Status: ${status}\n- Message: ${message}\n`);
                 console.log(serviceResult.credentials);
                 break;
-            case '7':
-                console.log('Exiting...');
-                status = true;
-                message = 'Exit option selected';
-                continueApp = false;
-                break;
             case '6':
-                const initResult = await credentialManager.createCredentialsCollection(collectionName); // Use your collection name
+                const initResult = await credentialManager.createCredentialsCollection(collectionName);
                 console.log(initResult.message);
                 status = initResult.status;
                 message = initResult.message;
                 break;
+            case '7':
+                const serviceNameResult = await promptForNewServiceName({ readLineInterface });
+                if (!serviceNameResult || serviceNameResult.status === false) {
+                    console.log(serviceNameResult ? serviceNameResult.message : 'Failed to get service name. Exiting to main menu...');
+                    status = true;
+                    message = '';
+                    break;
+                }
+                const addServiceResult = await credentialManager.addService(serviceNameResult.serviceName as any);
+                console.log(addServiceResult.message);
+                status = addServiceResult.status;
+                message = addServiceResult.message;
 
+                break;
+
+            case '8':
+                console.log('Exiting...');
+                status = true;
+                message = 'Exit option selected';
+                continueApp = false;
+
+                break;
             default:
                 console.log('Invalid option selected. Please try again.');
                 status = true;
