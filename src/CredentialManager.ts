@@ -7,7 +7,7 @@ import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentials
 import { createCredentialsCollectionFunction } from './functions/createCredentialsCollectionFunction';
 class CredentialManager {
   dbConnection: Db | null = null;
-  initDBPromise:  Promise<{ status: boolean; message: string }>;
+  initDBPromise: Promise<{ status: boolean; message: string }>;
   collectionName: string;
 
   constructor(collectionName: string = 'CredentialManager') {
@@ -55,22 +55,22 @@ class CredentialManager {
       return { status: false, message: "Database connection is not initialized." };
     }
     const targetCollectionName = customCollectionName || this.collectionName;
+
     return createCredentialsCollectionFunction({
       dbConnection: this.dbConnection,
       collectionName: targetCollectionName,
     });
   }
 
-  public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string } {
+  public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string; message:string; } {
     const oldName = this.collectionName;
     this.collectionName = newCollectionName;
     const newName = this.collectionName;
-
+    let message = 'Collection name updated successfully.'
     const status = true;
 
-    return { status, oldName, newName };
-}
-
+    return { status, oldName, newName, message }
+  };
 }
 
 export { CredentialManager };

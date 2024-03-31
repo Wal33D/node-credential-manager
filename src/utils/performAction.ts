@@ -65,18 +65,27 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 message = addServiceResult.message;
 
                 break;
-            case '8': 
-                const { status: newCollectionStatus, newName } = await promptForNewCollectionName({ credentialManager, readLineInterface });
-                if (newCollectionStatus) {
-                    const { oldName } = credentialManager.setCollectionName(newName as string);
-                    message = `Collection name changed from '${oldName}' to '${newName}'.`;
-                    const initResult = await credentialManager.createCredentialsCollection(newName as string);
-                    console.log(initResult.message, message);
+            case '8':
+                const { status: promptStatus, newName, message: promptMessage } = await promptForNewCollectionName({ credentialManager, readLineInterface });
+                if (promptStatus && newName) {
+                    const { status: setCollectionStatus, oldName } = credentialManager.setCollectionName(newName);
+                    const { status: credStatus, existed, message: credMessage } = await credentialManager.createCredentialsCollection(newName);
+
+                    if (credStatus) {
+                        message = `Collection name changed from '${oldName}' to '${newName}'. ${credMessage}`;
+                    } else {
+                        message = `Collection name changed from '${oldName}' to '${newName}', but there was an issue: ${credMessage}`;
+                    }
+                    status = true;
+                    console.log(message);
+                } else {
+                    message = promptMessage;
+                    status = false;
+                    console.log(message);
                 }
-                message = 'Collection name change failed.';
-                
                 break;
-            case '9': 
+
+            case '9':
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };
 
