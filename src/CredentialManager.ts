@@ -10,6 +10,8 @@ import { initializeMongo } from './utils/initializeMongo';
 //import { validateCredentials } from './utils/validateCredentials';
 import { InitializeMongoResponse } from './types';
 
+let collectionName = 'apiKeys';
+
 class CredentialManager {
   dbConnection: Db | null = null;
   initDBPromise: Promise<void>;
@@ -46,14 +48,15 @@ class CredentialManager {
     servicesCount: number;
     totalCredentials: number;
     databaseName: string;
+    collectionName: string;
   }> {
     let status = false;
     let credentialsList: any[] = [];
     let message = '';
-    let servicesCount = 0; 
-    let totalCredentials = 0; 
-    let databaseName = ''; 
-
+    let servicesCount = 0;
+    let totalCredentials = 0;
+    let databaseName = '';
+    
     try {
       await this.ensureDBInit();
 
@@ -66,12 +69,13 @@ class CredentialManager {
           servicesCount,
           totalCredentials,
           databaseName,
+          collectionName,
         };
       }
 
       databaseName = this.dbConnection.databaseName;
 
-      const dbCollection = this.dbConnection.collection('apiKeys');
+      const dbCollection = this.dbConnection.collection(collectionName);
       const credentials = await dbCollection.find({}, { projection: { _id: 0, services: 1 } }).toArray();
 
       credentialsList = credentials.map(doc => {
@@ -79,11 +83,11 @@ class CredentialManager {
           totalCredentials += doc.services.reduce((acc: any, service: { keys: string | any[]; }) => acc + service.keys.length, 0);
         }
         return doc.services;
-      }).flat(); 
+      }).flat();
 
       status = true;
       message = 'Credentials listed successfully.';
-      servicesCount = credentialsList.length; 
+      servicesCount = credentialsList.length;
     } catch (error) {
       message = `Failed to list credentials: ${error}`;
     }
@@ -95,6 +99,7 @@ class CredentialManager {
       servicesCount,
       totalCredentials,
       databaseName,
+      collectionName,
     };
   }
 }

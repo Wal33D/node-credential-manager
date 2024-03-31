@@ -1,17 +1,22 @@
-import readline from 'readline';
 import { CredentialManager } from "./CredentialManager";
 import { promptForServiceName } from './utils/promptForServiceName';
-import { promptForSpecificKey } from './utils/promptForSpecificKey';
 import { promptForKeyType } from './utils/promptForKeyType';
 import { findSpecificKeyForService } from './utils/findSpecificKeyForService';
+import { createReadlineInterface } from './utils/createReadlineInterface';
 
 async function viewCredentials({ credentialManager = new CredentialManager() }) {
   await credentialManager.ensureDBInit();
 
 
-  while (true) { // Start an infinite loop to repeatedly show the menu until the user exits
-    const rl = createReadlineInterface();
+  while (true) {
+    const readlineInterfaceResult = createReadlineInterface();
 
+    if (!readlineInterfaceResult.status) {
+      console.error(`Failed to create readline interface: ${readlineInterfaceResult.message}`);
+      process.exit(1); // Exit the application if unable to create the readline interface
+    }
+
+    const rl = readlineInterfaceResult.interfaceInstance;
     const result = await credentialManager.getAllCredentials();
 
     if (!result.status) {
@@ -21,9 +26,8 @@ async function viewCredentials({ credentialManager = new CredentialManager() }) 
 
     // Display the credentials
     console.log(`\nCREDENTIALS & KEYS: ${result.message}`);
-    console.log(`-Database: ${result.databaseName}`);
-    console.log(`-Total services managed: ${result.servicesCount}`);
-    console.log(`-Total credentials stored: ${result.totalCredentials}\n`);
+    console.log(`- Database: ${result.databaseName} | Collection: ${result.collectionName}`);
+    console.log(`- Services: ${result.servicesCount} | Credentials: ${result.totalCredentials}\n`);
     console.log(`[CREDENTIALS]`);
 
     result.credentials.forEach((cred) => {
@@ -51,14 +55,6 @@ async function viewCredentials({ credentialManager = new CredentialManager() }) 
 
   console.log('Exiting application...');
   process.exit(0); // Ensure the application exits after breaking out of the loop
-}
-
-
-function createReadlineInterface() {
-  return readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
 }
 
 async function promptMenu(rl: any) {
@@ -92,42 +88,42 @@ async function performAction(credentialManager: CredentialManager, action: any, 
         console.log('Option to delete a credential selected.');
         // Implementation...
         break;
-        case '4':
-          console.log('Option to search for a specific key selected.');
-        
-          const serviceNameResult = await promptForServiceName(credentialManager, rl) as any;
-          if (!serviceNameResult || serviceNameResult.status === false) {
-            console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
-            return true; // Exit if no valid service name is provided
+      case '4':
+        console.log('Option to search for a specific key selected.');
+
+        const serviceNameResult = await promptForServiceName(credentialManager, rl) as any;
+        if (!serviceNameResult || serviceNameResult.status === false) {
+          console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
+          return true; // Exit if no valid service name is provided
+        }
+
+        let keyTypeResult: any;
+        let findKeyResult = { status: false, credential: null, message: '' };
+
+        while (!findKeyResult.status) {
+          keyTypeResult = await promptForKeyType(credentialManager, rl);
+          if (!keyTypeResult || keyTypeResult.status === false || keyTypeResult.result.toLowerCase() === "back") {
+            console.log(keyTypeResult ? keyTypeResult.message : 'Exiting to main menu...');
+            return true; // Exit or go back if no valid key type is provided or "back" is entered
           }
-        
-          let keyTypeResult:any;
-          let findKeyResult = { status: false, credential: null, message: '' };
-        
-          while (!findKeyResult.status) {
-            keyTypeResult = await promptForKeyType(credentialManager, rl);
-            if (!keyTypeResult || keyTypeResult.status === false || keyTypeResult.result.toLowerCase() === "back") {
-              console.log(keyTypeResult ? keyTypeResult.message : 'Exiting to main menu...');
-              return true; // Exit or go back if no valid key type is provided or "back" is entered
-            }
-        
-            // Attempt to find the specific key with the given service name and key type
-            findKeyResult = await findSpecificKeyForService({
-              serviceName: serviceNameResult.serviceName, // Use the validated service name
-              keyType: keyTypeResult.result, // Use the user-provided key type
-              dbConnection: credentialManager.dbConnection
-            });
-        
-            // If the key is not found, inform the user and the loop will prompt for the key type again
-            if (!findKeyResult.status) {
-              console.log(findKeyResult.message);
-            }
+
+          // Attempt to find the specific key with the given service name and key type
+          findKeyResult = await findSpecificKeyForService({
+            serviceName: serviceNameResult.serviceName, // Use the validated service name
+            keyType: keyTypeResult.result, // Use the user-provided key type
+            dbConnection: credentialManager.dbConnection
+          });
+
+          // If the key is not found, inform the user and the loop will prompt for the key type again
+          if (!findKeyResult.status) {
+            console.log(findKeyResult.message);
           }
-        
-          // If the loop exits because a key is found (status: true), log the key details
-          console.log('Key details:', findKeyResult.credential);
-          break
-        
+        }
+
+        // If the loop exits because a key is found (status: true), log the key details
+        console.log('Key details:', findKeyResult.credential);
+        break
+
       case '5':
         console.log('Option to search by service name and key selected.');
         const serviceInfo = await promptForServiceName(credentialManager, rl);
