@@ -1,11 +1,11 @@
-export const promptMenu = async ({ rl }: { rl: any }): Promise<{ status: boolean; choice: string; message: string; }> => {
+export const promptMenu = async ({ readLineInterface }: { readLineInterface: any }): Promise<{ status: boolean; choice: string; message: string; }> => {
     let status = false;
     let choice = '';
     let message = 'Failed to receive input';
 
     try {
         choice = await new Promise((resolve) => {
-            rl.question(
+            readLineInterface.question(
                 'What would you like to do next?\n' +
                 ' 1. Add a new credential\n' +
                 ' 2. Update an existing credential\n' +

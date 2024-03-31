@@ -14,7 +14,7 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
       process.exit(1);
     }
 
-    const rl = readlineInterfaceResult.interfaceInstance;
+    const readLineInterface = readlineInterfaceResult.interfaceInstance;
     const result = await credentialManager.getAllCredentials();
 
     if (!result.status) {
@@ -28,7 +28,7 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
     console.log(`- Services: ${result.servicesCount} | Credentials: ${result.totalCredentials}\n`);
 
     // Await the user's action choice
-    const menuResult = await promptMenu({ rl });
+    const menuResult = await promptMenu({ readLineInterface });
     if (!menuResult.status) {
       console.error(`Error in menu selection: ${menuResult.message}`);
       continue;
@@ -36,7 +36,7 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
 
     const action = menuResult.choice;
 
-    const continueApp = await performAction({ credentialManager, action, rl });
+    const continueApp = await performAction({ credentialManager, action, readLineInterface });
     if (!continueApp) break;
   }
 

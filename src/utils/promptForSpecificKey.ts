@@ -1,7 +1,7 @@
 import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
-import { SpecificKeySearchResult } from '../types'; 
+import { PromptForKeyTypeResult, ReadlineInterfaceResult, SpecificKeySearchResult } from '../types'; 
 import { promptForKeyType } from './promptForKeyType';
 import { findSpecificKeyForService } from './findSpecificKeyForService';
 

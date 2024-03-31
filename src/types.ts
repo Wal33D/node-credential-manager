@@ -30,10 +30,6 @@ export interface ServiceCredential {
 // Result of viewing credentials, extending the generic operation result
 export interface ViewCredentialsResult extends OperationResult {
     credentialsMessage?: string; 
-    databaseName?: string;
-    collectionName?: string;
-    servicesCount?: number;
-    totalCredentials?: number;
     credentials?: ServiceCredential[];
 }
 
@@ -44,5 +40,17 @@ export interface ServiceCredentialOperationResult extends OperationResultWithCre
 export interface InitializeMongoResponse {
     status: boolean;
     mongoDatabase: Db | null;
+    message: string;
+}
+
+export interface PromptForKeyTypeResult {
+    status: boolean;
+    result?: string;
+    message: string;
+
+}
+export interface ReadlineInterfaceResult {
+    status: boolean;
+    interfaceInstance?: any; 
     message: string;
 }

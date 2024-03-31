@@ -9,11 +9,11 @@ import { PromptForKeyTypeResult } from '../types';
 export const performAction = async ({
     credentialManager,
     action,
-    rl
+    readLineInterface
 }: {
     credentialManager: CredentialManager,
     action: string,
-    rl: any
+    readLineInterface: any
 }): Promise<{ status: boolean, message: string, continue: boolean }> => {
     let status = false;
     let message = '';
@@ -22,11 +22,11 @@ export const performAction = async ({
     try {
         switch (action) {
             case '3':
-                const viewCredentialsResult: ViewCredentialsResult = await viewAllCredentials({ credentialManager });
+                const viewCredentialsResult: ViewCredentialsResult = await viewAllCredentials({ credentialManager, readLineInterface: readLineInterface });
                 console.log(viewCredentialsResult.credentialsMessage);
                 break;
             case '4':
-                const serviceNameResult = await promptForServiceName({ credentialManager, rl }) as any;
+                const serviceNameResult = await promptForServiceName({ credentialManager, readLineInterface }) as any;
                 if (!serviceNameResult || serviceNameResult.status === false) {
                     console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
                     status = true;
@@ -37,7 +37,7 @@ export const performAction = async ({
                 let findKeyResult = { status: false, credential: null, message: '' };
 
                 while (!findKeyResult.status) {
-                    keyTypeResult = await promptForKeyType(credentialManager, rl);
+                    keyTypeResult = await promptForKeyType(credentialManager, readLineInterface);
                     if (!keyTypeResult || keyTypeResult.status === false || keyTypeResult.result?.toLowerCase() === "back") {
                         console.log(keyTypeResult ? keyTypeResult.message : 'Exiting to main menu...');
                         status = true;
@@ -57,7 +57,7 @@ export const performAction = async ({
                 console.log('Key details:', findKeyResult.credential);
                 break;
             case '5':
-                const serviceResult = await promptForServiceName({ credentialManager, rl }) as any;
+                const serviceResult = await promptForServiceName({ credentialManager, readLineInterface }) as any;
                 message = serviceResult.message;
                 status = serviceResult.status;
 
@@ -79,7 +79,7 @@ export const performAction = async ({
         message = `An error occurred: ${error.message}`;
         continueApp = true;
     } finally {
-        rl.close();
+        readLineInterface.close();
     }
 
     return { status, message, continue: continueApp };
