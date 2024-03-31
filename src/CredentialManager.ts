@@ -18,26 +18,31 @@ class CredentialManager {
 
   private async initializeDB(): Promise<void> {
     try {
-      const response = await initializeMongo();
-      if (response.status && response.mongoDatabase) {
-        this.dbConnection = response.mongoDatabase;
-
-        const createCollectionResponse = await createCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: this.collectionName});
-
-        if (createCollectionResponse.status) {
-          console.log(createCollectionResponse.message);
-        }
-
-      } else {
-        console.error('Database initialization failed:', response.message);
-        throw new Error(response.message);
+      const { status, mongoDatabase, message } = await initializeMongo();
+      if (!status || !mongoDatabase) {
+        console.error('Database initialization failed:', message);
+        throw new Error(message);
       }
+      
+      this.dbConnection = mongoDatabase;
+      
+      const createCollectionResponse = await createCredentialsCollectionFunction({
+        dbConnection: this.dbConnection,
+        collectionName: this.collectionName
+      });
+  
+      if (!createCollectionResponse.status) {
+        console.error('Creating credentials collection failed:', createCollectionResponse.message);
+        throw new Error(createCollectionResponse.message);
+      }
+      
+      console.log(createCollectionResponse.message);
     } catch (error: any) {
       console.error("Database initialization error:", error.message);
       throw error;
     }
   }
-
+  
   public async ensureDBInit(): Promise<void> {
     await this.initDBPromise;
   }
@@ -59,19 +64,19 @@ class CredentialManager {
 
   public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; message: string }> {
     await this.ensureDBInit();
-  
+
     if (!this.dbConnection) {
       return { status: false, message: "Database connection is not initialized." };
     }
-  
+
     const targetCollectionName = customCollectionName || this.collectionName;
-  
+
     return createCredentialsCollectionFunction({
       dbConnection: this.dbConnection,
       collectionName: targetCollectionName,
     });
   }
-  
+
 
 }
 

@@ -18,9 +18,10 @@ export const createCredentialsCollectionFunction = async ({
       message = `Collection '${collectionName}' was created as it did not exist.`;
     } else {
       message = `Collection '${collectionName}' already exists, no action required.`;
-      status = false; // No action needed, but operation is successful in context
+      status = true; // No action needed, but operation is successful in context
     }
   } catch (error: any) {
+    status = false;
     message = `Failed to create or verify the '${collectionName}' collection: ${error.message}`;
   }
 
