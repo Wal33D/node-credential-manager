@@ -30,7 +30,7 @@ export const performAction = async ({
             case '4':
             case '5':
                 const serviceActionHandler = async () => {
-                    const serviceNameResult:any = await promptForServiceName({ credentialManager, readLineInterface });
+                    const serviceNameResult: any = await promptForServiceName({ credentialManager, readLineInterface });
                     if (!serviceNameResult || !serviceNameResult.status) {
                         console.log(serviceNameResult?.message || 'Exiting to main menu...');
                         return { status: true, message: '' };
@@ -67,24 +67,24 @@ export const performAction = async ({
                 status = initResult.status;
                 message = initResult.message;
                 break;
-                case '7':
-                    const serviceNameResult = await promptForNewServiceName({ readLineInterface, credentialManager }) as any
-                    // Check if service already exists
-                    const dbCollection = credentialManager.dbConnection?.collection(credentialManager.collectionName);
-                    const serviceExists = await dbCollection?.findOne({ name: serviceNameResult.serviceName });
-                    if (serviceExists) {
-                        console.log(`Service '${serviceNameResult.serviceName}' already exists in the '${credentialManager.collectionName}' collection.`);
-                        break;
-                    }
-                
-                    // If all checks pass, add the service
-                    const addServiceResult = await credentialManager.addService(serviceNameResult.serviceName);
-                    console.log(addServiceResult.message);
-                    status = addServiceResult.status;
-                    message = addServiceResult.message;
-                    
+            case '7':
+                const serviceNameResult = await promptForNewServiceName({ credentialManager, readLineInterface }) as any
+                // Check if service already exists
+                const dbCollection = credentialManager.dbConnection?.collection(credentialManager.collectionName);
+                const serviceExists = await dbCollection?.findOne({ name: serviceNameResult.serviceName });
+                if (serviceExists) {
+                    console.log(`Service '${serviceNameResult.serviceName}' already exists in the '${credentialManager.collectionName}' collection.`);
                     break;
-                
+                }
+
+                // If all checks pass, add the service
+                const addServiceResult = await credentialManager.addService(serviceNameResult.serviceName);
+                console.log(addServiceResult.message);
+                status = addServiceResult.status;
+                message = addServiceResult.message;
+
+                break;
+
             case '8':
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };

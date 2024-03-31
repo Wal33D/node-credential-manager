@@ -1,75 +1,67 @@
 import readline from 'readline';
+import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
-import { ReadlineInterfaceResult } from '../types';
 
 export const promptForNewServiceName = async ({
-    readLineInterface,
-    credentialManager 
+    credentialManager,
+    readLineInterface
 }: {
-    readLineInterface?: readline.Interface | any,
-    credentialManager: any 
-}): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
-    let message = 'Failed to prompt for new service name.';
-    let status = false;
-    let serviceName: string | undefined = undefined;
-    let continueApp = true;
+    credentialManager: CredentialManager,
+    readLineInterface?: readline.Interface
+}): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; } | null> => {
+    let readlineInterface: any = readLineInterface;
+    let createdInternally = false;
+    let message = 'Beginning service name validation...';
 
-    try {
-        let readlineInterface: readline.Interface | any;
-        let createdInternally = false;
-
-        if (!readlineInterface) {
-            const interfaceCreationResult: ReadlineInterfaceResult = createReadlineInterface();
-            if (!interfaceCreationResult.status) {
-                throw new Error(interfaceCreationResult.message);
-            }
+    if (!readlineInterface) {
+        const interfaceCreationResult = createReadlineInterface();
+        if (interfaceCreationResult.status) {
             readlineInterface = interfaceCreationResult.interfaceInstance;
             createdInternally = true;
+        } else {
+            console.error(interfaceCreationResult.message);
+            return null;
         }
+    }
 
-        // Ensure database connection is initialized
-        await credentialManager.ensureDBInit();
-        if (!credentialManager.dbConnection) {
-            throw new Error("Database connection is not initialized.");
-        }
-
-        serviceName = await new Promise<string | undefined>((resolve) => {
-            const question = 'Enter the name of the new service you want to add:\n';
-            readlineInterface?.question(question, async (input: string) => {
+    const promptLoop = async (): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; } | null> => {
+        return new Promise((resolve) => {
+            const question = 'Enter the name of the new service you want to add (or type "exit" to return to the menu):\n';
+            readlineInterface.question(question, async (input: string) => {
                 if (input.toLowerCase() === "exit") {
-                    console.log('Exiting to main menu...');
-                    continueApp = false;
-                    resolve(undefined);
+                    message = 'Exiting to main menu...';
+                    resolve({ status: false, message, continueApp: false });
                 } else if (input.includes(' ')) {
-                    message = "Service name should not contain spaces. Please try again with a valid name.";
-                    resolve(undefined);
+                    message = "Service name should not contain spaces. Please try again.";
+                    resolve(await promptLoop()); // Recursively call promptLoop for another attempt
                 } else {
-                    // Check if service already exists
-                    const dbCollection = credentialManager.dbConnection.collection(credentialManager.collectionName);
-                    const serviceExists = await dbCollection.findOne({ name: input });
-                    if (serviceExists) {
-                        message = `Service '${input}' already exists in the '${credentialManager.collectionName}' collection.`;
-                        resolve(undefined);
+                    // Ensure database connection is initialized
+                    await credentialManager.ensureDBInit();
+                    if (!credentialManager.dbConnection) {
+                        message = "Database connection is not initialized.";
+                        resolve({ status: false, message: "Database connection is not initialized.", continueApp: false });
                     } else {
-                        status = true;
-                        message = 'Service name validated and ready for addition.';
-                        resolve(input);
+                        // Check if service already exists
+                        const dbCollection = credentialManager.dbConnection.collection(credentialManager.collectionName);
+                        const serviceExists = await dbCollection.findOne({ name: input });
+                        if (serviceExists) {
+                            message = `Service '${input}' already exists. Please try again.`;
+                            resolve(await promptLoop()); // Recursively call promptLoop for another attempt
+                        } else {
+                            message = 'Service name validated and ready for addition.';
+                            resolve({ status: true, serviceName: input, message, continueApp: true });
+                        }
                     }
                 }
             });
         });
+    };
 
-        if (!serviceName && !continueApp) {
-            message = 'Exited to main menu or validation failed.';
-        }
+    const result = await promptLoop();
 
-        if (createdInternally && readlineInterface) {
-            readlineInterface.close();
-        }
-    } catch (error: any) {
-        message = `Error: ${error.message}`;
-        continueApp = false;
+    if (createdInternally && readlineInterface) {
+        readlineInterface.close();
     }
 
-    return { status, serviceName, message, continueApp };
+    return result;
 }
