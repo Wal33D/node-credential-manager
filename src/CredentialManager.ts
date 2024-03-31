@@ -2,6 +2,7 @@ require('dotenv').config({ path: './.env.local' });
 
 import { Db } from 'mongodb';
 import { initializeMongo } from './utils/initializeMongo';
+import { addServiceFunction } from './functions/addServiceFunction';
 
 class CredentialManager {
   dbConnection: Db | null = null;
@@ -9,7 +10,7 @@ class CredentialManager {
   collectionName: string;
 
   constructor(collectionName: string = 'CredentialManager') {
-    this.collectionName = collectionName; 
+    this.collectionName = collectionName;
     this.initDBPromise = this.initializeDB();
   }
 
@@ -78,18 +79,18 @@ class CredentialManager {
   }
 
 
-  async createCredentialsCollection(collectionName: string): Promise<{ status: boolean; message: string;}> {
+  async createCredentialsCollection(collectionName: string): Promise<{ status: boolean; message: string; }> {
     if (!this.dbConnection) {
       return { status: false, message: "Database connection is not initialized." };
     }
 
     try {
-      const collections = await this.dbConnection.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
-      if (collections.length === 0) {
+      const dbCollection = await this.dbConnection.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
+      if (dbCollection.length === 0) {
         await this.dbConnection.createCollection(collectionName);
         return { status: true, message: `Collection '${collectionName}' was created as it did not exist.` };
       } else {
-        return { status: false,message: `Collection '${collectionName}' already exists, no action required.` };
+        return { status: false, message: `Collection '${collectionName}' already exists, no action required.` };
       }
     } catch (error) {
       console.error(`Failed to create or verify the '${collectionName}' collection: ${error}`);
@@ -97,18 +98,10 @@ class CredentialManager {
     }
   }
 
-  async addService(serviceName: string): Promise<{ status: boolean; message: string }> {
+  public async addService(serviceName: string): Promise<{ status: boolean; message: string }> {
     await this.ensureDBInit();
-
-    if (!this.dbConnection) {
-        return { status: false, message: "Database connection is not initialized." };
-    }
-
-    const dbCollection = this.dbConnection.collection(this.collectionName);
-    
-    await dbCollection.insertOne({ name: serviceName, credentials: [] });
-    return { status: true, message: `Service '${serviceName}' added successfully to the '${this.collectionName}' collection.` };
-}
+    return addServiceFunction({ dbConnection: this.dbConnection as any, collectionName: this.collectionName, serviceName });
+  }
 
   setCollectionName(newCollectionName: string): void {
     this.collectionName = newCollectionName;
