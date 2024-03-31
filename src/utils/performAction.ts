@@ -4,6 +4,7 @@ import { promptForServiceName } from '../utils/promptForServiceName';
 import { findSpecificCredentialForService } from '../utils/findSpecificCredentialForService';
 import { viewAllCredentials } from './viewAllCredentials';
 import { promptForNewServiceName } from './promptForNewServiceName';
+import { promptForNewCollectionName } from './promptForNewCollectionName';
 
 const collectionName = 'CredentialManager';
 export const performAction = async ({ action, readLineInterface, credentialManager, }: { action: string, readLineInterface?: any, credentialManager: CredentialManager, }): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
@@ -32,7 +33,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
                     let keyTypeResult;
                     do {
-                        keyTypeResult = await promptForKeyType({credentialManager, readLineInterface});
+                        keyTypeResult = await promptForKeyType({ credentialManager, readLineInterface });
                         if (!keyTypeResult || !keyTypeResult.status || keyTypeResult.result?.toLowerCase() === "back") {
                             console.log(keyTypeResult?.message || 'Exiting to main menu...');
                             return { status: true, message: '' };
@@ -64,16 +65,19 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 message = addServiceResult.message;
 
                 break;
-
-                case '8': // This now corresponds to changing the collection name
-                const newCollectionName = await promptForNewCollectionName({ credentialManager, readLineInterface });
-                const { oldName, newName } = credentialManager.setCollectionName(newCollectionName);
-                console.log(`Collection name changed from '${oldName}' to '${newName}'.`);
-                status = true;
-                message = `Collection name changed successfully.`;
+            case '8': 
+                const { status: newCollectionStatus, newName } = await promptForNewCollectionName({ credentialManager, readLineInterface });
+                if (newCollectionStatus) {
+                    const { oldName } = credentialManager.setCollectionName(newName as string);
+                    console.log(`Collection name changed from '${oldName}' to '${newName}'.`);
+                    status = true;
+                    message = `Collection name changed successfully.`;
+                    await credentialManager.createCredentialsCollection(collectionName);
+                }
+                message = 'Collection name change failed.';
+                
                 break;
-
-            case '9': // Updated to '9' for exiting
+            case '9': 
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };
 
