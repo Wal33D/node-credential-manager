@@ -31,9 +31,10 @@ export const promptMenu = async ({ readLineInterface }: { readLineInterface?: re
                 ' 6. Initialize DB with default structure\n' +
                 ' 7. Add a new service\n' +
                 ' 8. Change the collection name\n' +
-                ' 9. Delete a collection\n' + // New option added here
-                '10. Exit\n' + // Update exit option
-                'Please enter your choice (1-10):\n', // Updated choice range
+                ' 9. Delete a collection\n' +
+                '10. Reset collection name to default\n' + // New option for resetting collection name
+                '11. Exit\n' + // Adjusted for new option
+                'Please enter your choice (1-11):\n',
                 (answer: string) => {
                     resolve(answer); 
                 }

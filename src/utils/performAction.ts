@@ -98,7 +98,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                     console.log(deleteResult.message);
                     status = deleteResult.status;
                     message = deleteResult.message;
-                    if(deleteResult.status){
+                    if (deleteResult.status) {
                         await credentialManager.resetCollectionNameToDefault();
                     }
                 } else {
@@ -108,7 +108,14 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 }
 
                 break;
-            case '10': // Updated case number for exiting
+            case '10':
+                const resetResult = credentialManager.resetCollectionNameToDefault();
+                console.log(resetResult.message);
+                status = resetResult.status;
+                message = resetResult.message;
+                break;
+
+            case '11': // Updated case number for exiting
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };
 

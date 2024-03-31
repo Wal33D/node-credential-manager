@@ -73,24 +73,49 @@ class CredentialManager {
     return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
-  public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string; message:string; } {
+  public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string; message: string; } {
     const oldName = this.collectionName;
-    this.collectionName = newCollectionName;
-    const newName = this.collectionName;
-    let message = 'Collection name updated successfully.'
-    const status = true;
+    let message: string;
+    let status: boolean = false;
 
-    return { status, oldName, newName, message }
-  };
+    if (oldName === newCollectionName) {
+        message = `The collection name is already '${newCollectionName}'. No changes were made.`;
+        status = false; 
+    } else {
+        this.collectionName = newCollectionName;
+        message = `Collection name updated successfully from '${oldName}' to '${newCollectionName}'.`;
+        status = true; 
+    }
+
+    return {
+        status,
+        oldName,
+        newName: this.collectionName, 
+        message
+    };
+}
+
   
   public resetCollectionNameToDefault(): { status: boolean; oldName: string; newName: string; message: string; } {
     const oldName = this.collectionName;
-    this.collectionName = defaultCollectionName; // Reset to default
-    const newName = this.collectionName;
-    const message = `Collection name reset from '${oldName}' to the default '${newName}'.`;
-    const status = true; // Assuming resetting to default always succeeds
+    let message: string;
+    let status: boolean = false;
 
-    return { status, oldName, newName, message };
+    if (oldName === defaultCollectionName) {
+        message = `The collection name is already set to the default '${defaultCollectionName}'. No changes were made.`;
+        status = false; 
+    } else {
+        this.collectionName = defaultCollectionName;
+        message = `Collection name reset from '${oldName}' to the default '${defaultCollectionName}'.`;
+        status = true;
+    }
+
+    return {
+        status,
+        oldName,
+        newName: this.collectionName,
+        message
+    };
 }
 
 }
