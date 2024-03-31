@@ -4,6 +4,7 @@ import { promptForServiceName } from '../utils/promptForServiceName';
 import { findSpecificKeyForService } from '../utils/findSpecificKeyForService';
 import { viewAllCredentials } from './viewAllCredentials';
 import { ViewCredentialsResult } from '../types';
+import { PromptForKeyTypeResult } from '../types';
 
 export const performAction = async ({
     credentialManager,
@@ -32,12 +33,12 @@ export const performAction = async ({
                     message = '';
                 }
 
-                let keyTypeResult: any;
+                let keyTypeResult: PromptForKeyTypeResult;
                 let findKeyResult = { status: false, credential: null, message: '' };
 
                 while (!findKeyResult.status) {
                     keyTypeResult = await promptForKeyType(credentialManager, rl);
-                    if (!keyTypeResult || keyTypeResult.status === false || keyTypeResult.result.toLowerCase() === "back") {
+                    if (!keyTypeResult || keyTypeResult.status === false || keyTypeResult.result?.toLowerCase() === "back") {
                         console.log(keyTypeResult ? keyTypeResult.message : 'Exiting to main menu...');
                         status = true;
                         message = '';
@@ -45,7 +46,7 @@ export const performAction = async ({
 
                     findKeyResult = await findSpecificKeyForService({
                         serviceName: serviceNameResult.serviceNameKey,
-                        keyType: keyTypeResult.result,
+                        keyType: keyTypeResult.result as any,
                         dbConnection: credentialManager.dbConnection
                     });
 
