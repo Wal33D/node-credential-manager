@@ -25,11 +25,9 @@ class CredentialManager {
         throw new Error('Failed to initialize MongoDB connection.');
       }
       this.dbConnection = mongoDatabase;
-      const { status: credStatus, message: credMessage } = await createCredentialsCollectionFunction({ dbConnection: mongoDatabase as any, collectionName: this.collectionName });
-
-      console.log(credStatus, credMessage);
+      const { message: credMessage } = await createCredentialsCollectionFunction({ dbConnection: mongoDatabase as any, collectionName: this.collectionName });
       status = true;
-      message = 'Database initialized successfully.';
+      message = `Database initialized successfully, ${credMessage}`;
     } catch (error: any) {
       status = false;
       message = `Database initialization error: ${error.message}`;

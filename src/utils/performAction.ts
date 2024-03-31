@@ -69,10 +69,9 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 const { status: newCollectionStatus, newName } = await promptForNewCollectionName({ credentialManager, readLineInterface });
                 if (newCollectionStatus) {
                     const { oldName } = credentialManager.setCollectionName(newName as string);
-                    console.log(`Collection name changed from '${oldName}' to '${newName}'.`);
-                    status = true;
-                    message = `Collection name changed successfully.`;
-                    await credentialManager.createCredentialsCollection(collectionName);
+                    message = `Collection name changed from '${oldName}' to '${newName}'.`;
+                    const initResult = await credentialManager.createCredentialsCollection(newName as string);
+                    console.log(initResult.message, message);
                 }
                 message = 'Collection name change failed.';
                 
