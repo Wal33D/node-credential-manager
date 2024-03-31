@@ -1,6 +1,12 @@
 import { Db } from "mongodb";
 
-export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }) => {
+export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }):
+ Promise<{
+    status: boolean;
+    keyType: string;
+    serviceName: string;
+    message: string;
+}> => {
     let status = false;
     let keyType = '';
     let message = '';

@@ -31,15 +31,16 @@ export async function promptForServiceName(credentialManager: CredentialManager,
         return;
       }
 
-      const val = await findServiceByName({ serviceName, dbConnection: credentialManager.dbConnection });
-      if (!val.status) {
-        console.log(val.message + ' Please try again.');
+      const findServiceByNameResult: { status: boolean; keyType: string; serviceName: string; message: string; } = await findServiceByName({ serviceName, dbConnection: credentialManager.dbConnection });
+      if (!findServiceByNameResult.status) {
+        console.log(findServiceByNameResult.message + ' Please try again.');
+        
         resolve(await promptForServiceName(credentialManager, readlineInterface)); // Recursive call to ask again
       } else {
         if (createdInternally) {
           readlineInterface.close();
         }
-        resolve(val); // Resolve with the found service
+        resolve(findServiceByNameResult); // Resolve with the found service
       }
     });
   });
