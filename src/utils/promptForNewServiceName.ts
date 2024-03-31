@@ -1,5 +1,4 @@
 import readline from 'readline';
-import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 
 export const promptForNewServiceName = async ({

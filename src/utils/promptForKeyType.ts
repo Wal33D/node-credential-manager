@@ -4,7 +4,6 @@ import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 
 export async function promptForKeyType(credentialManager: CredentialManager, readLineInterface?: readline.Interface): Promise<PromptForKeyTypeResult> {
-    // Adjust to match the type explicitly, improving clarity and type safety.
     let readlineInterface: readline.Interface | null = readLineInterface ?? null;
     let createdInternally = false;
 
@@ -14,13 +13,11 @@ export async function promptForKeyType(credentialManager: CredentialManager, rea
             console.error(interfaceCreationResult.message);
             return { status: false, message: "Failed to create readline interface." };
         }
-        // Ensure the assignment respects the exact type expected.
         readlineInterface = interfaceCreationResult.interfaceInstance as readline.Interface;
         createdInternally = true;
     }
 
     try {
-        // Using a more structured approach to handle user input and potential retries.
         return await new Promise<PromptForKeyTypeResult>((resolve) => {
             const keyTypeQuestion = 'Enter the key type ("Primary" or "Secondary") you want to retrieve (or type "exit" to return to the menu):\n';
             readlineInterface!.question(keyTypeQuestion, (input: string) => {
@@ -40,7 +37,6 @@ export async function promptForKeyType(credentialManager: CredentialManager, rea
             });
         });
     } finally {
-        // Close the readline interface if it was created within this function, ensuring resource cleanup.
         if (createdInternally && readlineInterface) {
             readlineInterface.close();
         }

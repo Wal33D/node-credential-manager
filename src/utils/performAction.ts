@@ -9,13 +9,13 @@ import { promptForNewServiceName } from './promptForNewServiceName';
 const collectionName = 'testKeys';
 
 export const performAction = async ({
-    credentialManager,
     action,
-    readLineInterface
+    readLineInterface,
+    credentialManager,
 }: {
-    credentialManager: CredentialManager,
     action: string,
-    readLineInterface: any
+    readLineInterface: any,
+    credentialManager: CredentialManager,
 }): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
     let status = false;
     let message = '';
@@ -24,54 +24,42 @@ export const performAction = async ({
     try {
         switch (action) {
             case '3':
-                const viewCredentialsResult: ViewCredentialsResult = await viewAllCredentials({ credentialManager, readLineInterface: readLineInterface });
+                const viewCredentialsResult: ViewCredentialsResult = await viewAllCredentials({ credentialManager, readLineInterface });
                 console.log(viewCredentialsResult.credentialsMessage);
                 break;
             case '4':
-                const credentialNameResult = await promptForServiceName({ credentialManager, readLineInterface }) as any;
-                if (!credentialNameResult || credentialNameResult.status === false) {
-                    console.log(credentialNameResult ? credentialNameResult.message : 'Exiting to main menu...');
-                    status = true;
-                    message = '';
-                    break; // Exiting or breaking out of the switch case if no service name is provided or on error.
-                }
-
-                let credNameResult: any;
-                let findKeyResult = { status: false, credential: null, message: '' } as any;
-
-                while (!findKeyResult.status) {
-                    credNameResult = await promptForKeyType(credentialManager, readLineInterface);
-                    if (!credNameResult || credNameResult.status === false || credNameResult.result?.toLowerCase() === "back") {
-                        console.log(credNameResult ? credNameResult.message : 'Exiting to main menu...');
-                        status = true;
-                        message = '';
-                        break; // Ensure we exit the loop if the user decides to go back or on error.
-                    }
-
-                    findKeyResult = await findSpecificKeyForService({
-                        serviceName: credentialNameResult.serviceName,
-                        credentialName: credNameResult.result as string,
-                        dbConnection: credentialManager.dbConnection as any,
-                    });
-
-                    if (!findKeyResult.status) {
-                        console.log(findKeyResult.message);
-                        // If you wish to allow multiple attempts, don't break here.
-                        // Add a break if you want to exit after the first unsuccessful attempt.
-                    } else {
-                        console.log(findKeyResult.credential);
-                        break; // Successfully found the key, break out of the while loop.
-                    }
-                }
-                break;
-
             case '5':
-                const serviceResult = await promptForServiceName({ credentialManager, readLineInterface }) as any;
-                message = serviceResult.message;
-                status = serviceResult.status;
+                const serviceActionHandler = async () => {
+                    const serviceNameResult:any = await promptForServiceName({ credentialManager, readLineInterface });
+                    if (!serviceNameResult || !serviceNameResult.status) {
+                        console.log(serviceNameResult?.message || 'Exiting to main menu...');
+                        return { status: true, message: '' };
+                    }
+                    if (action === '5') {
+                        console.log(`- Service: ${serviceNameResult.serviceName} | Status: ${serviceNameResult.status}\n- Message: ${serviceNameResult.message}\n`);
+                        console.log(serviceNameResult.credentials);
+                        return serviceNameResult;
+                    }
 
-                console.log(`- Service: ${serviceResult.serviceName} | Status: ${status}\n- Message: ${message}\n`);
-                console.log(serviceResult.credentials);
+                    let keyTypeResult;
+                    do {
+                        keyTypeResult = await promptForKeyType(credentialManager, readLineInterface);
+                        if (!keyTypeResult || !keyTypeResult.status || keyTypeResult.result?.toLowerCase() === "back") {
+                            console.log(keyTypeResult?.message || 'Exiting to main menu...');
+                            return { status: true, message: '' };
+                        }
+                        const findKeyResult = await findSpecificKeyForService({
+                            serviceName: serviceNameResult.serviceName,
+                            credentialName: keyTypeResult.result as any,
+                            dbConnection: credentialManager.dbConnection as any,
+                        });
+                        console.log(findKeyResult.message);
+                        if (findKeyResult.status) console.log(findKeyResult.credential);
+                    } while (!keyTypeResult.status);
+
+                    return keyTypeResult;
+                };
+                ({ status, message } = await serviceActionHandler());
                 break;
             case '6':
                 const initResult = await credentialManager.createCredentialsCollection(collectionName);
@@ -81,34 +69,25 @@ export const performAction = async ({
                 break;
             case '7':
                 const serviceNameResult = await promptForNewServiceName({ readLineInterface });
-                if (!serviceNameResult || serviceNameResult.status === false) {
-                    console.log(serviceNameResult ? serviceNameResult.message : 'Failed to get service name. Exiting to main menu...');
-                    status = true;
-                    message = '';
+                if (!serviceNameResult || !serviceNameResult.status) {
+                    console.log(serviceNameResult?.message || 'Failed to get service name. Exiting to main menu...');
                     break;
                 }
                 const addServiceResult = await credentialManager.addService(serviceNameResult.serviceName as any);
                 console.log(addServiceResult.message);
                 status = addServiceResult.status;
                 message = addServiceResult.message;
-
                 break;
-
             case '8':
                 console.log('Exiting...');
-                status = true;
-                message = 'Exit option selected';
-                continueApp = false;
-
-                break;
+                return { status: true, message: 'Exit option selected', continueApp: false };
             default:
                 console.log('Invalid option selected. Please try again.');
-                status = true;
                 message = 'Invalid option selected';
+                status = true;
         }
     } catch (error: any) {
         message = `An error occurred: ${error.message}`;
-        continueApp = true;
     } finally {
         readLineInterface.close();
     }
