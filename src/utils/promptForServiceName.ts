@@ -19,7 +19,7 @@ export const promptForServiceName = async ({
       createdInternally = true;
     } else {
       console.error(interfaceCreationResult.message);
-      return Promise.resolve(null); // Early return if readline interface creation fails
+      return Promise.resolve(null);
     }
   }
 
@@ -40,12 +40,12 @@ export const promptForServiceName = async ({
       if (!findServiceByNameResult.status) {
         console.log(findServiceByNameResult.message + ' Please try again.');
         
-        resolve(await promptForServiceName({credentialManager, rl:readlineInterface})); // Recursive call to ask again
+        resolve(await promptForServiceName({credentialManager, rl:readlineInterface}));
       } else {
         if (createdInternally) {
           readlineInterface.close();
         }
-        resolve(findServiceByNameResult); // Resolve with the found service
+        resolve(findServiceByNameResult); 
       }
     });
   });

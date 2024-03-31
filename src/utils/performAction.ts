@@ -20,21 +20,11 @@ export const performAction = async ({
 
     try {
         switch (action) {
-            case '1':
-                console.log('Option to add a new credential selected.');
-                break;
-            case '2':
-                console.log('Option to update an existing credential selected.');
-                // Implementation...
-                break;
             case '3':
-                console.log('Option to delete a credential selected.');
-                const viewCredentialsResult:ViewCredentialsResult = await viewAllCredentials({ credentialManager }) ;
+                const viewCredentialsResult: ViewCredentialsResult = await viewAllCredentials({ credentialManager });
                 console.log(viewCredentialsResult.credentialsMessage);
                 break;
             case '4':
-                console.log('Option to search for a specific key selected.');
-
                 const serviceNameResult = await promptForServiceName({ credentialManager, rl }) as any;
                 if (!serviceNameResult || serviceNameResult.status === false) {
                     console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
@@ -42,7 +32,7 @@ export const performAction = async ({
                     message = '';
                 }
 
-                let keyTypeResult: any;3
+                let keyTypeResult: any;
                 let findKeyResult = { status: false, credential: null, message: '' };
 
                 while (!findKeyResult.status) {
@@ -53,41 +43,31 @@ export const performAction = async ({
                         message = '';
                     }
 
-                    // Attempt to find the specific key with the given service name and key type
                     findKeyResult = await findSpecificKeyForService({
-                        serviceName: serviceNameResult.serviceName, // Use the validated service name
-                        keyType: keyTypeResult.result, // Use the user-provided key type
+                        serviceName: serviceNameResult.serviceNameKey,
+                        keyType: keyTypeResult.result,
                         dbConnection: credentialManager.dbConnection
                     });
 
-                    // If the key is not found, inform the user and the loop will prompt for the key type again
                     if (!findKeyResult.status) {
                         console.log(findKeyResult.message);
                     }
                 }
-
-                // If the loop exits because a key is found (status: true), log the key details
                 console.log('Key details:', findKeyResult.credential);
-                break
-
+                break;
             case '5':
-                console.log('\n5. Search by service name and key selected.');
+                const serviceResult = await promptForServiceName({ credentialManager, rl }) as any;
+                message = serviceResult.message;
+                status = serviceResult.status;
 
-                const { status: serviceStatus, value, serviceNameKey, message: serviceMessage } = await promptForServiceName({ credentialManager, rl }) as any;
-                message = serviceMessage;
-                status = serviceStatus;
-
-                console.log(`- Service: ${serviceNameKey} | Status: ${status}`);
-                console.log(`- Message: ${message}\n`);
-                console.log(value);
-
+                console.log(`- Service: ${serviceResult.serviceNameKey} | Status: ${status}\n- Message: ${message}\n`);
+                console.log(serviceResult.value);
                 break;
             case '6':
                 console.log('Exiting...');
                 status = true;
                 message = 'Exit option selected';
                 continueApp = false;
-
                 break;
             default:
                 console.log('Invalid option selected. Please try again.');
@@ -96,7 +76,7 @@ export const performAction = async ({
         }
     } catch (error: any) {
         message = `An error occurred: ${error.message}`;
-        continueApp = true; // Decide whether you want to continue or exit based on the error
+        continueApp = true;
     } finally {
         rl.close();
     }
