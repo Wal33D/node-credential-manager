@@ -6,7 +6,7 @@ import { viewAllCredentials } from './viewAllCredentials';
 import { promptForNewServiceName } from './promptForNewServiceName';
 import { promptForCollectionDeletion } from './promptForCollectionDeletion';
 import { promptForCollectionNameChange } from './promptForCollectionNameChange';
-import { handleServiceCredentialsInteraction } from './handleServiceCredentialsInteraction';
+import { handleServiceAction } from './handleServiceAction';
 
 export const performAction = async ({ action, readLineInterface, credentialManager, }: { action: string, readLineInterface?: any, credentialManager: CredentialManager, }): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
     let status = false;
@@ -22,16 +22,14 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 break;
                 case '4':
                     case '5':
-                        // Call the refactored function to handle service credentials.
-                        const credentialsInteractionResult = await handleServiceCredentialsInteraction({
-                            readLineInterface, 
-                            credentialManager
-                        });
-                        console.log(credentialsInteractionResult.message);
-                        status = credentialsInteractionResult.status;
-                        message = credentialsInteractionResult.message;
+                        const serviceActionResult = await handleServiceAction({ action, readLineInterface, credentialManager });
+                        console.log(serviceActionResult.message);
+                        console.log(`- Service: ${serviceActionResult.serviceName} | Status: ${serviceActionResult.status}\n`);
+                        console.log(serviceActionResult.credentials);                       
+                         status = serviceActionResult.status;
+                        message = serviceActionResult.message;
+                        // Optionally handle additional data from serviceActionResult here
                         break;
-                    
             case '6':
                 const initResult = await credentialManager.createCredentialsCollection(credentialManager.collectionName);
                 console.log(initResult.message);
