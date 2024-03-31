@@ -3,13 +3,12 @@ import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 
 export const promptForNewServiceName = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
-    let readlineInterface: any = readLineInterface;
     let createdInternally = false;
 
-    if (!readlineInterface) {
+    if (!readLineInterface) {
         const interfaceCreationResult = createReadlineInterface();
         if (interfaceCreationResult.status) {
-            readlineInterface = interfaceCreationResult.interfaceInstance;
+            readLineInterface = interfaceCreationResult.interfaceInstance as any;
             createdInternally = true;
         } else {
             console.error(interfaceCreationResult.message); // Early feedback if the readline interface cannot be created
@@ -20,7 +19,7 @@ export const promptForNewServiceName = async ({ credentialManager, readLineInter
     const promptLoop = async (): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
         return new Promise((resolve) => {
             const question = 'Enter the name of the new service you want to add (or type "exit" to return to the menu):\n';
-            readlineInterface.question(question, async (input: string) => {
+            readLineInterface!.question(question, async (input: string) => {
                 let message = ''; // Reset message for each iteration
                 if (input.toLowerCase() === "exit") {
                     message = 'Exiting to main menu...';
@@ -55,8 +54,8 @@ export const promptForNewServiceName = async ({ credentialManager, readLineInter
 
     const result = await promptLoop();
 
-    if (createdInternally && readlineInterface) {
-        readlineInterface.close();
+    if (createdInternally && readLineInterface) {
+        readLineInterface.close();
     }
 
     return result;

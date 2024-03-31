@@ -8,16 +8,14 @@ export const viewAllCredentials = async ({ credentialManager, readLineInterface 
   let credentialsMessage = '';
   let credentials = [];
   let createdInternally = false;
-  let readlineInterface: any = readLineInterface;
 
   try {
-    let readlineInterface = readLineInterface;
-    if (!readlineInterface) {
-      const readlineInterfaceResult = createReadlineInterface();
-      if (!readlineInterfaceResult.status) {
-        throw new Error(`Failed to create readline interface: ${readlineInterfaceResult.message}`);
+    if (!readLineInterface) {
+      const readLineInterfaceResult = createReadlineInterface();
+      if (!readLineInterfaceResult.status) {
+        throw new Error(`Failed to create readline interface: ${readLineInterfaceResult.message}`);
       }
-      readlineInterface = readlineInterfaceResult.interfaceInstance as readline.Interface;
+      readLineInterface = readLineInterfaceResult.interfaceInstance as readline.Interface;
       createdInternally = true;
     }
 
@@ -37,8 +35,8 @@ export const viewAllCredentials = async ({ credentialManager, readLineInterface 
   } catch (error: any) {
     message = `Error: ${error.message}`;
   } finally {
-    if (createdInternally && readlineInterface) {
-      readlineInterface.close();
+    if (createdInternally && readLineInterface) {
+      readLineInterface.close();
     }
   }
 

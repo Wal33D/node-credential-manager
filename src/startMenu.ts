@@ -14,7 +14,7 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
       process.exit(1);
     }
 
-    const readLineInterface = readlineInterfaceResult.interfaceInstance;
+    const readLineInterface = readlineInterfaceResult.interfaceInstance as any;
     const result = await credentialManager.getAllCredentials();
 
     if (!result.status) {
