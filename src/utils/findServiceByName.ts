@@ -29,7 +29,7 @@ export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serv
 
             if (caseInsensitiveService) {
                 // Found a case-insensitive match; provide a hint
-                message = `Service '${serviceNameKey}' not found.\nHint: Did you mean '${caseInsensitiveService.name}'? Service name is case-sensitive.\n`;
+                message = `Service '${serviceNameKey}' not found.\n - Hint: Did you mean '${caseInsensitiveService.name}'? Service name is case-sensitive.\n`;
             } else {
                 // No case-insensitive match found either
                 message = `Service '${serviceNameKey}' not found.`;

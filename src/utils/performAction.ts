@@ -58,7 +58,7 @@ export const performAction = async ({
                         // If you wish to allow multiple attempts, don't break here.
                         // Add a break if you want to exit after the first unsuccessful attempt.
                     } else {
-                        console.log(`Key details:\n  Name: ${findKeyResult.credential?.name}\n  Credentials: ${JSON.stringify(findKeyResult.credential?.value, null, 2)}`);
+                        console.log(findKeyResult.credential);
                         break; // Successfully found the key, break out of the while loop.
                     }
                 }
@@ -79,7 +79,7 @@ export const performAction = async ({
                 continueApp = false;
                 break;
             case '6':
-                const initResult = await credentialManager.initializeCredentialsCollection(collectionName); // Use your collection name
+                const initResult = await credentialManager.createCredentialsCollection(collectionName); // Use your collection name
                 console.log(initResult.message);
                 status = initResult.status;
                 message = initResult.message;
