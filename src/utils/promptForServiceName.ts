@@ -1,13 +1,7 @@
 import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { findServiceByName } from './findServiceByName';
-
-function createReadlineInterface() {
-  return readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-}
+import { createReadlineInterface } from './createReadlineInterface';
 
 export async function promptForServiceName(credentialManager: CredentialManager, rl: readline.Interface = createReadlineInterface()) {
   return new Promise((resolve) => {
