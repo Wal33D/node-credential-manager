@@ -3,7 +3,6 @@ import { CredentialManager } from "../CredentialManager";
 import { promptForServiceName } from '../utils/promptForServiceName';
 import { findSpecificCredentialForService } from '../utils/findSpecificCredentialForService';
 import { viewAllCredentials } from './viewAllCredentials';
-import { ViewCredentialsResult } from '../types';
 import { promptForNewServiceName } from './promptForNewServiceName';
 
 const collectionName = 'CredentialManager';
@@ -15,7 +14,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
     try {
         switch (action) {
             case '3':
-                const viewCredentialsResult: ViewCredentialsResult = await viewAllCredentials({ credentialManager, readLineInterface });
+                const viewCredentialsResult = await viewAllCredentials({ credentialManager, readLineInterface });
                 console.log(viewCredentialsResult.credentialsMessage);
                 break;
             case '4':
@@ -28,7 +27,6 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                     }
                     if (action === '5') {
                         console.log(`- Service: ${serviceNameResult.serviceName} | Status: ${serviceNameResult.status}\n- Message: ${serviceNameResult.message}\n`);
-                        console.log(serviceNameResult.credentials);
                         return serviceNameResult;
                     }
 

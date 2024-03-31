@@ -1,13 +1,12 @@
 import { Db } from 'mongodb';
 
-export async function createCredentialsCollection(dbConnection: Db | null, collectionName: string): Promise<{ status: boolean; message: string; }> {
+export async function createCredentialsCollection(dbConnection: Db, collectionName: string): Promise<{ status: boolean; message: string; }> {
     let status = false;
     let message = '';
 
     if (!dbConnection) {
         status = false
         message = 'Database connection is not initialized.'
-        return { status, message };
     }
 
     try {
@@ -16,13 +15,13 @@ export async function createCredentialsCollection(dbConnection: Db | null, colle
             await dbConnection.createCollection(collectionName);
             message = `INFO: Collection '${collectionName}' was created as it did not exist.`
             status = true;
-
         } else {
-            message = `INFO: Collection '${collectionName}' was created as it did not exist.`
-            return { status: true, message, };
+            message = `INFO: Collection '${collectionName}' already exists, no action required.`
+            status = true;
         }
     } catch (error) {
-        message: `Failed to create or verify the '${collectionName}' collection: ${error}`
-        return { status: false, message };
+        message = `Failed to create or verify the '${collectionName}' collection: ${error}`
+        status = false;
     }
+    return { status, message };
 }
