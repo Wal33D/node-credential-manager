@@ -28,6 +28,8 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                     }
                     if (action === '5') {
                         console.log(`- Service: ${serviceNameResult.serviceName} | Status: ${serviceNameResult.status}\n- Message: ${serviceNameResult.message}\n`);
+                        console.log(serviceNameResult.credentials);
+
                         return serviceNameResult;
                     }
 

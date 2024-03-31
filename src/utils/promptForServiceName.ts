@@ -3,7 +3,7 @@ import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 import { findServiceByName } from './findServiceByName';
 
-export const promptForServiceName = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; serviceName?: string; credentials:any; message: string; }> => {
+export const promptForServiceName = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; serviceName?: string; credentials: any; message: string; }> => {
   let createdInternally = false;
 
   if (!readLineInterface) {
@@ -13,11 +13,11 @@ export const promptForServiceName = async ({ credentialManager, readLineInterfac
       createdInternally = true;
     } else {
       console.error(interfaceCreationResult.message);
-      return { status: false, message: interfaceCreationResult.message , credentials:[] };
+      return { status: false, message: interfaceCreationResult.message, credentials: [] };
     }
   }
 
-  const promptLoop = async (rl: readline.Interface): Promise<{ status: boolean; serviceName?: string; credentials:any; message: string; }> => {
+  const promptLoop = async (rl: readline.Interface): Promise<{ status: boolean; serviceName?: string; credentials: any; message: string; }> => {
     return new Promise((resolve) => {
       const ask = () => {
         rl.question('Enter the service name you want to search for (or type "exit" to return to the menu):\n', async (serviceName: string) => {
@@ -35,7 +35,7 @@ export const promptForServiceName = async ({ credentialManager, readLineInterfac
             //message = `Service found: ${serviceName}`
             let credentials = findServiceByNameResult.credentials;
 
-            resolve({ status: true, serviceName: serviceName, credentials,message: 'Service found.' });
+            resolve({ status: true, serviceName: serviceName, credentials, message: 'Service found.' });
           }
         });
       };
