@@ -25,12 +25,10 @@ export async function promptForCollectionNameChange({ credentialManager, readLin
             message = `Collection name changed successfully.`;
             if (createCollectionResult.existed) {
                 message += ` The collection '${newName}' already existed.`;
-                status = false;
             } else {
                 message += ` A new collection '${newName}' was created successfully.`;
-                status = true;
-
             }
+            status = true;
         } else {
             message = `Failed to create or confirm the existence of the collection '${newName}'.`;
             status = false;
