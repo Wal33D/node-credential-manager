@@ -42,16 +42,18 @@ Promise<{ status: boolean; message: string; credential?: any }> {
             return { status: true, message: 'User exited to main menu', credential: null };
         }
 
-        const keySearchResult: SpecificKeySearchResult = await findSpecificKeyForService({
+        const keySearchResult: any = await findSpecificKeyForService({
             serviceName: serviceName,
             keyType: keyType.result!,
-            dbConnection: credentialManager.dbConnection
+            dbConnection: credentialManager.dbConnection as any,
         });
 
         console.log(keySearchResult.message);
 
         if (keySearchResult.status) {
-            return { status: true, message: 'Key retrieved successfully.', credential: keySearchResult.credential };
+            // Update to reflect new structure and naming convention
+            // credential object now correctly includes the 'name' and 'credentials' fields
+            return { status: true, message: 'Key retrieved successfully.', credential: { name: keySearchResult.credential.name, credentials: keySearchResult.credential.credentials } };
         } else {
             return { status: false, message: 'No key retrieved.', credential: null };
         }

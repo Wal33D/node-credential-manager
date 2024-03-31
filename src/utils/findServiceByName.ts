@@ -1,14 +1,15 @@
 import { Db } from "mongodb";
 const collectionName = 'testKeys';
+
 export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serviceNameKey: string, dbConnection: Db | any }):
     Promise<{
         status: boolean;
-        value: string;
         serviceNameKey: string;
+        credentials: any[];
         message: string;
     }> => {
     let status = false;
-    let value = '';
+    let credentials = [];
     let message = '';
 
     try {
@@ -17,33 +18,20 @@ export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serv
         }
 
         const dbCollection = dbConnection.collection(collectionName);
-        const document = await dbCollection.findOne({}); // Fetch the single document
+        // Adjusted to directly query the service by name, considering each document represents a service now
+        const serviceDocument = await dbCollection.findOne({ name: serviceNameKey });
 
-        if (document && document.services) {
-            // First, try to find a case-sensitive match
-            const exactMatchService = document.services.find((service: { name: string; }) => service.name === serviceNameKey);
-
-            // If no case-sensitive match, try to find a case-insensitive match to suggest the correct casing
-            if (!exactMatchService) {
-                const caseInsensitiveMatchService = document.services.find((service: { name: string; }) => service.name.toLowerCase() === serviceNameKey.toLowerCase());
-
-                if (caseInsensitiveMatchService) {
-                    message = ` - Hint: Did you mean this service '${caseInsensitiveMatchService.name}'? Service name is case-sensitive.`;
-                } else {
-                    message = `Service ${serviceNameKey} not found.`;
-                }
-            } else {
-                status = true;
-                value = exactMatchService.keys;
-                serviceNameKey = exactMatchService.name;
-                message = `Keys for service ${exactMatchService.name} retrieved successfully.`;
-            }
+        if (serviceDocument) {
+            status = true;
+            credentials = serviceDocument.credentials; // Updated field name
+            message = `Credentials for service ${serviceDocument.name} retrieved successfully.`;
         } else {
-            throw new Error('No services found in the database.');
+            // If service not found, providing an adjusted message
+            message = `Service ${serviceNameKey} not found.`;
         }
     } catch (error: any) {
         message = `Error: ${error.message}`;
     }
 
-    return { status, serviceNameKey, value, message };
+    return { status, serviceNameKey, credentials, message };
 };

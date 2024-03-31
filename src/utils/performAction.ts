@@ -5,6 +5,7 @@ import { findSpecificKeyForService } from '../utils/findSpecificKeyForService';
 import { viewAllCredentials } from './viewAllCredentials';
 import { ViewCredentialsResult } from '../types';
 import { PromptForKeyTypeResult } from '../types';
+const collectionName = 'testKeys'; 
 
 export const performAction = async ({
     credentialManager,
@@ -31,10 +32,11 @@ export const performAction = async ({
                     console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
                     status = true;
                     message = '';
+                    break; // Exiting or breaking out of the switch case if no service name is provided or on error.
                 }
 
-                let keyTypeResult: PromptForKeyTypeResult;
-                let findKeyResult = { status: false, credential: null, message: '' };
+                let keyTypeResult: any;
+                let findKeyResult = { status: false, credential: null, message: '' } as any;
 
                 while (!findKeyResult.status) {
                     keyTypeResult = await promptForKeyType(credentialManager, readLineInterface);
@@ -42,27 +44,33 @@ export const performAction = async ({
                         console.log(keyTypeResult ? keyTypeResult.message : 'Exiting to main menu...');
                         status = true;
                         message = '';
+                        break; // Ensure we exit the loop if the user decides to go back or on error.
                     }
 
                     findKeyResult = await findSpecificKeyForService({
                         serviceName: serviceNameResult.serviceNameKey,
-                        keyType: keyTypeResult.result as any,
-                        dbConnection: credentialManager.dbConnection
+                        keyType: keyTypeResult.result as string,
+                        dbConnection: credentialManager.dbConnection as any,
                     });
 
                     if (!findKeyResult.status) {
                         console.log(findKeyResult.message);
+                        // If you wish to allow multiple attempts, don't break here.
+                        // Add a break if you want to exit after the first unsuccessful attempt.
+                    } else {
+                        console.log(`Key details: Name - ${findKeyResult.credential?.name}, Credentials - ${findKeyResult.credential?.credentials}`);
+                        break; // Successfully found the key, break out of the while loop.
                     }
                 }
-                console.log('Key details:', findKeyResult.credential);
                 break;
+
             case '5':
                 const serviceResult = await promptForServiceName({ credentialManager, readLineInterface }) as any;
                 message = serviceResult.message;
                 status = serviceResult.status;
 
                 console.log(`- Service: ${serviceResult.serviceNameKey} | Status: ${status}\n- Message: ${message}\n`);
-                console.log(serviceResult.value);
+                console.log(serviceResult.credentials);
                 break;
             case '7':
                 console.log('Exiting...');
@@ -71,7 +79,7 @@ export const performAction = async ({
                 continueApp = false;
                 break;
             case '6':
-                const initResult = await credentialManager.initializeCredentialsCollection('testKeys'); // Use your collection name
+                const initResult = await credentialManager.initializeCredentialsCollection(collectionName); // Use your collection name
                 console.log(initResult.message);
                 status = initResult.status;
                 message = initResult.message;
