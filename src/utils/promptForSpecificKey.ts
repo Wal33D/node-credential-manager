@@ -51,9 +51,8 @@ Promise<{ status: boolean; message: string; credential?: any }> {
         console.log(keySearchResult.message);
 
         if (keySearchResult.status) {
-            // Update to reflect new structure and naming convention
-            // credential object now correctly includes the 'name' and 'credentials' fields
-            return { status: true, message: 'Key retrieved successfully.', credential: { name: keySearchResult.credential.name, credentials: keySearchResult.credential.credentials } };
+
+            return { status: true, message: 'Key retrieved successfully.', credential: { name: keySearchResult.credential.name, credentials: keySearchResult.credential.value } };
         } else {
             return { status: false, message: 'No key retrieved.', credential: null };
         }

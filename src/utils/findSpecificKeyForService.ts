@@ -35,7 +35,7 @@ export const findSpecificKeyForService = async ({
       status = true;
       // Updated to reflect that 'apiKey' is now 'credentials'
       credential = { name: key.name, value: key.value };
-      message = `${credential.name} key for service ${credential.value} retrieved successfully.`;
+      message = `${credentialName} key for service ${serviceName} retrieved successfully.`;
     } else {
       // Enhanced message hint if the key was not found
       let hint = "";
