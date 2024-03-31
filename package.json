@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "view": "yarn build && node dist/viewCredentials.js"
+    "view": "yarn build && node dist/startMenu.js"
   },
   "keywords": [
     "credentials",

@@ -7,12 +7,13 @@ export const promptMenu = async ({ rl }: { rl: any }): Promise<{ status: boolean
         choice = await new Promise((resolve) => {
             rl.question(
                 'What would you like to do next?\n' +
-                '1. Add a new credential\n' +
-                '2. Update an existing credential\n' +
-                '3. Delete a credential\n' +
-                '4. Search for a specific key\n' +
-                '5. Search by service name and key\n' +
-                '6. Exit\nPlease enter your choice (1-6): ',
+                ' 1. Add a new credential\n' +
+                ' 2. Update an existing credential\n' +
+                ' 3. Delete a credential\n' +
+                ' 4. Search for a specific key\n' +
+                ' 5. Search by service name and key\n' +
+                ' 6. Exit\n'+
+                'Please enter your choice (1-6):\n',
                 (answer: any) => {
                     resolve(answer); 
                 }

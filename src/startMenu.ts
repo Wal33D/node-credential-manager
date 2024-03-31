@@ -1,0 +1,51 @@
+import { promptMenu } from "./utils/promptMenu";
+import { performAction } from "./utils/performAction";
+import { CredentialManager } from "./CredentialManager";
+import { createReadlineInterface } from './utils/createReadlineInterface';
+
+async function startMenu({ credentialManager = new CredentialManager() }) {
+  await credentialManager.ensureDBInit();
+
+  while (true) {
+    const readlineInterfaceResult = createReadlineInterface();
+
+    if (!readlineInterfaceResult.status) {
+      console.error(`Failed to create readline interface: ${readlineInterfaceResult.message}`);
+      process.exit(1);
+    }
+
+    const rl = readlineInterfaceResult.interfaceInstance;
+    const result = await credentialManager.getAllCredentials();
+
+    if (!result.status) {
+      console.log("No credentials found.");
+      return;
+    }
+
+    // Display the credentials
+    console.log(`\nCREDENTIALS & KEYS`);
+    console.log(`- Database: ${result.databaseName} | Collection: ${result.collectionName}`);
+    console.log(`- Services: ${result.servicesCount} | Credentials: ${result.totalCredentials}`);
+    console.log(`- Credentials: ${JSON.stringify(result.credentials,null,2)}\n`);
+
+  
+    console.log('\n');
+
+    // Await the user's action choice
+    const menuResult = await promptMenu({ rl });
+    if (!menuResult.status) {
+      console.error(`Error in menu selection: ${menuResult.message}`);
+      continue;
+    }
+
+    const action = menuResult.choice;
+
+    const continueApp = await performAction({ credentialManager, action, rl });
+    if (!continueApp) break;
+  }
+
+  console.log('Exiting application...');
+  process.exit(0);
+}
+
+startMenu({});
