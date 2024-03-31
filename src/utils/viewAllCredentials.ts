@@ -5,9 +5,14 @@ import { ViewCredentialsResult } from "../types";
 export const viewAllCredentials = async ({
   credentialManager = new CredentialManager()
 }): Promise<ViewCredentialsResult> => {
-  let status = false; // Explicitly declare status
+  let status = false;
   let message = '';
-  let credentialsMessage = ''; // Declare credentialsMessage
+  let credentialsMessage = '';
+  let databaseName = '';
+  let collectionName = '';
+  let servicesCount = 0;
+  let totalCredentials = 0;
+  let credentials = [];
 
   try {
     const readlineInterfaceResult = createReadlineInterface();
@@ -22,28 +27,31 @@ export const viewAllCredentials = async ({
       throw new Error("No credentials found.");
     }
 
-    // Preparing the credentials display message
+    status = true;
+    message = "Credentials fetched successfully.";
     credentialsMessage = `\nCREDENTIALS & KEYS
 - Database: ${result.databaseName} | Collection: ${result.collectionName}
 - Services: ${result.servicesCount} | Credentials: ${result.totalCredentials}
 - Credentials: ${JSON.stringify(result.credentials, null, 2)}`;
-
-    // Updating the return statement to include credentialsMessage
-    return {
-      status: true,
-      message: "Credentials fetched successfully.",
-      credentialsMessage,
-      databaseName: result.databaseName,
-      collectionName: result.collectionName,
-      servicesCount: result.servicesCount,
-      totalCredentials: result.totalCredentials,
-      credentials: result.credentials,
-    };
+    databaseName = result.databaseName;
+    collectionName = result.collectionName;
+    servicesCount = result.servicesCount;
+    totalCredentials = result.totalCredentials;
+    credentials = result.credentials;
   } catch (error: any) {
     message = `Error: ${error.message}`;
-    // Logging the error message to maintain consistency with successful path
-    console.log(message);
   }
 
-  return { status, message };
+  return {
+    status,
+    message,
+    ...(status && {
+      credentialsMessage,
+      databaseName,
+      collectionName,
+      servicesCount,
+      totalCredentials,
+      credentials,
+    }),
+  };
 };

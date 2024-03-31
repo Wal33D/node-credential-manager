@@ -3,6 +3,7 @@ import { CredentialManager } from "../CredentialManager";
 import { promptForServiceName } from '../utils/promptForServiceName';
 import { findSpecificKeyForService } from '../utils/findSpecificKeyForService';
 import { viewAllCredentials } from './viewAllCredentials';
+import { ViewCredentialsResult } from '../types';
 
 export const performAction = async ({
     credentialManager,
@@ -28,7 +29,8 @@ export const performAction = async ({
                 break;
             case '3':
                 console.log('Option to delete a credential selected.');
-                const{} = await viewAllCredentials({ credentialManager });
+                const viewCredentialsResult:ViewCredentialsResult = await viewAllCredentials({ credentialManager }) ;
+                console.log(viewCredentialsResult.credentialsMessage);
                 break;
             case '4':
                 console.log('Option to search for a specific key selected.');
@@ -40,7 +42,7 @@ export const performAction = async ({
                     message = '';
                 }
 
-                let keyTypeResult: any;
+                let keyTypeResult: any;3
                 let findKeyResult = { status: false, credential: null, message: '' };
 
                 while (!findKeyResult.status) {
