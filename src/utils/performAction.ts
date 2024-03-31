@@ -67,16 +67,22 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 break;
             case '8':
                 const { status: promptStatus, newName, message: promptMessage } = await promptForNewCollectionName({ credentialManager, readLineInterface });
+
                 if (promptStatus && newName) {
                     const { status: setCollectionStatus, oldName } = credentialManager.setCollectionName(newName);
-                    const { status: credStatus, existed, message: credMessage } = await credentialManager.createCredentialsCollection(newName);
+                    const { status, existed } = await credentialManager.createCredentialsCollection(newName);
 
-                    if (credStatus) {
-                        message = `Collection name changed from '${oldName}' to '${newName}'. ${credMessage}`;
-                    } else {
-                        message = `Collection name changed from '${oldName}' to '${newName}', but there was an issue: ${credMessage}`;
+                    message = `Failed to change collection name.`;
+
+                    if (setCollectionStatus) {
+                        if (status) {
+                            if (existed) {
+                                message = `Collection name changed from '${oldName}' to '${newName}'.`;
+                            } else {
+                                message = `Collection name changed from '${oldName}' to '${newName}'. A new collection '${newName}' was created successfully.`;
+                            }
+                        }
                     }
-                    status = true;
                     console.log(message);
                 } else {
                     message = promptMessage;
@@ -85,10 +91,24 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 }
                 break;
 
-            case '9':
+                case '9': // New case for deleting a collection
+                const deleteCollectionName = await promptForNewCollectionName({ credentialManager, readLineInterface }); // Assuming this function exists and prompts the user for the collection name to delete
+                if (deleteCollectionName) {
+                    const deleteResult = await credentialManager.deleteCredentialsCollection(newName);
+                    console.log(deleteResult.message);
+                    status = deleteResult.status;
+                    message = deleteResult.message;
+                } else {
+                    message = "Deletion canceled or invalid collection name provided.";
+                    status = false;
+                    console.log(message);
+                }
+                
+                break;
+            case '10': // Updated case number for exiting
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };
-
+            
             default:
                 console.log('Invalid option selected. Please try again.');
                 message = 'Invalid option selected';

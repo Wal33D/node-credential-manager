@@ -26,7 +26,7 @@ export const promptForNewCollectionName = async ({ credentialManager, readLineIn
                     console.log(" - Hint:  name cannot be empty. Please try again."); // Immediate feedback before re-prompting
                     resolve(promptLoop());
                 } else {
-                    resolve({ status: true, newName: input, message: 'New collection name received.' });
+                    resolve({ status: true, newName: input, message: 'collection name received.' });
                 }
             });
         });

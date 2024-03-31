@@ -5,6 +5,7 @@ import { initializeMongo } from './utils/initializeMongo';
 import { addServiceFunction } from './functions/addServiceFunction';
 import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
 import { createCredentialsCollectionFunction } from './functions/createCredentialsCollectionFunction';
+import { deleteCredentialsCollectionFunction } from './functions/deleteCredentialsCollectionFunction';
 class CredentialManager {
   dbConnection: Db | null = null;
   initDBPromise: Promise<{ status: boolean; message: string }>;
@@ -49,17 +50,24 @@ class CredentialManager {
     return addServiceFunction({ dbConnection: this.dbConnection as Db, collectionName: this.collectionName, serviceName });
   }
 
-  public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; message: string }> {
+  public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; existed:boolean; message: string }> {
     await this.ensureDBInit();
     if (!this.dbConnection) {
-      return { status: false, message: "Database connection is not initialized." };
+      return { status: false,existed:false, message: "Database connection is not initialized." };
     }
     const targetCollectionName = customCollectionName || this.collectionName;
 
-    return createCredentialsCollectionFunction({
-      dbConnection: this.dbConnection,
-      collectionName: targetCollectionName,
-    });
+    return createCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName, });
+  }
+
+  public async deleteCredentialsCollection(customCollectionName?: string): Promise<{ status: boolean; message: string }> {
+    await this.ensureDBInit(); 
+    if (!this.dbConnection) {
+      return { status: false, message: "Database connection is not initialized." };
+    }
+
+    const targetCollectionName = customCollectionName || this.collectionName;
+    return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
   public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string; message:string; } {
