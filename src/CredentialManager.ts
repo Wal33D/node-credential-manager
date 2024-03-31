@@ -53,17 +53,18 @@ class CredentialManager {
       message = 'Database connection is not initialized.';
       return { status, message, credentials: credentialsList, servicesCount: 0, totalCredentials: 0, databaseName, collectionName };
     }
-  
+
     databaseName = this.dbConnection.databaseName;
-  
+
     try {
       const dbCollection = this.dbConnection.collection(collectionName);
       const services = await dbCollection.find({}).toArray();
-  
-      credentialsList = services; // Each document is a service with its keys.
+      
+      credentialsList = services;
       const servicesCount = services.length;
-      const totalCredentials = services.reduce((acc, service) => acc + service.keys.length, 0);
-  
+
+      const totalCredentials = services.reduce((acc, service) => acc + service.credentials.length, 0);
+
       status = true;
       message = 'Loaded successfully.';
       return { status, credentials: credentialsList, message, servicesCount, totalCredentials, databaseName, collectionName };
@@ -72,26 +73,21 @@ class CredentialManager {
       return { status, credentials: [], message: `Failed to load credentials: ${error}`, servicesCount: 0, totalCredentials: 0, databaseName, collectionName };
     }
   }
-  
 
   async initializeCredentialsCollection(collectionName: string): Promise<{ status: boolean; message: string }> {
-    await this.ensureDBInit(); // Ensure the DB is initialized
-
+    await this.ensureDBInit(); 
     if (!this.dbConnection) {
       return { status: false, message: "Database connection is not initialized." };
     }
 
     try {
-      // Check if the collection already exists
       const collections = await this.dbConnection.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
       if (collections.length === 0) {
-        // The collection does not exist, so initialize it with the default structure
         await this.dbConnection.collection(collectionName).insertOne({
-          services: [] // Start with an empty services array
+          services: [] 
         });
         return { status: true, message: "Collection initialized with default structure." };
       } else {
-        // The collection already exists
         return { status: true, message: "Collection already exists, no changes made." };
       }
     } catch (error) {
