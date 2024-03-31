@@ -13,12 +13,9 @@ export const createReadlineInterface = (): { status: boolean; interfaceInstance:
         if (interfaceInstance) {
             status = true;
             message = 'Readline interface created successfully.';
-        } else {
-            // This else block is theoretically unnecessary due to how createInterface works,
-            // but is included for completeness according to the guidelines.
-            throw new Error('Failed to create readline interface.');
-        }
+        } 
     } catch (error: any) {
+        status = false;
         message = `Error: ${error.message}`;
     }
 

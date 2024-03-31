@@ -1,7 +1,6 @@
 import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
-import { ReadlineInterfaceResult } from '../types';
 import { promptForKeyType } from './promptForKeyType';
 import { findSpecificCredentialForService } from './findSpecificCredentialForService';
 
@@ -10,7 +9,7 @@ export const promptForSpecificKey = async ({ credentialManager, readLineInterfac
     let message = ''; // Initialize message variable for dynamic updates
 
     if (!readLineInterface) {
-        const interfaceCreationResult: ReadlineInterfaceResult = createReadlineInterface();
+        const interfaceCreationResult = createReadlineInterface();
         if (!interfaceCreationResult.status) {
             message = interfaceCreationResult.message;
             console.error(message); // Provide immediate feedback if unable to create readline interface

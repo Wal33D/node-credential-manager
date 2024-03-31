@@ -1,5 +1,4 @@
 import readline from 'readline';
-import { ReadlineInterfaceResult } from '../types';
 import { createReadlineInterface } from './createReadlineInterface';
 
 export const promptMenu = async ({ readLineInterface }: { readLineInterface?: readline.Interface }): Promise<{ status: boolean; choice: string; message: string; }> => {
@@ -9,7 +8,7 @@ export const promptMenu = async ({ readLineInterface }: { readLineInterface?: re
     let message = 'Failed to receive input';
 
     if (!readLineInterface) {
-        const interfaceCreationResult: ReadlineInterfaceResult = createReadlineInterface();
+        const interfaceCreationResult = createReadlineInterface();
         if (!interfaceCreationResult.status) {
             message = interfaceCreationResult.message;
             console.error(message);

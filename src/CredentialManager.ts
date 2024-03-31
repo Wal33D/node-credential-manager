@@ -2,7 +2,6 @@ require('dotenv').config({ path: './.env.local' });
 
 import { Db } from 'mongodb';
 import { initializeMongo } from './utils/initializeMongo';
-import { InitializeMongoResponse } from './types';
 
 class CredentialManager {
   dbConnection: Db | null = null;
@@ -16,7 +15,7 @@ class CredentialManager {
 
   private async initializeDB(): Promise<void> {
     try {
-      const response: InitializeMongoResponse = await initializeMongo();
+      const response = await initializeMongo();
       if (response.status && response.mongoDatabase) {
         this.dbConnection = response.mongoDatabase;
 
@@ -48,6 +47,7 @@ class CredentialManager {
     collectionName: string;
   }> {
     await this.ensureDBInit();
+
     let status = false;
     let message = '';
     let databaseName = '';
@@ -63,7 +63,6 @@ class CredentialManager {
     try {
       const dbCollection = this.dbConnection.collection(this.collectionName);
       const services = await dbCollection.find({}).toArray();
-
       credentialsList = services;
       const servicesCount = services.length;
 
@@ -79,7 +78,7 @@ class CredentialManager {
   }
 
 
-  async createCredentialsCollection(collectionName: string): Promise<{ status: boolean; message: string; logMessage?: string }> {
+  async createCredentialsCollection(collectionName: string): Promise<{ status: boolean; message: string;}> {
     if (!this.dbConnection) {
       return { status: false, message: "Database connection is not initialized." };
     }
@@ -88,9 +87,9 @@ class CredentialManager {
       const collections = await this.dbConnection.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
       if (collections.length === 0) {
         await this.dbConnection.createCollection(collectionName);
-        return { status: true, message: `Collection '${collectionName}' created successfully.`, logMessage: `INFO: Collection '${collectionName}' was created as it did not exist.` };
+        return { status: true, message: `Collection '${collectionName}' was created as it did not exist.` };
       } else {
-        return { status: false, message: `Collection '${collectionName}' already exists, no changes made.`, logMessage: `INFO: Collection '${collectionName}' already exists, no action required.` };
+        return { status: false,message: `Collection '${collectionName}' already exists, no action required.` };
       }
     } catch (error) {
       console.error(`Failed to create or verify the '${collectionName}' collection: ${error}`);
@@ -107,7 +106,6 @@ class CredentialManager {
 
     const dbCollection = this.dbConnection.collection(this.collectionName);
     
-    // Assume service does not exist and proceed to add it
     await dbCollection.insertOne({ name: serviceName, credentials: [] });
     return { status: true, message: `Service '${serviceName}' added successfully to the '${this.collectionName}' collection.` };
 }

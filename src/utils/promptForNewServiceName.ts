@@ -24,8 +24,12 @@ export const promptForNewServiceName = async ({ credentialManager, readLineInter
                 if (input.toLowerCase() === "exit") {
                     message = 'Exiting to main menu...';
                     resolve({ status: false, message, continueApp: false });
+                } else if (input === '') {
+                    message = " - Hint:  name cannot be empty. Please try again.";
+                    console.log(message); // Immediate feedback before re-prompting
+                    resolve(await promptLoop());
                 } else if (input.includes(' ')) {
-                    message = "Service name should not contain spaces. Please try again.";
+                    message = " - Hint:  name should not contain spaces. Please try again.";
                     console.log(message); // Immediate feedback before re-prompting
                     resolve(await promptLoop());
                 } else {
@@ -39,11 +43,11 @@ export const promptForNewServiceName = async ({ credentialManager, readLineInter
                         const dbCollection = credentialManager.dbConnection.collection(credentialManager.collectionName);
                         const serviceExists = await dbCollection.findOne({ name: input });
                         if (serviceExists) {
-                            message = `Service '${input}' already exists. Please try again.`;
+                            message = ` - Hint:  '${input}' already exists. Please try again.`;
                             console.log(message); // Immediate feedback if service exists
                             resolve(await promptLoop());
                         } else {
-                            message = 'Service name validated and ready for addition.';
+                            message = ' - Hint:  name validated and ready for addition.';
                             resolve({ status: true, serviceName: input, message, continueApp: true });
                         }
                     }
