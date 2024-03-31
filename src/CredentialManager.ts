@@ -22,12 +22,7 @@ class CredentialManager {
     
     try {
       const { status:mongoDBStatus, mongoDatabase, message:initMessage } = await initializeMongo();
-
-      if (!mongoDBStatus || !mongoDatabase) {
-        message = `Database initialization failed: ${initMessage}`;
-        throw new Error(message);
-      }
-
+      const { status:mongoDBStatus, mongoDatabase, message } = await   this.createCredentialsCollection((this.collectionName));
       this.dbConnection = mongoDatabase;
       status = true;
       message = 'Database initialized successfully.';
