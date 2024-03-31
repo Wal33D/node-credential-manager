@@ -79,7 +79,7 @@ class CredentialManager {
     let status: boolean = false;
 
     if (oldName === newCollectionName) {
-        message = `The collection name is already '${newCollectionName}'. No changes were made.`;
+        message = `Collection name is already set to '${newCollectionName}'. No changes were made.`; 
         status = false; 
     } else {
         this.collectionName = newCollectionName;
@@ -94,7 +94,6 @@ class CredentialManager {
         message
     };
 }
-
   
   public resetCollectionNameToDefault(): { status: boolean; oldName: string; newName: string; message: string; } {
     const oldName = this.collectionName;
