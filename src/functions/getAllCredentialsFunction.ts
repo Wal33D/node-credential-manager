@@ -13,6 +13,7 @@ export const getAllCredentialsFunction = async ({
   servicesCount: number;
   totalCredentials: number;
   databaseName: string;
+  collectionName: string;
 }> => {
 
   let status = false;
@@ -20,21 +21,21 @@ export const getAllCredentialsFunction = async ({
   let databaseName = '';
   let credentialsList: any = [];
 
-  databaseName = this.dbConnection.databaseName;
+  databaseName = dbConnection?.databaseName as string;
 
   try {
-    const dbCollection = this.dbConnection.collection(this.collectionName);
+    const dbCollection = dbConnection?.collection(collectionName) as any;
     const services = await dbCollection.find({}).toArray();
     credentialsList = services;
     const servicesCount = services.length;
 
-    const totalCredentials = services.reduce((acc, service) => acc + service.credentials.length, 0);
+    const totalCredentials = services.reduce((acc: any, service: { credentials: string | any[]; }) => acc + service.credentials.length, 0);
 
     status = true;
     message = 'Loaded successfully.';
-    return { status, credentials: credentialsList, message, servicesCount, totalCredentials, databaseName, collectionName: this.collectionName };
+    return { status, credentials: credentialsList, message, servicesCount, totalCredentials, databaseName, collectionName };
   } catch (error) {
     console.error(`Failed to load credentials: ${error}`);
-    return { status, credentials: [], message: `Failed to load credentials: ${error}`, servicesCount: 0, totalCredentials: 0, databaseName, collectionName: this.collectionName };
+    return { status, credentials: [], message: `Failed to load credentials: ${error}`, servicesCount: 0, totalCredentials: 0, databaseName, collectionName };
   }
 }
