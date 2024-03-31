@@ -1,14 +1,14 @@
 import { Db } from "mongodb";
 
-export const findServiceByName = async ({ serviceName, dbConnection }: { serviceName: string, dbConnection: Db | any }):
- Promise<{
-    status: boolean;
-    keyType: string;
-    serviceName: string;
-    message: string;
-}> => {
+export const findServiceByName = async ({ serviceNameKey, dbConnection }: { serviceNameKey: string, dbConnection: Db | any }):
+    Promise<{
+        status: boolean;
+        value: string;
+        serviceNameKey: string;
+        message: string;
+    }> => {
     let status = false;
-    let keyType = '';
+    let value = '';
     let message = '';
 
     try {
@@ -21,21 +21,21 @@ export const findServiceByName = async ({ serviceName, dbConnection }: { service
 
         if (document && document.services) {
             // First, try to find a case-sensitive match
-            const exactMatchService = document.services.find((service: { name: string; }) => service.name === serviceName);
+            const exactMatchService = document.services.find((service: { name: string; }) => service.name === serviceNameKey);
 
             // If no case-sensitive match, try to find a case-insensitive match to suggest the correct casing
             if (!exactMatchService) {
-                const caseInsensitiveMatchService = document.services.find((service: { name: string; }) => service.name.toLowerCase() === serviceName.toLowerCase());
+                const caseInsensitiveMatchService = document.services.find((service: { name: string; }) => service.name.toLowerCase() === serviceNameKey.toLowerCase());
 
                 if (caseInsensitiveMatchService) {
                     message = `Did you mean this service '${caseInsensitiveMatchService.name}'? Service name is case-sensitive.`;
                 } else {
-                    message = `Service ${serviceName} not found.`;
+                    message = `Service ${serviceNameKey} not found.`;
                 }
             } else {
                 status = true;
-                keyType = exactMatchService.keys;
-                serviceName = exactMatchService.name;
+                value = exactMatchService.keys;
+                serviceNameKey = exactMatchService.name;
                 message = `Keys for service ${exactMatchService.name} retrieved successfully.`;
             }
         } else {
@@ -45,5 +45,5 @@ export const findServiceByName = async ({ serviceName, dbConnection }: { service
         message = `Error: ${error.message}`;
     }
 
-    return { status, keyType, serviceName, message };
+    return { status, serviceNameKey, value, message };
 };

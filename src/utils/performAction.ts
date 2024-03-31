@@ -30,7 +30,7 @@ export const performAction = async ({
             case '4':
                 console.log('Option to search for a specific key selected.');
 
-                const serviceNameResult = await promptForServiceName(credentialManager, rl) as any;
+                const serviceNameResult = await promptForServiceName({credentialManager, rl}) as any;
                 if (!serviceNameResult || serviceNameResult.status === false) {
                     console.log(serviceNameResult ? serviceNameResult.message : 'Exiting to main menu...');
                     status = true;
@@ -67,7 +67,7 @@ export const performAction = async ({
 
             case '5':
                 console.log('Option to search by service name and key selected.');
-                const serviceInfo = await promptForServiceName(credentialManager, rl);
+                const serviceInfo = await promptForServiceName({credentialManager, rl});
                 if (serviceInfo === null) {
                     status = true;
                     message = 'Search by service name and key option selected';
