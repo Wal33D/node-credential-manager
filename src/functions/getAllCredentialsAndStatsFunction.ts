@@ -9,11 +9,11 @@ export const getAllCredentialsAndStatsFunction = async ({
 }): Promise<{
   status: boolean;
   credentials: any[];
-  message: string;
-  servicesCount: number;
-  totalCredentials: number;
   databaseName: string;
+  servicesCount: number;
   collectionName: string;
+  credentialsCount: number;
+  message: string;
 }> => {
 
   let status = false;
@@ -29,13 +29,13 @@ export const getAllCredentialsAndStatsFunction = async ({
     credentialsList = services;
     const servicesCount = services.length;
 
-    const totalCredentials = services.reduce((acc: any, service: { credentials: string | any[]; }) => acc + service.credentials.length, 0);
+    const credentialsCount = services.reduce((acc: any, service: { credentials: string | any[]; }) => acc + service.credentials.length, 0);
 
     status = true;
     message = 'Loaded successfully.';
-    return { status, credentials: credentialsList, message, servicesCount, totalCredentials, databaseName, collectionName };
+    return { status, credentials: credentialsList, message, servicesCount, credentialsCount, databaseName, collectionName };
   } catch (error) {
     console.error(`Failed to load credentials: ${error}`);
-    return { status, credentials: [], message: `Failed to load credentials: ${error}`, servicesCount: 0, totalCredentials: 0, databaseName, collectionName };
+    return { status, credentials: [], message: `Failed to load credentials: ${error}`, servicesCount: 0, credentialsCount: 0, databaseName, collectionName };
   }
 }

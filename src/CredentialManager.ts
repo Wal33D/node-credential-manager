@@ -43,7 +43,7 @@ class CredentialManager {
     await this.initDBPromise;
   }
 
-  public async getAllCredentials(): Promise<{ status: boolean; message: string; credentials: any[]; databaseName: string; collectionName: string; servicesCount: number; totalCredentials: number; }> {
+  public async getAllCredentials(): Promise<{ status: boolean; message: string; credentials: any[]; databaseName: string; collectionName: string; servicesCount: number; credentialsCount: number; }> {
     await this.ensureDBInit();
     return getAllCredentialsAndStatsFunction({ dbConnection: this.dbConnection, collectionName: this.collectionName });
   }
