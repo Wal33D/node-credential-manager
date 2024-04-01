@@ -15,21 +15,20 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
     try {
         switch (action) {
-            
+
             case '3':
                 const viewCredentialsResult = await viewAllCredentials({ credentialManager, readLineInterface });
                 console.log(viewCredentialsResult.credentialsMessage);
                 break;
-                case '4':
-                    case '5':
-                        const serviceActionResult = await handleServiceAction({ action, readLineInterface, credentialManager });
-                        console.log(serviceActionResult.message);
-                        console.log(`- Service: ${serviceActionResult.serviceName} | Status: ${serviceActionResult.status}\n`);
-                        console.log(serviceActionResult.credentials);                       
-                         status = serviceActionResult.status;
-                        message = serviceActionResult.message;
-                        // Optionally handle additional data from serviceActionResult here
-                        break;
+            case '4':
+            case '5':
+                const serviceActionResult = await handleServiceAction({ action, readLineInterface, credentialManager });
+                console.log(serviceActionResult.message);
+                console.log(`- Service: ${serviceActionResult.serviceName} | Status: ${serviceActionResult.status}\n`);
+                console.log(serviceActionResult.credential);
+                status = serviceActionResult.status;
+                message = serviceActionResult.message;
+                break;
             case '6':
                 const initResult = await credentialManager.createCredentialsCollection(credentialManager.collectionName);
                 console.log(initResult.message);
@@ -44,13 +43,13 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 message = addServiceResult.message;
 
                 break;
-                case '8':
-                    const collectionNameChangeResult = await promptForCollectionNameChange({ credentialManager, readLineInterface });
-                    console.log(collectionNameChangeResult.message);
-                    status = collectionNameChangeResult.status;
-                    message = collectionNameChangeResult.message;
-                    break;
-                
+            case '8':
+                const collectionNameChangeResult = await promptForCollectionNameChange({ credentialManager, readLineInterface });
+                console.log(collectionNameChangeResult.message);
+                status = collectionNameChangeResult.status;
+                message = collectionNameChangeResult.message;
+                break;
+
             case '9':
                 const deleteProcessResult = await promptForCollectionDeletion({ credentialManager, readLineInterface });
                 console.log(deleteProcessResult.message);

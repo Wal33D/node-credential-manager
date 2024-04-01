@@ -17,7 +17,6 @@ export async function handleServiceAction({
         return { status: false, message: serviceNameResult?.message || 'Exiting to main menu...' };
     }
 
-    console.log(`- Service: ${serviceNameResult.serviceName} | Status: ${serviceNameResult.status}\n- Message: ${serviceNameResult.message}\n`);
     if (action === '5') {
         // For action '5', return after fetching service name.
         return { status: true, message: 'Service name retrieved successfully.', serviceName: serviceNameResult.serviceName, credentials:serviceNameResult.credentials };
@@ -36,10 +35,9 @@ export async function handleServiceAction({
             credentialName: keyTypeResult.result as any,
             dbConnection: credentialManager.dbConnection,
         });
-        console.log(findKeyResult.message);
+
         if (findKeyResult.status) {
-            console.log(findKeyResult.credential);
-            return { status: true, message: 'Credential retrieved successfully.',serviceName:serviceNameResult.credentials, credential: findKeyResult.credential };
+            return { status: true, message: 'Credential retrieved successfully.',serviceName:serviceNameResult.serviceName, credential: findKeyResult.credential };
         }
     } while (!keyTypeResult.status);
 
