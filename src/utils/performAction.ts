@@ -27,7 +27,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 message = serviceActionResult.message;
                 break;
             case '6':
-                const initResult = await credentialManager.createCabinet(credentialManager.collectionName);
+                const initResult = await credentialManager.createCabinet();
                 console.log(initResult.message);
                 status = initResult.status;
                 message = initResult.message;

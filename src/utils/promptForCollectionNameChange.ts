@@ -14,15 +14,7 @@ export async function promptForCollectionNameChange({ credentialManager, readLin
             throw new Error("Operation canceled or invalid collection name provided.");
         }
 
-        const {status, collectionName, message: creationMessage} = await credentialManager.createCabinet({
-            newCollectionName: newNameResult.newName
-        });
-
-        if (status) {
-            message = `Collection name changed successfully to '${collectionName}'.`;
-        } else {
-            message = creationMessage;
-        }
+        return await credentialManager.createCabinet(newNameResult.newName);
 
     } catch (error: any) {
         message = `An error occurred during the collection name change process: ${error.message}`;

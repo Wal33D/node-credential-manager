@@ -4,7 +4,7 @@ import { Db } from 'mongodb';
 import { initializeMongo } from './utils/initializeMongo';
 import { addServiceFunction } from './functions/addServiceFunction';
 import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
-import { createCabinet } from './functions/createCabinet';
+import { createCabinet as createCabinetFunction } from './functions/createCabinet';
 import { deleteCredentialsCollectionFunction } from './functions/deleteCredentialsCollectionFunction';
 
 const defaultCollectionName = 'CredentialManager';
@@ -29,7 +29,7 @@ class CredentialManager {
         throw new Error('Failed to initialize MongoDB connection.');
       }
       this.dbConnection = mongoDatabase;
-      const { message: credMessage } = await createCabinet({ dbConnection: mongoDatabase as any, collectionName: this.collectionName, defaultCollectionName });
+      const { message: credMessage } = await createCabinetFunction({ dbConnection: mongoDatabase as any, collectionName: this.collectionName, defaultCollectionName });
       status = true;
       message = `Database initialized successfully, ${credMessage}`;
     } catch (error: any) {
@@ -83,8 +83,8 @@ class CredentialManager {
     if (!this.dbConnection) {
       return { status: false, creationStatus: false, message: "Database connection is not initialized." };
     }
-
-    const result = await createCabinet({ dbConnection: this.dbConnection, collectionName: this.collectionName, newCollectionName, defaultCollectionName });
+    console.log(newCollectionName);
+    const result = await createCabinetFunction({ dbConnection: this.dbConnection, collectionName: this.collectionName, newCollectionName, defaultCollectionName });
     
     if (result.status) {
       this.collectionName = result.collectionName;
