@@ -2,8 +2,8 @@ import { CredentialManager } from "../CredentialManager";
 import { viewAllCredentials } from './viewAllCredentials';
 import { promptForNewServiceName } from './promptForNewServiceName';
 import { promptForCollectionDeletion } from './promptForCollectionDeletion';
-import { promptForCollectionNameChange } from './promptForCollectionNameChange';
 import { handleServiceAction } from './handleServiceAction';
+import { promptForNewCollectionName } from "./promptForNewCollectionName";
 
 export const performAction = async ({ action, readLineInterface, credentialManager, }: { action: string, readLineInterface?: any, credentialManager: CredentialManager, }): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
     let status = false;
@@ -41,14 +41,18 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
                 break;
             case '8':
-                const collectionNameChangeResult = await promptForCollectionNameChange({ credentialManager, readLineInterface });
+                const newNameResult = await promptForNewCollectionName({ credentialManager, readLineInterface });
+                const collectionNameChangeResult = await credentialManager.createCabinet(newNameResult.newName);
                 console.log(collectionNameChangeResult.message);
                 status = collectionNameChangeResult.status;
                 message = collectionNameChangeResult.message;
                 break;
 
             case '9':
-                const deleteProcessResult = await promptForCollectionDeletion({ credentialManager, readLineInterface });
+                const {status:nameStatus, newName:cabinetName} = await promptForNewCollectionName({ credentialManager, readLineInterface });
+
+                const deleteProcessResult = await credentialManager.deleteCabinet(cabinetName );
+
                 console.log(deleteProcessResult.message);
                 status = deleteProcessResult.status;
                 message = deleteProcessResult.message;
@@ -61,7 +65,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 message = resetResult.message;
                 break;
 
-            case '11': 
+            case '11':
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };
 

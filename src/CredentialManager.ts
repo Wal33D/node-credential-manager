@@ -67,7 +67,7 @@ class CredentialManager {
     return addServiceFunction({ dbConnection: this.dbConnection as Db, collectionName: this.collectionName, serviceName });
   }
 
-  public async deleteCredentialsCollection(customCollectionName?: string): Promise<{ status: boolean; message: string }> {
+  public async deleteCabinet(customCollectionName?: string): Promise<{ status: boolean; message: string }> {
     await this.ensureDBInit();
     if (!this.dbConnection) {
       return { status: false, message: "Database connection is not initialized." };
