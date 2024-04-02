@@ -6,7 +6,7 @@ import { addServiceFunction } from './functions/addServiceFunction';
 import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
 import { createCabinet as createCabinetFunction } from './functions/createCabinet';
 import { deleteCabinet } from './functions/deleteCabinet';
-import { createKey } from './functions/createKey';
+import { insertRecordIntoCabinet } from './functions/insertRecordIntoCabinet';
 
 const DEFAULT_COLLECTION_NAME = process.env.DEFAULT_COLLECTION_NAME || "CredentialManager";
 
@@ -99,7 +99,7 @@ class CredentialManager {
     }
   }
 
-  public async addOrUpdateKey(recordName: string, keyData: object, cabinetName?: string): Promise<{ status: boolean; recordId: string|null; operationStatus: boolean; message: string }> {
+  public async addOrUpdateKey(recordName: string, credential: any, cabinetName?: string): Promise<{ status: boolean; recordId: string|null; operationStatus: boolean; message: string }> {
     await this.ensureDBInit();
 
     if (!this.dbConnection) {
@@ -109,11 +109,10 @@ class CredentialManager {
     const targetCabinetName = cabinetName || this.collectionName || DEFAULT_COLLECTION_NAME;
 
     try {
-      const result = await createKey({
+      const result = await insertRecordIntoCabinet({
         dbConnection: this.dbConnection,
         cabinetName: targetCabinetName,
-        recordName: recordName,
-        keyData: keyData,
+        recordData: {name:recordName, credential} as any,
       });
 
       return result;

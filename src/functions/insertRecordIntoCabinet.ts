@@ -27,7 +27,7 @@ export async function insertRecordIntoCabinet({
     dbConnection: Db,
     cabinetName: string,
     recordData: RecordData,
-}): Promise<{ status: boolean; insertedId?: string; message: string }> {
+}): Promise<{ status: boolean; insertedId: string|null; message: string }> {
     try {
         const cabinet = dbConnection.collection(cabinetName);
         const result = await cabinet.insertOne(recordData);
@@ -41,12 +41,14 @@ export async function insertRecordIntoCabinet({
         } else {
             return {
                 status: false,
+                insertedId:null,
                 message: "Failed to insert the record into the cabinet.",
             };
         }
     } catch (error: any) {
         return {
             status: false,
+            insertedId:null,
             message: `Failed to insert the record into the cabinet: ${error.message}`,
         };
     }
