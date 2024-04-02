@@ -1,41 +1,35 @@
 import { Db } from 'mongodb';
 
-export async function createOrUpdateKey({
+export async function createKey({
     dbConnection,
     cabinetName,
     keyId,
     keyData,
-    defaultCabinetName
 }: {
     dbConnection: Db,
     cabinetName: string,
     keyId: string,
     keyData: object,
-    defaultCabinetName: string
 }): Promise<{ status: boolean; keyId: string; operationStatus: boolean; message: string }> {
     let status = false;
-    let operationStatus = false; // True if inserted or updated, false otherwise
+    let operationStatus = false;
     let message = '';
 
     try {
-        const finalCabinetName = cabinetName || defaultCabinetName;
-        const cabinet = dbConnection.collection(finalCabinetName);
+        const cabinet = dbConnection.collection(cabinetName);
 
-        // Check if the Key already exists
         const existingKey = await cabinet.findOne({ keyId: keyId });
         if (existingKey) {
-            // Update the existing Key with new data
             await cabinet.updateOne({ keyId: keyId }, { $set: keyData });
-            message = `Key '${keyId}' in cabinet '${finalCabinetName}' was updated successfully.`;
+            message = `Key '${keyId}' in cabinet '${cabinetName}' was updated successfully.`;
             operationStatus = true;
         } else {
-            // Insert a new Key document
             await cabinet.insertOne({ keyId: keyId, ...keyData });
-            message = `Key '${keyId}' was inserted into cabinet '${finalCabinetName}'.`;
+            message = `Key '${keyId}' was inserted into cabinet '${cabinetName}'.`;
             operationStatus = true;
         }
 
-        status = true; // Operation was successful
+        status = true; 
     } catch (error: any) {
         message = `Failed to insert or update Key: ${error.message}`;
     }

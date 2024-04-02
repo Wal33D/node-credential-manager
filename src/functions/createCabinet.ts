@@ -1,22 +1,21 @@
 import { Db } from 'mongodb';
+const DEFAULT_COLLECTION_NAME = process.env.DEFAULT_COLLECTION_NAME || "CredentialManager";
 
 export async function createCabinet({
     dbConnection,
     collectionName,
     newCollectionName,
-    defaultCollectionName
 }: {
     dbConnection: Db,
     collectionName: string,
     newCollectionName?: string,
-    defaultCollectionName: string
 }): Promise<{ status: boolean; collectionName: string; creationStatus: boolean; message: string }> {
     let status = false;
     let creationStatus = false;
     let message = '';
 
     try {
-        const finalCollectionName = newCollectionName ?? defaultCollectionName;
+        const finalCollectionName = newCollectionName ?? DEFAULT_COLLECTION_NAME;
         const wasAlreadySet = collectionName === finalCollectionName;
         console.log(finalCollectionName)
 

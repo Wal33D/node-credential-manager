@@ -6,15 +6,16 @@ import { addServiceFunction } from './functions/addServiceFunction';
 import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
 import { createCabinet as createCabinetFunction } from './functions/createCabinet';
 import { deleteCabinet } from './functions/deleteCabinet';
+import { createKey } from './functions/createKey';
 
-const defaultCollectionName = 'CredentialManager';
+const DEFAULT_COLLECTION_NAME = process.env.DEFAULT_COLLECTION_NAME || "CredentialManager";
 
 class CredentialManager {
   dbConnection: Db | null = null;
   initDBPromise: Promise<{ status: boolean; message: string }>;
   collectionName: string;
 
-  constructor(collectionName: string = defaultCollectionName) {
+  constructor(collectionName: string = DEFAULT_COLLECTION_NAME) {
     this.collectionName = collectionName;
     this.initDBPromise = this.initializeDB();
   }
@@ -29,7 +30,7 @@ class CredentialManager {
         throw new Error('Failed to initialize MongoDB connection.');
       }
       this.dbConnection = mongoDatabase;
-      const { message: credMessage } = await createCabinetFunction({ dbConnection: mongoDatabase as any, collectionName: this.collectionName, defaultCollectionName });
+      const { message: credMessage } = await createCabinetFunction({ dbConnection: mongoDatabase as any, collectionName: this.collectionName });
       status = true;
       message = `Database initialized successfully, ${credMessage}`;
     } catch (error: any) {
@@ -78,20 +79,50 @@ class CredentialManager {
   }
 
   public async createCabinet(newCollectionName?: string): Promise<{ status: boolean; creationStatus: boolean; message: string }> {
+    try {
+      await this.ensureDBInit();
+
+      if (!this.dbConnection) {
+        return { status: false, creationStatus: false, message: "Database connection is not initialized." };
+      }
+
+      const result = await createCabinetFunction({ dbConnection: this.dbConnection, collectionName: this.collectionName, newCollectionName });
+
+      if (result.status) {
+        this.collectionName = result.collectionName;
+      }
+
+      return result;
+
+    } catch (error: any) {
+      return { status: false, creationStatus: false, message: `An error occurred while adding/updating the key: ${error.message}` };
+    }
+  }
+
+  public async addOrUpdateKey(keyId: string, keyData: object, cabinetName?: string): Promise<{ status: boolean; keyId: string; operationStatus: boolean; message: string }> {
     await this.ensureDBInit();
 
     if (!this.dbConnection) {
-      return { status: false, creationStatus: false, message: "Database connection is not initialized." };
+      return { status: false, keyId, operationStatus: false, message: "Database connection is not initialized." };
     }
-    console.log(newCollectionName);
-    const result = await createCabinetFunction({ dbConnection: this.dbConnection, collectionName: this.collectionName, newCollectionName, defaultCollectionName });
-    
-    if (result.status) {
-      this.collectionName = result.collectionName;
+
+    const targetCabinetName = cabinetName || this.collectionName || DEFAULT_COLLECTION_NAME;
+
+    try {
+      const result = await createKey({
+        dbConnection: this.dbConnection,
+        cabinetName: targetCabinetName,
+        keyId: keyId,
+        keyData: keyData,
+      });
+
+      return result;
+    } catch (error: any) {
+      return { status: false, keyId, operationStatus: false, message: `An error occurred while adding/updating the key: ${error.message}` };
     }
-    
-    return result;
   }
 }
+
+
 
 export { CredentialManager };
