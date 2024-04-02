@@ -39,26 +39,23 @@ class CredentialManager {
     return { status, message };
   }
 
-public async ensureDBInit(): Promise<{ status: boolean; message: string }> {
+  public async ensureDBInit(): Promise<{ status: boolean; message: string }> {
     let status = false;
     let message = '';
 
     try {
-        await this.initDBPromise;
-        
-        if (!this.dbConnection) {
-            throw new Error("Database connection is not initialized.");
-        }
-
-        status = true;
-        message = "Database connection is initialized.";
+      await this.initDBPromise;
+      if (!this.dbConnection) {
+        throw new Error("Database connection is not initialized.");
+      }
+      status = true;
+      message = "Database connection is initialized.";
     } catch (error: any) {
-        message = `Error: ${error.message}`;
+      message = `Error: ${error.message}`;
     }
 
     return { status, message };
-}
-
+  }
 
   public async getAllCredentials(): Promise<{ status: boolean; message: string; credentials: any[]; databaseName: string; collectionName: string; servicesCount: number; credentialsCount: number; }> {
     await this.ensureDBInit();
@@ -70,15 +67,6 @@ public async ensureDBInit(): Promise<{ status: boolean; message: string }> {
     return addServiceFunction({ dbConnection: this.dbConnection as Db, collectionName: this.collectionName, serviceName });
   }
 
-  public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; message: string }> {
-    await this.ensureDBInit();
-    if (!this.dbConnection) {
-      return { status: false, message: "Database connection is not initialized." };
-    }
-    const targetCollectionName = customCollectionName || this.collectionName;
-
-    return createCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName, });
-  }
 
   public async deleteCredentialsCollection(customCollectionName?: string): Promise<{ status: boolean; message: string }> {
     await this.ensureDBInit();
@@ -90,7 +78,19 @@ public async ensureDBInit(): Promise<{ status: boolean; message: string }> {
     return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
-  public setCollectionName(newCollectionName?: string): { status: boolean; collectionName: string; message: string } {
+  public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; message: string }> {
+    if (!this.dbConnection) {
+      return { status: false, message: "Database connection is not initialized."};
+    }
+    const targetCollectionName = customCollectionName || this.collectionName;
+  
+    return createCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
+  }
+  
+  public setCollectionName(newCollectionName?: string): { status: boolean; collectionName: string = defaultCollectionName; message: string } {
+    if (!this.dbConnection) {
+      return { status: false, collectionName, message: "Database connection is not initialized."};
+    }
     const finalCollectionName = newCollectionName ?? defaultCollectionName;
     const wasAlreadySet = this.collectionName === finalCollectionName;
     const action = newCollectionName ? 'updated' : 'reset';

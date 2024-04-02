@@ -11,7 +11,7 @@ export const createCredentialsCollectionFunction = async ({
   let message = '';
 
   try {
-    const dbCollection = await dbConnection.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
+    const dbCollection = await dbConnection.listCollections({ name: collectionName  }, { nameOnly: true }).toArray();
     if (dbCollection.length === 0) {
       await dbConnection.createCollection(collectionName);
       status = true;
