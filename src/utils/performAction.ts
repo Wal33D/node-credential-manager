@@ -3,6 +3,8 @@ import { viewAllCredentials } from './viewAllCredentials';
 import { promptForNewServiceName } from './promptForNewServiceName';
 import { handleServiceAction } from './handleServiceAction';
 import { promptForNewCollectionName } from "./promptForNewCollectionName";
+import { promptForKeyName } from "./promptForKeyName";
+import { promptForKeyValue } from "./promptForKeyValue";
 
 export const performAction = async ({ action, readLineInterface, credentialManager, }: { action: string, readLineInterface?: any, credentialManager: CredentialManager, }): Promise<{ status: boolean, message: string, continueApp: boolean }> => {
     let status = false;
@@ -11,7 +13,23 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
     try {
         switch (action) {
+            case '2':
+                const keyResult = await promptForKeyName(readLineInterface);
+                if (!keyResult.status) {
+                    message = keyResult.message;
+                    break;
+                }
 
+                const valueResult = await promptForKeyValue(readLineInterface);
+                if (!valueResult.status) {
+                    message = valueResult.message;
+                    break;
+                }
+
+                console.log(`Key '${keyResult.key}' with value '${valueResult.value}' is ready for processing.`);
+                status = true;
+                message = "Key and value received.";
+                break;
             case '3':
                 const viewCredentialsResult = await viewAllCredentials({ credentialManager, readLineInterface });
                 console.log(viewCredentialsResult.credentialsMessage);

@@ -18,7 +18,7 @@ export const promptForNewCollectionName = async ({ credentialManager, readLineIn
 
     const promptLoop = async (): Promise<{ status: boolean; newName?: string; message: string; }> => {
         return new Promise((resolve) => {
-            const question = 'Enter the new collection name you want to set (or type "exit" to return to the menu):\n';
+            const question = 'Enter the new Cabinet name you want to set (or type "exit" to return to the menu):\n';
             const askQuestion = () => { // Modified to re-prompt using a function
                 readLineInterface!.question(question, (input: string) => {
                     if (input.toLowerCase() === "exit") {
@@ -30,7 +30,7 @@ export const promptForNewCollectionName = async ({ credentialManager, readLineIn
                         console.log(" - Hint:  name should not contain spaces. Please try again."); // Immediate feedback
                         askQuestion(); // Re-ask the question without resolving
                     } else {
-                        resolve({ status: true, newName: input, message: 'Collection name received.' });
+                        resolve({ status: true, newName: input, message: 'Cabinet name received.' });
                     }
                 });
             };
