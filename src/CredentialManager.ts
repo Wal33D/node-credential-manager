@@ -7,7 +7,6 @@ import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentials
 import { createCredentialsCollectionFunction } from './functions/createCredentialsCollectionFunction';
 import { deleteCredentialsCollectionFunction } from './functions/deleteCredentialsCollectionFunction';
 
-const defaultCollectionName = 'CredentialManager';
 
 class CredentialManager {
   dbConnection: Db | null = null;
@@ -64,7 +63,7 @@ class CredentialManager {
   }
 
   public async deleteCredentialsCollection(customCollectionName?: string): Promise<{ status: boolean; message: string }> {
-    await this.ensureDBInit(); 
+    await this.ensureDBInit();
     if (!this.dbConnection) {
       return { status: false, message: "Database connection is not initialized." };
     }
@@ -73,47 +72,40 @@ class CredentialManager {
     return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
-  public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string; message: string } {
-    const oldName = this.collectionName;
-    const isNameUnchanged = oldName === newCollectionName;
-    const message = isNameUnchanged
-        ? `Collection name is already set to '${newCollectionName}'. No changes were made.`
-        : `Collection name updated successfully from '${oldName}' to '${newCollectionName}'.`;
+  public setCollectionName(newCollectionName: string): { status: boolean; collectionName: string; message: string } {
+    const nameIsUnchanged = this.collectionName === newCollectionName;
+    const message = nameIsUnchanged
+      ? `Collection name is already '${newCollectionName}'. No changes were made.`
+      : `Collection name updated successfully from '${this.collectionName}' to '${newCollectionName}'.`;
 
-    if (!isNameUnchanged) {
-        this.collectionName = newCollectionName;
+    if (!nameIsUnchanged) {
+      this.collectionName = newCollectionName;
     }
 
     return {
-        status: !isNameUnchanged,
-        oldName,
-        newName: this.collectionName,
-        message,
+      status: !nameIsUnchanged,
+      collectionName: this.collectionName,
+      message,
     };
-}
+  }
 
+  public resetCollectionNameToDefault(): { status: boolean; defaultCollectionName: string; message: string } {
+    const defaultCollectionName = 'CredentialManager';
+    const wasAlreadyDefault = this.collectionName === defaultCollectionName;
   
-  public resetCollectionNameToDefault(): { status: boolean; oldName: string; newName: string; message: string; } {
-    const oldName = this.collectionName;
-    let message: string;
-    let status: boolean = false;
-
-    if (oldName === defaultCollectionName) {
-        message = `The collection name is already set to the default '${defaultCollectionName}'. No changes were made.`;
-        status = false; 
-    } else {
-        this.collectionName = defaultCollectionName;
-        message = `Collection name reset from '${oldName}' to the default '${defaultCollectionName}'.`;
-        status = true;
+    if (!wasAlreadyDefault) {
+      this.collectionName = defaultCollectionName;
     }
-
+  
     return {
-        status,
-        oldName,
-        newName: this.collectionName,
-        message
+      status: !wasAlreadyDefault,
+      defaultCollectionName: this.collectionName,
+      message: wasAlreadyDefault
+        ? `The collection name is already set to the default '${defaultCollectionName}'. No changes were made.`
+        : `Collection name reset to the default '${defaultCollectionName}'.`
     };
-}
+  }
+  
 
 }
 
