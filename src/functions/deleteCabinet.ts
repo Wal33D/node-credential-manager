@@ -1,6 +1,6 @@
 import { Db } from "mongodb";
 
-export const deleteCredentialsCollectionFunction = async ({ dbConnection, collectionName, }:
+export const deleteCabinet = async ({ dbConnection, collectionName, }:
     { dbConnection: Db; collectionName: string; }): Promise<{ status: boolean; message: string }> => {
     try {
         const collectionExists = await dbConnection.listCollections({ name: collectionName }, { nameOnly: true }).toArray();

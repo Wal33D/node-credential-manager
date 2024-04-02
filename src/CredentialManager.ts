@@ -5,7 +5,7 @@ import { initializeMongo } from './utils/initializeMongo';
 import { addServiceFunction } from './functions/addServiceFunction';
 import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
 import { createCabinet as createCabinetFunction } from './functions/createCabinet';
-import { deleteCredentialsCollectionFunction } from './functions/deleteCredentialsCollectionFunction';
+import { deleteCabinet } from './functions/deleteCabinet';
 
 const defaultCollectionName = 'CredentialManager';
 
@@ -74,7 +74,7 @@ class CredentialManager {
     }
 
     const targetCollectionName = customCollectionName || this.collectionName;
-    return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
+    return deleteCabinet({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
   public async createCabinet(newCollectionName?: string): Promise<{ status: boolean; creationStatus: boolean; message: string }> {

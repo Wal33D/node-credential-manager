@@ -1,7 +1,6 @@
 import { CredentialManager } from "../CredentialManager";
 import { viewAllCredentials } from './viewAllCredentials';
 import { promptForNewServiceName } from './promptForNewServiceName';
-import { promptForCollectionDeletion } from './promptForCollectionDeletion';
 import { handleServiceAction } from './handleServiceAction';
 import { promptForNewCollectionName } from "./promptForNewCollectionName";
 
@@ -49,10 +48,8 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 break;
 
             case '9':
-                const {status:nameStatus, newName:cabinetName} = await promptForNewCollectionName({ credentialManager, readLineInterface });
-
+                const {newName:cabinetName} = await promptForNewCollectionName({ credentialManager, readLineInterface });
                 const deleteProcessResult = await credentialManager.deleteCabinet(cabinetName );
-
                 console.log(deleteProcessResult.message);
                 status = deleteProcessResult.status;
                 message = deleteProcessResult.message;
