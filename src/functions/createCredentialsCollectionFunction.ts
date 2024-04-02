@@ -1,29 +1,47 @@
 import { Db } from 'mongodb';
 
-export const createCredentialsCollectionFunction = async ({
+export async function CreateCabinet({
   dbConnection,
   collectionName,
+  newCollectionName,
+  defaultCollectionName
 }: {
-  dbConnection: Db;
-  collectionName: string;
-}): Promise<{ status: boolean; message: string }> => {
-  let status = false;
-  let message = '';
+  dbConnection: Db,
+  collectionName: string,
+  newCollectionName?: string,
+  defaultCollectionName: string
+}): Promise<{ status: boolean; collectionName: string; creationStatus: boolean; message: string }> {
+    let status = false;
+    let creationStatus = false; 
+    let message = '';
 
-  try {
-    const dbCollection = await dbConnection.listCollections({ name: collectionName  }, { nameOnly: true }).toArray();
-    if (dbCollection.length === 0) {
-      await dbConnection.createCollection(collectionName);
-      status = true;
-      message = `Collection '${collectionName}' was created as it did not exist.`;
-    } else {
-      message = `Collection '${collectionName}' already exists, no action required.`;
-      status = true;
+    try {
+        if (!dbConnection) {
+            throw new Error("Database connection is not initialized.");
+        }
+
+        const finalCollectionName = newCollectionName ?? defaultCollectionName;
+        const wasAlreadySet = collectionName === finalCollectionName;
+
+        if (!wasAlreadySet) {
+            const dbCollection = await dbConnection.listCollections({ name: finalCollectionName }, { nameOnly: true }).toArray();
+            if (dbCollection.length === 0) {
+                await dbConnection.createCollection(finalCollectionName);
+                creationStatus = true;
+                message = `Collection '${finalCollectionName}' was created as it did not exist.`;
+            } else {
+                message = `Collection '${finalCollectionName}' already exists, no action required.`;
+            }
+
+            collectionName = finalCollectionName;
+            status = true; 
+        } else {
+            message = `Collection name is already '${finalCollectionName}'. No changes were made.`;
+            status = false; 
+        }
+    } catch (error: any) {
+        message = `Failed to create/switch collection: ${error.message}`;
     }
-  } catch (error: any) {
-    status = false;
-    message = `Failed to create or verify the '${collectionName}' collection: ${error.message}`;
-  }
 
-  return { status, message };
-};
+    return { status, creationStatus, collectionName, message };
+}

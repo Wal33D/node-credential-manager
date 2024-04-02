@@ -78,44 +78,43 @@ class CredentialManager {
     return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
-  public async setAndCreateCollectionName(newCollectionName?: string): Promise<{ status: boolean; collectionName: string; wasCreated: boolean; message: string }> {
-    let status = false;
-    let wasCreated = false; 
-    let message = '';
 
-    try {
-        if (!this.dbConnection) {
-            throw new Error("Database connection is not initialized.");
-        }
-
-        const finalCollectionName = newCollectionName ?? defaultCollectionName;
-        const wasAlreadySet = this.collectionName === finalCollectionName;
-
-        if (!wasAlreadySet) {
-            this.collectionName = finalCollectionName;
-            const createResult = await createCredentialsCollectionFunction({
-                dbConnection: this.dbConnection,
-                collectionName: finalCollectionName
-            });
-
-            if (!createResult.status) {
-                message = createResult.message;
-            } else {
-                status = true;
-                wasCreated = true; 
-                message = `Collection name successfully set to '${finalCollectionName}' and collection ensured in database.`;
-            }
-        } else {
-            status = true; 
-            message = `Collection name is already '${finalCollectionName}'. No changes were made.`;
-        }
-    } catch (error: any) {
-        message = `Failed to create/switch collection: ${error.message}`;
-    }
-
-    return { status, collectionName: this.collectionName, wasCreated, message };
-}
-
+  public async setCreateCollectionName(newCollectionName?: string): Promise<{ status: boolean; collectionName: string; creationStatus: boolean; message: string }> {
+      let status = false;
+      let creationStatus = false; 
+      let message = '';
+  
+      try {
+          if (!this.dbConnection) {
+              throw new Error("Database connection is not initialized.");
+          }
+  
+          const finalCollectionName = newCollectionName ?? defaultCollectionName;
+          const wasAlreadySet = this.collectionName === finalCollectionName;
+  
+          if (!wasAlreadySet) {
+              const dbCollection = await this.dbConnection.listCollections({ name: finalCollectionName }, { nameOnly: true }).toArray();
+              if (dbCollection.length === 0) {
+                  await this.dbConnection.createCollection(finalCollectionName);
+                  creationStatus = true;
+                  message = `Collection '${finalCollectionName}' was created as it did not exist.`;
+              } else {
+                  message = `Collection '${finalCollectionName}' already exists, no action required.`;
+              }
+  
+              this.collectionName = finalCollectionName;
+              status = true; 
+          } else {
+              message = `Collection name is already '${finalCollectionName}'. No changes were made.`;
+              status = false; 
+          }
+      } catch (error: any) {
+          message = `Failed to create/switch collection: ${error.message}`;
+      }
+  
+      return { status, creationStatus, collectionName: this.collectionName, message };
+  }
+  
 }
 
 export { CredentialManager };

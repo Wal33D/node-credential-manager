@@ -1,7 +1,4 @@
-import { promptForKeyType } from '../utils/promptForKeyType';
 import { CredentialManager } from "../CredentialManager";
-import { promptForServiceName } from '../utils/promptForServiceName';
-import { findSpecificCredentialForService } from '../utils/findSpecificCredentialForService';
 import { viewAllCredentials } from './viewAllCredentials';
 import { promptForNewServiceName } from './promptForNewServiceName';
 import { promptForCollectionDeletion } from './promptForCollectionDeletion';
@@ -30,7 +27,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 message = serviceActionResult.message;
                 break;
             case '6':
-                const initResult = await credentialManager.createCredentialsCollection(credentialManager.collectionName);
+                const initResult = await credentialManager.setCreateCollectionName(credentialManager.collectionName);
                 console.log(initResult.message);
                 status = initResult.status;
                 message = initResult.message;
@@ -58,13 +55,13 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 break;
 
             case '10':
-                const resetResult = credentialManager.setCollectionName();
+                const resetResult = await credentialManager.setCreateCollectionName();
                 console.log(resetResult.message);
                 status = resetResult.status;
                 message = resetResult.message;
                 break;
 
-            case '11': // Updated case number for exiting
+            case '11': 
                 console.log('Exiting...');
                 return { status: true, message: 'Exit option selected', continueApp: false };
 
