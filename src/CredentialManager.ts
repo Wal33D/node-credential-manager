@@ -99,11 +99,11 @@ class CredentialManager {
     }
   }
 
-  public async addOrUpdateKey(keyId: string, keyData: object, cabinetName?: string): Promise<{ status: boolean; keyId: string; operationStatus: boolean; message: string }> {
+  public async addOrUpdateKey(recordName: string, keyData: object, cabinetName?: string): Promise<{ status: boolean; recordId: string|null; operationStatus: boolean; message: string }> {
     await this.ensureDBInit();
 
     if (!this.dbConnection) {
-      return { status: false, keyId, operationStatus: false, message: "Database connection is not initialized." };
+      return { status: false, recordId:null, operationStatus: false, message: "Database connection is not initialized." };
     }
 
     const targetCabinetName = cabinetName || this.collectionName || DEFAULT_COLLECTION_NAME;
@@ -112,13 +112,13 @@ class CredentialManager {
       const result = await createKey({
         dbConnection: this.dbConnection,
         cabinetName: targetCabinetName,
-        keyId: keyId,
+        recordName: recordName,
         keyData: keyData,
       });
 
       return result;
     } catch (error: any) {
-      return { status: false, keyId, operationStatus: false, message: `An error occurred while adding/updating the key: ${error.message}` };
+      return { status: false, recordId:null, operationStatus: false, message: `An error occurred while adding/updating the key: ${error.message}` };
     }
   }
 }

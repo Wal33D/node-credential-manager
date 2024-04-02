@@ -14,21 +14,23 @@ export const performAction = async ({ action, readLineInterface, credentialManag
     try {
         switch (action) {
             case '2':
-                const keyResult = await promptForKeyName(readLineInterface);
+                const keyResult = await promptForKeyName(readLineInterface) as any;
                 if (!keyResult.status) {
                     message = keyResult.message;
                     break;
                 }
 
-                const valueResult = await promptForKeyValue(readLineInterface);
+                const valueResult = await promptForKeyValue(readLineInterface) as any;
                 if (!valueResult.status) {
                     message = valueResult.message;
                     break;
                 }
 
                 console.log(`Key '${keyResult.key}' with value '${valueResult.value}' is ready for processing.`);
+                const asd = await credentialManager.addOrUpdateKey(keyResult.key , valueResult.value);
+
                 status = true;
-                message = "Key and value received.";
+                message = asd.message;
                 break;
             case '3':
                 const viewCredentialsResult = await viewAllCredentials({ credentialManager, readLineInterface });

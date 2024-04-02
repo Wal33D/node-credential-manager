@@ -35,7 +35,7 @@ export async function insertRecordIntoCabinet({
         if (result.insertedId) {
             return {
                 status: true,
-                insertedId: result.insertedId.toString(), // Convert ObjectId to string for easy handling
+                insertedId: result.insertedId.toString(),
                 message: `Record was successfully inserted into cabinet '${cabinetName}' with ID: ${result.insertedId}.`,
             };
         } else {
