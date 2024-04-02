@@ -53,10 +53,10 @@ class CredentialManager {
     return addServiceFunction({ dbConnection: this.dbConnection as Db, collectionName: this.collectionName, serviceName });
   }
 
-  public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; existed:boolean; message: string }> {
+  public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; message: string }> {
     await this.ensureDBInit();
     if (!this.dbConnection) {
-      return { status: false,existed:false, message: "Database connection is not initialized." };
+      return { status: false, message: "Database connection is not initialized." };
     }
     const targetCollectionName = customCollectionName || this.collectionName;
 
@@ -73,27 +73,25 @@ class CredentialManager {
     return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
-  public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string; message: string; } {
+  public setCollectionName(newCollectionName: string): { status: boolean; oldName: string; newName: string; message: string } {
     const oldName = this.collectionName;
-    let message: string;
-    let status: boolean = false;
+    const isNameUnchanged = oldName === newCollectionName;
+    const message = isNameUnchanged
+        ? `Collection name is already set to '${newCollectionName}'. No changes were made.`
+        : `Collection name updated successfully from '${oldName}' to '${newCollectionName}'.`;
 
-    if (oldName === newCollectionName) {
-        message = `Collection name is already set to '${newCollectionName}'. No changes were made.`; 
-        status = false; 
-    } else {
+    if (!isNameUnchanged) {
         this.collectionName = newCollectionName;
-        message = `Collection name updated successfully from '${oldName}' to '${newCollectionName}'.`;
-        status = true; 
     }
 
     return {
-        status,
+        status: !isNameUnchanged,
         oldName,
-        newName: this.collectionName, 
-        message
+        newName: this.collectionName,
+        message,
     };
 }
+
   
   public resetCollectionNameToDefault(): { status: boolean; oldName: string; newName: string; message: string; } {
     const oldName = this.collectionName;

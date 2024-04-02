@@ -6,10 +6,9 @@ export const createCredentialsCollectionFunction = async ({
 }: {
   dbConnection: Db;
   collectionName: string;
-}): Promise<{ status: boolean; existed: boolean; message: string }> => {
+}): Promise<{ status: boolean; message: string }> => {
   let status = false;
   let message = '';
-  let existed = false;
 
   try {
     const dbCollection = await dbConnection.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
@@ -17,18 +16,14 @@ export const createCredentialsCollectionFunction = async ({
       await dbConnection.createCollection(collectionName);
       status = true;
       message = `Collection '${collectionName}' was created as it did not exist.`;
-      existed = false;
-
     } else {
       message = `Collection '${collectionName}' already exists, no action required.`;
       status = true;
-      existed = true;
     }
   } catch (error: any) {
     status = false;
-    existed = false;
     message = `Failed to create or verify the '${collectionName}' collection: ${error.message}`;
   }
 
-  return { status, existed, message };
+  return { status, message };
 };
