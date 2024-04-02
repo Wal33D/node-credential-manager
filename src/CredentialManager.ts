@@ -67,7 +67,6 @@ class CredentialManager {
     return addServiceFunction({ dbConnection: this.dbConnection as Db, collectionName: this.collectionName, serviceName });
   }
 
-
   public async deleteCredentialsCollection(customCollectionName?: string): Promise<{ status: boolean; message: string }> {
     await this.ensureDBInit();
     if (!this.dbConnection) {
@@ -78,23 +77,19 @@ class CredentialManager {
     return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
-
   public async createCabinet(newCollectionName?: string): Promise<{ status: boolean; creationStatus: boolean; message: string }> {
     await this.ensureDBInit();
 
     if (!this.dbConnection) {
       return { status: false, creationStatus: false, message: "Database connection is not initialized." };
     }
-    const result = await createCabinet({
-      dbConnection: this.dbConnection,
-      collectionName: this.collectionName,
-      newCollectionName,
-      defaultCollectionName
-    });
 
+    const result = await createCabinet({ dbConnection: this.dbConnection, collectionName: this.collectionName, newCollectionName, defaultCollectionName });
+    
     if (result.status) {
       this.collectionName = result.collectionName;
     }
+    
     return result;
   }
 }

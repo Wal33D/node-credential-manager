@@ -1,25 +1,21 @@
 import { Db } from 'mongodb';
 
 export async function createCabinet({
-  dbConnection,
-  collectionName,
-  newCollectionName,
-  defaultCollectionName
+    dbConnection,
+    collectionName,
+    newCollectionName,
+    defaultCollectionName
 }: {
-  dbConnection: Db,
-  collectionName: string,
-  newCollectionName?: string,
-  defaultCollectionName: string
+    dbConnection: Db,
+    collectionName: string,
+    newCollectionName?: string,
+    defaultCollectionName: string
 }): Promise<{ status: boolean; collectionName: string; creationStatus: boolean; message: string }> {
     let status = false;
-    let creationStatus = false; 
+    let creationStatus = false;
     let message = '';
 
     try {
-        if (!dbConnection) {
-            throw new Error("Database connection is not initialized.");
-        }
-
         const finalCollectionName = newCollectionName ?? defaultCollectionName;
         const wasAlreadySet = collectionName === finalCollectionName;
 
@@ -34,10 +30,10 @@ export async function createCabinet({
             }
 
             collectionName = finalCollectionName;
-            status = true; 
+            status = true;
         } else {
             message = `Collection name is already '${finalCollectionName}'. No changes were made.`;
-            status = false; 
+            status = false;
         }
     } catch (error: any) {
         message = `Failed to create/switch collection: ${error.message}`;

@@ -20,7 +20,7 @@ export async function promptForCollectionNameChange({ credentialManager, readLin
             return { status: false, message: setCollectionResult.message };
         }
 
-        const createCollectionResult = await credentialManager.createCredentialsCollection(newName);
+        const createCollectionResult = await credentialManager.createCabinet(newName);
         if (createCollectionResult.status) {
             message = `Collection name changed successfully.`;
             if (createCollectionResult.existed) {

@@ -27,7 +27,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 message = serviceActionResult.message;
                 break;
             case '6':
-                const initResult = await credentialManager.setCreateCollectionName(credentialManager.collectionName);
+                const initResult = await credentialManager.createCabinet(credentialManager.collectionName);
                 console.log(initResult.message);
                 status = initResult.status;
                 message = initResult.message;
@@ -55,7 +55,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 break;
 
             case '10':
-                const resetResult = await credentialManager.setCreateCollectionName();
+                const resetResult = await credentialManager.createCabinet();
                 console.log(resetResult.message);
                 status = resetResult.status;
                 message = resetResult.message;
