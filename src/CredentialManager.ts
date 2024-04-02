@@ -39,9 +39,26 @@ class CredentialManager {
     return { status, message };
   }
 
-  public async ensureDBInit(): Promise<void> {
-    await this.initDBPromise;
-  }
+public async ensureDBInit(): Promise<{ status: boolean; message: string }> {
+    let status = false;
+    let message = '';
+
+    try {
+        await this.initDBPromise;
+        
+        if (!this.dbConnection) {
+            throw new Error("Database connection is not initialized.");
+        }
+
+        status = true;
+        message = "Database connection is initialized.";
+    } catch (error: any) {
+        message = `Error: ${error.message}`;
+    }
+
+    return { status, message };
+}
+
 
   public async getAllCredentials(): Promise<{ status: boolean; message: string; credentials: any[]; databaseName: string; collectionName: string; servicesCount: number; credentialsCount: number; }> {
     await this.ensureDBInit();
@@ -78,18 +95,18 @@ class CredentialManager {
     const wasAlreadySet = this.collectionName === finalCollectionName;
     const action = newCollectionName ? 'updated' : 'reset';
     const messagePrefix = wasAlreadySet ? 'already' : 'successfully';
-  
+
     if (!wasAlreadySet) {
       this.collectionName = finalCollectionName;
     }
-  
+
     return {
       status: !wasAlreadySet,
       collectionName: this.collectionName,
       message: `Collection name ${messagePrefix} ${action} to '${finalCollectionName}'.` + (wasAlreadySet ? " No changes were made." : "")
     };
   }
-  
+
 }
 
 export { CredentialManager };
