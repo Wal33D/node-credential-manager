@@ -78,10 +78,10 @@ class CredentialManager {
     return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
-  public async setAndCreateCollectionName(newCollectionName?: string): Promise<{ status: boolean; collectionName: string; message: string }> {
+  public async setAndCreateCollectionName(newCollectionName?: string): Promise<{ status: boolean; collectionName: string; wasCreated: boolean; message: string }> {
     let status = false;
-    let collectionName = '';
-    let message = `Collection name is already '${this.collectionName}'. No changes were made.`;
+    let wasCreated = false; 
+    let message = '';
 
     try {
         if (!this.dbConnection) {
@@ -90,8 +90,6 @@ class CredentialManager {
 
         const finalCollectionName = newCollectionName ?? defaultCollectionName;
         const wasAlreadySet = this.collectionName === finalCollectionName;
-        const action = newCollectionName ? 'updated' : 'reset';
-        collectionName = this.collectionName; 
 
         if (!wasAlreadySet) {
             this.collectionName = finalCollectionName;
@@ -99,22 +97,23 @@ class CredentialManager {
                 dbConnection: this.dbConnection,
                 collectionName: finalCollectionName
             });
+
             if (!createResult.status) {
                 message = createResult.message;
-                return { status, collectionName: this.collectionName, message };
+            } else {
+                status = true;
+                wasCreated = true; 
+                message = `Collection name successfully set to '${finalCollectionName}' and collection ensured in database.`;
             }
-
-            status = true;
-            message = `Collection name successfully ${action} to '${finalCollectionName}' and collection ensured in database.`;
-        } 
-        if (wasAlreadySet) { 
+        } else {
+            status = true; 
             message = `Collection name is already '${finalCollectionName}'. No changes were made.`;
         }
     } catch (error: any) {
         message = `Failed to create/switch collection: ${error.message}`;
     }
 
-    return { status, collectionName: this.collectionName, message };
+    return { status, collectionName: this.collectionName, wasCreated, message };
 }
 
 }
