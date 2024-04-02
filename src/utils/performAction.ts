@@ -58,7 +58,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
                 break;
 
             case '10':
-                const resetResult = credentialManager.resetCollectionNameToDefault();
+                const resetResult = credentialManager.setCollectionName();
                 console.log(resetResult.message);
                 status = resetResult.status;
                 message = resetResult.message;
