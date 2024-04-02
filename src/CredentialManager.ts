@@ -78,34 +78,44 @@ class CredentialManager {
     return deleteCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
   }
 
-  public async createCredentialsCollection(customCollectionName: string): Promise<{ status: boolean; message: string }> {
-    if (!this.dbConnection) {
-      return { status: false, message: "Database connection is not initialized."};
-    }
-    const targetCollectionName = customCollectionName || this.collectionName;
-  
-    return createCredentialsCollectionFunction({ dbConnection: this.dbConnection, collectionName: targetCollectionName });
-  }
-  
-  public setCollectionName(newCollectionName?: string): { status: boolean; collectionName: string = defaultCollectionName; message: string } {
-    if (!this.dbConnection) {
-      return { status: false, collectionName, message: "Database connection is not initialized."};
-    }
-    const finalCollectionName = newCollectionName ?? defaultCollectionName;
-    const wasAlreadySet = this.collectionName === finalCollectionName;
-    const action = newCollectionName ? 'updated' : 'reset';
-    const messagePrefix = wasAlreadySet ? 'already' : 'successfully';
+  public async setAndCreateCollectionName(newCollectionName?: string): Promise<{ status: boolean; collectionName: string; message: string }> {
+    let status = false;
+    let collectionName = '';
+    let message = `Collection name is already '${this.collectionName}'. No changes were made.`;
 
-    if (!wasAlreadySet) {
-      this.collectionName = finalCollectionName;
+    try {
+        if (!this.dbConnection) {
+            throw new Error("Database connection is not initialized.");
+        }
+
+        const finalCollectionName = newCollectionName ?? defaultCollectionName;
+        const wasAlreadySet = this.collectionName === finalCollectionName;
+        const action = newCollectionName ? 'updated' : 'reset';
+        collectionName = this.collectionName; 
+
+        if (!wasAlreadySet) {
+            this.collectionName = finalCollectionName;
+            const createResult = await createCredentialsCollectionFunction({
+                dbConnection: this.dbConnection,
+                collectionName: finalCollectionName
+            });
+            if (!createResult.status) {
+                message = createResult.message;
+                return { status, collectionName: this.collectionName, message };
+            }
+
+            status = true;
+            message = `Collection name successfully ${action} to '${finalCollectionName}' and collection ensured in database.`;
+        } 
+        if (wasAlreadySet) { 
+            message = `Collection name is already '${finalCollectionName}'. No changes were made.`;
+        }
+    } catch (error: any) {
+        message = `Failed to create/switch collection: ${error.message}`;
     }
 
-    return {
-      status: !wasAlreadySet,
-      collectionName: this.collectionName,
-      message: `Collection name ${messagePrefix} ${action} to '${finalCollectionName}'.` + (wasAlreadySet ? " No changes were made." : "")
-    };
-  }
+    return { status, collectionName: this.collectionName, message };
+}
 
 }
 
