@@ -4,7 +4,7 @@ import { Db } from 'mongodb';
 import { initializeMongo } from './utils/initializeMongo';
 import { addServiceFunction } from './functions/addServiceFunction';
 import { getAllCredentialsAndStatsFunction } from './functions/getAllCredentialsAndStatsFunction';
-import { createCredentialsCollectionFunction } from './functions/createCredentialsCollectionFunction';
+import { createCabinet } from './functions/createCabinet';
 import { deleteCredentialsCollectionFunction } from './functions/deleteCredentialsCollectionFunction';
 
 const defaultCollectionName = 'CredentialManager';
@@ -29,7 +29,7 @@ class CredentialManager {
         throw new Error('Failed to initialize MongoDB connection.');
       }
       this.dbConnection = mongoDatabase;
-      const { message: credMessage } = await createCredentialsCollectionFunction({ dbConnection: mongoDatabase as any, collectionName: this.collectionName });
+      const { message: credMessage } = await createCabinet({ dbConnection: mongoDatabase as any, collectionName: this.collectionName, defaultCollectionName });
       status = true;
       message = `Database initialized successfully, ${credMessage}`;
     } catch (error: any) {
@@ -79,42 +79,24 @@ class CredentialManager {
   }
 
 
-  public async setCreateCollectionName(newCollectionName?: string): Promise<{ status: boolean; collectionName: string; creationStatus: boolean; message: string }> {
-      let status = false;
-      let creationStatus = false; 
-      let message = '';
-  
-      try {
-          if (!this.dbConnection) {
-              throw new Error("Database connection is not initialized.");
-          }
-  
-          const finalCollectionName = newCollectionName ?? defaultCollectionName;
-          const wasAlreadySet = this.collectionName === finalCollectionName;
-  
-          if (!wasAlreadySet) {
-              const dbCollection = await this.dbConnection.listCollections({ name: finalCollectionName }, { nameOnly: true }).toArray();
-              if (dbCollection.length === 0) {
-                  await this.dbConnection.createCollection(finalCollectionName);
-                  creationStatus = true;
-                  message = `Collection '${finalCollectionName}' was created as it did not exist.`;
-              } else {
-                  message = `Collection '${finalCollectionName}' already exists, no action required.`;
-              }
-  
-              this.collectionName = finalCollectionName;
-              status = true; 
-          } else {
-              message = `Collection name is already '${finalCollectionName}'. No changes were made.`;
-              status = false; 
-          }
-      } catch (error: any) {
-          message = `Failed to create/switch collection: ${error.message}`;
-      }
-  
-      return { status, creationStatus, collectionName: this.collectionName, message };
+  public async createCabinet(newCollectionName?: string): Promise<{ status: boolean; creationStatus: boolean; message: string }> {
+    await this.ensureDBInit();
+
+    if (!this.dbConnection) {
+      return { status: false, creationStatus: false, message: "Database connection is not initialized." };
+    }
+    const result = await createCabinet({
+      dbConnection: this.dbConnection,
+      collectionName: this.collectionName,
+      newCollectionName,
+      defaultCollectionName
+    });
+
+    if (result.status) {
+      this.collectionName = result.collectionName;
+    }
+    return result;
   }
-  
 }
 
 export { CredentialManager };

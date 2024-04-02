@@ -1,6 +1,6 @@
 import { Db } from 'mongodb';
 
-export async function CreateCabinet({
+export async function createCabinet({
   dbConnection,
   collectionName,
   newCollectionName,
