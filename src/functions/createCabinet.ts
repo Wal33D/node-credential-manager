@@ -22,6 +22,7 @@ export async function createCabinet({
         if (!wasAlreadySet) {
             const dbCollection = await dbConnection.listCollections({ name: finalCollectionName }, { nameOnly: true }).toArray();
             if (dbCollection.length === 0) {
+                console.log(finalCollectionName)
                 await dbConnection.createCollection(finalCollectionName);
                 creationStatus = true;
                 message = `Collection '${finalCollectionName}' was created as it did not exist.`;

@@ -8,33 +8,23 @@ export async function promptForCollectionNameChange({ credentialManager, readLin
     let message = '';
 
     try {
+        // Prompt for the new collection name
         const newNameResult = await promptForNewCollectionName({ credentialManager, readLineInterface });
         if (!newNameResult.status || !newNameResult.newName) {
-            return { status: false, message: "Operation canceled or invalid collection name provided." };
+            throw new Error("Operation canceled or invalid collection name provided.");
         }
 
-        const newName = newNameResult.newName;
-        const setCollectionResult = await credentialManager.setCollectionName(newName);
-        if (!setCollectionResult.status) {
-            console.log(setCollectionResult.message);
-            return { status: false, message: setCollectionResult.message };
-        }
+        const {status, collectionName, message: creationMessage} = await credentialManager.createCabinet({
+            newCollectionName: newNameResult.newName
+        });
 
-        const createCollectionResult = await credentialManager.createCabinet(newName);
-        if (createCollectionResult.status) {
-            message = `Collection name changed successfully.`;
-            if (createCollectionResult.existed) {
-                message += ` The collection '${newName}' already existed.`;
-            } else {
-                message += ` A new collection '${newName}' was created successfully.`;
-            }
-            status = true;
+        if (status) {
+            message = `Collection name changed successfully to '${collectionName}'.`;
         } else {
-            message = `Failed to create or confirm the existence of the collection '${newName}'.`;
-            status = false;
+            message = creationMessage;
         }
+
     } catch (error: any) {
-        status = false;
         message = `An error occurred during the collection name change process: ${error.message}`;
     }
 
