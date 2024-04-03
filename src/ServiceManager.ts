@@ -3,22 +3,28 @@ import { Db, ObjectId } from 'mongodb';
 export class ServiceManager {
     private dbConnection: Db;
     public cabinetName: string;
-    public credentials: any[] = [];
+    // Changing the type of credentials to have a clearer structure
+    public credentials: { _id: ObjectId, name: string, value: any }[] = [];
 
     constructor({ dbConnection, cabinetName }: { dbConnection: Db, cabinetName: string }) {
         this.dbConnection = dbConnection;
         this.cabinetName = cabinetName;
-        this.listCredentials();
+        this.loadCredentials();
+        
     }
 
-    // Optionally, list all credentials in the cabinet
-    public async listCredentials(): Promise<{ credentials?: any[] }> {
+    public async loadCredentials(): Promise<void> {
         try {
-            this.credentials = await this.dbConnection.collection(this.cabinetName).find({}).toArray();
-            console.log(this.credentials)
-            return  this.credentials;
+            const docs = await this.dbConnection.collection(this.cabinetName).find({}).toArray();
+            // Transform each document into a structured credential object
+            this.credentials = docs.map(doc => ({
+                _id: doc._id,
+                name: doc.name,
+                value: doc.value
+            }));
         } catch (error: any) {
-            return { status: false, message: `Failed to list credentials: ${error.message}` };
+            console.error(`Failed to load credentials: ${error.message}`);
+            // Not changing the credentials array in case of error
         }
     }
 

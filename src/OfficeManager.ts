@@ -40,8 +40,7 @@ export class OfficeManager {
                 console.log(`Connected successfully to MongoDB and to database: ${this.officeName}`);
 
                 // Instantiate CabinetManager with the connected database
-                this.cabinetManager = new CabinetManager({ officeDbConnection: this.officeDbConnection });
-                console.log('CabinetManager initialized successfully.');
+                this.cabinetManager = await new CabinetManager({ officeDbConnection: this.officeDbConnection });
                 return;
             } catch (error: any) {
                 attempts++;
