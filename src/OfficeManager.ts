@@ -5,7 +5,7 @@ import { Db, MongoClient } from 'mongodb';
 const DEFAULT_OFFICE_NAME = process.env.DEFAULT_OFFICE_NAME || "CredentialManager";
 
 export class OfficeManager {
-  officeDbConnection: Db | null = null;
+  officeDbConnection: Db | null = null; // Renamed for clarity
   private officeName: string;
 
   constructor(officeName: string = DEFAULT_OFFICE_NAME) {
