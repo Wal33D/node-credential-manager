@@ -16,6 +16,7 @@ async function startMenu() {
   await delay(1000); // Wait for 3000 milliseconds (3 seconds)
   // Retrieve the OfficeManager instance for the default office
   const officeManager = credentialManager.offices.get(defaultOfficeName);
+  await delay(1000); // Wait for 3000 milliseconds (3 seconds)
 
   if (!officeManager) {
     console.error(`Office '${defaultOfficeName}' not found.`);
