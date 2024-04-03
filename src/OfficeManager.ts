@@ -38,13 +38,10 @@ export class OfficeManager {
                 await mongoClient.connect();
                 this.officeDbConnection = mongoClient.db(this.officeName);
                 console.log(`Connected successfully to MongoDB and to database: ${this.officeName}`);
-                
+
                 // Instantiate CabinetManager with the connected database
                 this.cabinetManager = new CabinetManager({ officeDbConnection: this.officeDbConnection });
                 console.log('CabinetManager initialized successfully.');
-                const serviceManager = this.cabinetManager.getServiceManager('MyServiceCabinet');
-                console.log('ServiceManager initialized successfully.', serviceManager);
-
                 return;
             } catch (error: any) {
                 attempts++;
@@ -56,16 +53,6 @@ export class OfficeManager {
             }
         }
     }
-// OfficeManager class
-
-public getCabinetManager(cabinetName?: string): CabinetManager {
-    if (!this.officeDbConnection) {
-        throw new Error("Office database connection is not established.");
-    }
-    // Use the provided cabinetName or fallback to a default
-    const targetCabinetName = cabinetName || 'DefaultCabinet';
-    return new CabinetManager({ officeDbConnection: this.officeDbConnection, cabinetName: targetCabinetName });
-}
 
     public async ensureConnection(): Promise<void> {
         if (!this.officeDbConnection) {
@@ -75,7 +62,6 @@ public getCabinetManager(cabinetName?: string): CabinetManager {
         }
     }
 
-    // Delegate method to list cabinets using CabinetManager
     public async listCabinets(): Promise<string[]> {
         if (!this.cabinetManager) {
             throw new Error("CabinetManager is not initialized.");

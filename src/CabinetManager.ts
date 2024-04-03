@@ -3,8 +3,9 @@ import { ServiceManager } from './ServiceManager';
 
 export class CabinetManager {
     private officeDbConnection: Db;
-    private cabinetName: string;
-    private cabinets: string[] = []; // Cache for cabinet names
+    public cabinetName: string;
+    public serviceManagers: Map<string, ServiceManager> = new Map(); 
+    public cabinets: string[] = []; 
 
     constructor({ officeDbConnection, cabinetName }: { officeDbConnection: Db, cabinetName?: string }) {
         this.officeDbConnection = officeDbConnection;
@@ -14,16 +15,18 @@ export class CabinetManager {
 
     private async initializeCabinets(): Promise<void> {
         try {
-            // Fetch and cache the list of cabinets
             this.cabinets = await this.listCabinets();
             
-            // Ensure the specified or default cabinet exists
             if (!this.cabinets.includes(this.cabinetName)) {
                 console.log(`Cabinet '${this.cabinetName}' not found. Creating default cabinet: '${this.cabinetName}'`);
                 await this.createCabinet(this.cabinetName);
-                // Refresh the cabinets list after creation
                 this.cabinets.push(this.cabinetName);
             }
+
+            this.cabinets.forEach(cabinet => {
+                const serviceManager = new ServiceManager({ dbConnection: this.officeDbConnection, cabinetName: cabinet });
+                this.serviceManagers.set(cabinet, serviceManager);
+            });
         } catch (error: any) {
             console.error(`Error during cabinet initialization: ${error.message}`);
         }
@@ -31,9 +34,10 @@ export class CabinetManager {
 
     public async listCabinets(): Promise<string[]> {
         if (this.cabinets.length > 0) {
+            console.log(`Returning cached cabinet list: ${this.cabinets.join(', ')}`);
             return this.cabinets;
         }
-
+        
         try {
             const cabinets = await this.officeDbConnection.listCollections({}, { nameOnly: true }).toArray();
             this.cabinets = cabinets.map(cabinet => cabinet.name);
@@ -50,7 +54,6 @@ export class CabinetManager {
                 return { status: false, message: `Cabinet '${cabinetName}' already exists.` };
             }
             await this.officeDbConnection.createCollection(cabinetName);
-            // Update the cache to include the newly created cabinet
             this.cabinets.push(cabinetName);
             return { status: true, message: `Cabinet '${cabinetName}' created successfully.` };
         } catch (error: any) {
@@ -65,7 +68,6 @@ export class CabinetManager {
                 return { status: false, message: `Cabinet '${cabinetName}' does not exist.` };
             }
             await this.officeDbConnection.dropCollection(cabinetName);
-            // Update the cache to remove the deleted cabinet
             this.cabinets = this.cabinets.filter(name => name !== cabinetName);
             return { status: true, message: `Cabinet '${cabinetName}' deleted successfully.` };
         } catch (error: any) {
