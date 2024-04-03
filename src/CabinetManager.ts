@@ -3,9 +3,9 @@ import { ServiceManager } from './ServiceManager';
 
 export class CabinetManager {
     private officeDbConnection: Db;
+    public cabinets: string[] = [];
     public cabinetName: string;
     public serviceManagers: Map<string, ServiceManager> = new Map();
-    public cabinets: string[] = [];
 
     constructor({ officeDbConnection, cabinetName }: { officeDbConnection: Db, cabinetName?: string }) {
         this.officeDbConnection = officeDbConnection;
@@ -18,9 +18,7 @@ export class CabinetManager {
             this.cabinets = await this.listCabinets();
 
             if (!this.cabinets.includes(this.cabinetName)) {
-                console.log(`Cabinet '${this.cabinetName}' not found. Creating default cabinet: '${this.cabinetName}'`);
                 await this.createCabinet(this.cabinetName);
-                // Ensure the cabinets list is updated immediately
                 this.cabinets.push(this.cabinetName);
             }
 
@@ -36,7 +34,6 @@ export class CabinetManager {
             console.error(`Error during cabinet initialization: ${error.message}`);
         }
     }
-
 
     public async listCabinets(): Promise<string[]> {
         if (this.cabinets.length > 0) {

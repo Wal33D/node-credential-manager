@@ -18,7 +18,6 @@ class CredentialManager {
     dbCluster = process.env.DB_CLUSTER || "cluster0.example.mongodb.net",
     officeName = process.env.DEFAULT_OFFICE_NAME || "DefaultOffice"
   }: CredentialManagerParams = {}) {
-    // Initialize OfficeManager with provided or default parameters
     this.officeManager = new OfficeManager({ officeName, dbUsername, dbPassword, dbCluster });
   }
 
@@ -29,7 +28,7 @@ class CredentialManager {
       console.log(`Initialization successful: Office '${this.officeManager.officeName}' is ready for use.`);
       const cabinetsList = await this.officeManager.listCabinets();
       console.log(`Available cabinets in '${this.officeManager.officeName}': ${cabinetsList.join(', ')}`);
-      console.log(this.officeManager)
+      console.log(this.officeManager.cabinetManagers)
     } catch (error: any) {
       console.error(`Initialization failed: ${error.message}`);
       throw error;
