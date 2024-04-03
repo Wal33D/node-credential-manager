@@ -19,7 +19,7 @@ export const viewAllCredentials = async ({ credentialManager, readLineInterface 
       createdInternally = true;
     }
 
-    const result = await credentialManager.getAllCredentials();
+    const result =" await credentialManager.getAllCredentials();" as any
 
     if (!result.status) {
       throw new Error("No credentials found.");
