@@ -8,7 +8,7 @@ async function startMenu() {
   const credentialManager = new CredentialManager();
 
   // Initialize the CredentialManager (ensure connection, etc.)
-  await credentialManager.initialize();
+  await credentialManager.initializeAllOffices();
 
   while (true) {
     const readlineInterfaceResult = createReadlineInterface();

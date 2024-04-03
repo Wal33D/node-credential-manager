@@ -42,13 +42,20 @@ export class OfficeManager {
     }
 
     private async ensureDefaultCollectionExists(): Promise<void> {
+        // Check that officeDbConnection is not null to satisfy TypeScript's strict null checks
+        if (!this.officeDbConnection) {
+            console.error("Database connection is not established in ensureDefaultCollectionExists.");
+            throw new Error("Database connection is not established.");
+        }
+    
         const collections = await this.officeDbConnection.listCollections({}, { nameOnly: true }).toArray();
         if (collections.length === 0) {
-            // Create a default collection if no collections are found
+            // Since we've already checked for null, we can confidently use officeDbConnection here
             await this.officeDbConnection.createCollection("defaultCollection");
             console.log(`Default collection created in database: ${this.officeName}`);
         }
     }
+    
 
     public async ensureConnection(): Promise<void> {
         if (!this.officeDbConnection) {
