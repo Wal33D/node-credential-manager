@@ -6,15 +6,14 @@ import { createReadlineInterface } from './utils/createReadlineInterface';
 async function startMenu() {
   // Initialize CredentialManager and its offices
   const credentialManager = new CredentialManager();
-  await credentialManager.initializeAllOffices();
 
   // Define default office and cabinet names
-  const defaultOfficeName = process.env.DEFAULT_OFFICE_NAME || "DefaultOffice";
-  const defaultCabinetName = process.env.DEFAULT_CABINET_NAME || "DefaultCabinet";
+  const defaultOfficeName = process.env.DEFAULT_OFFICE_NAME as string ;
+  const defaultCabinetName = process.env.DEFAULT_CABINET_NAME as string;
 
   // Generate a random value for demonstration purposes
   const randomValue = Math.floor(Math.random() * 100);
-
+  await delay(1000); // Wait for 3000 milliseconds (3 seconds)
   // Retrieve the OfficeManager instance for the default office
   const officeManager = credentialManager.offices.get(defaultOfficeName);
 
@@ -56,3 +55,6 @@ async function startMenu() {
 
 
 startMenu(); // Removed empty object passed as an argument
+function delay(milliseconds:any) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
