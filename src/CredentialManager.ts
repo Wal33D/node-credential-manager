@@ -8,38 +8,43 @@ import { createCabinet as createCabinetFunction } from './functions/createCabine
 import { deleteCabinet } from './functions/deleteCabinet';
 import { insertRecordIntoCabinet } from './functions/insertRecordIntoCabinet';
 
-const DEFAULT_COLLECTION_NAME = process.env.DEFAULT_COLLECTION_NAME || "CredentialManager";
+const DEFAULT_CABINET_NAME = process.env.DEFAULT_CABINET_NAME || "CredentialManager";
+const DEFAULT_OFFICE_NAME = process.env.DEFAULT_CABINET_NAME || "CredentialManager";
 
 class CredentialManager {
   dbConnection: Db | null = null;
   initDBPromise: Promise<{ status: boolean; message: string }>;
   collectionName: string;
 
-  constructor(collectionName: string = DEFAULT_COLLECTION_NAME) {
+  constructor(collectionName: string = DEFAULT_CABINET_NAME) {
     this.collectionName = collectionName;
     this.initDBPromise = this.initializeDB();
   }
 
-  private async initializeDB(): Promise<{ status: boolean; message: string }> {
+  private async initializeDB(officeName: string): Promise<{ status: boolean; message: string }> {
     let message = '';
     let status = false;
-
+  
     try {
-      const { status: mongoDBStatus, mongoDatabase } = await initializeMongo();
+      // Adjusted to pass 'officeName' to 'initializeMongo' and updated the destructured response variable
+      const { status: mongoDBStatus, databaseConnection, message: mongoMessage } = await initializeMongo({ officeName });
       if (!mongoDBStatus) {
-        throw new Error('Failed to initialize MongoDB connection.');
+        // This will now properly halt the application by throwing an error if the connection fails
+        throw new Error(mongoMessage || 'Failed to initialize MongoDB connection.');
       }
-      this.dbConnection = mongoDatabase;
-      const { message: credMessage } = await createCabinetFunction({ dbConnection: mongoDatabase as any, collectionName: this.collectionName });
+      this.dbConnection = databaseConnection; // Ensure this line correctly assigns the database connection
+      // Assuming 'createCabinetFunction' expects a 'dbConnection'. Adjust as needed.
+      const { message: credMessage } = await createCabinetFunction({ officeConnection: databaseConnection, collectionName: this.collectionName });
       status = true;
       message = `Database initialized successfully, ${credMessage}`;
     } catch (error: any) {
       status = false;
       message = `Database initialization error: ${error.message}`;
+      throw new Error(message); 
     }
     return { status, message };
   }
-
+  
   public async ensureDBInit(): Promise<{ status: boolean; message: string }> {
     let status = false;
     let message = '';
@@ -52,6 +57,7 @@ class CredentialManager {
       status = true;
       message = "Database connection is initialized.";
     } catch (error: any) {
+      status = false; 
       message = `Error: ${error.message}`;
     }
 
@@ -105,7 +111,7 @@ class CredentialManager {
       return { status: false, recordId:null,  message: "Database connection is not initialized." };
     }
 
-    const targetCabinetName = cabinetName || this.collectionName || DEFAULT_COLLECTION_NAME;
+    const targetCabinetName = cabinetName || this.collectionName || DEFAULT_CABINET_NAME;
 
     try {
       const result = await insertRecordIntoCabinet({
