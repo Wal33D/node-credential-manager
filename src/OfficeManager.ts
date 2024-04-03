@@ -14,7 +14,7 @@ export class OfficeManager {
     private dbUsername: string;
     private dbPassword: string;
     private dbCluster: string;
-    private cabinetManager?: CabinetManager;
+    public cabinetManagers: Map<string, CabinetManager> = new Map();
 
     constructor({ officeName, dbUsername, dbPassword, dbCluster }: OfficeManagerParams) {
         this.officeName = officeName;
@@ -39,7 +39,7 @@ export class OfficeManager {
                 console.log(`Connected successfully to MongoDB and to database: ${this.officeName}`);
 
                 // Now we initialize the CabinetManager here
-                await this.initializeCabinetManager();
+                await this.initializeCabinetManagers();
                 return;
             } catch (error: any) {
                 attempts++;
@@ -60,19 +60,24 @@ export class OfficeManager {
         }
     }
 
-    private async initializeCabinetManager(): Promise<void> {
+    private async initializeCabinetManagers(): Promise<void> {
+        const cabinetNames = await this.listCabinets();
+
+        // For each cabinet, initialize a CabinetManager and add it to the map
+        cabinetNames.forEach(cabinetName => {
+            const cabinetManager = new CabinetManager({ officeDbConnection: this.officeDbConnection!, cabinetName });
+            this.cabinetManagers.set(cabinetName, cabinetManager);
+        });
+
+        console.log('CabinetManagers initialized for all cabinets.');
+    }
+
+    public async listCabinets(): Promise<string[]> {
         if (!this.officeDbConnection) {
             throw new Error("Database connection not established.");
         }
 
-        this.cabinetManager = new CabinetManager({ officeDbConnection: this.officeDbConnection });
-        console.log('CabinetManager initialized successfully.');
-    }
-    // Delegate listing cabinets to CabinetManager
-    public async listCabinets(): Promise<string[]> {
-        if (!this.cabinetManager) {
-            throw new Error("CabinetManager is not initialized.");
-        }
-        return this.cabinetManager.listCabinets();
+        const cabinets = await this.officeDbConnection.listCollections({}, { nameOnly: true }).toArray();
+        return cabinets.map(cabinet => cabinet.name);
     }
 }
