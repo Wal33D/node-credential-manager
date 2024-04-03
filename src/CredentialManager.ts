@@ -81,7 +81,6 @@ class CredentialManager {
   public async createCabinet(newCollectionName?: string): Promise<{ status: boolean; creationStatus: boolean; message: string }> {
     try {
       await this.ensureDBInit();
-
       if (!this.dbConnection) {
         return { status: false, creationStatus: false, message: "Database connection is not initialized." };
       }
