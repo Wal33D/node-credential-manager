@@ -1,12 +1,11 @@
 import { Db, MongoClient } from 'mongodb';
-import { CabinetManager } from './CabinetManager'; // Ensure this path is correct
+import { CabinetManager } from './CabinetManager';
 
 interface OfficeManagerParams {
     officeName: string;
     dbUsername: string;
     dbPassword: string;
     dbCluster: string;
-    defaultCabinetName: string;
 }
 
 export class OfficeManager {
@@ -39,10 +38,10 @@ export class OfficeManager {
                 await mongoClient.connect();
                 this.officeDbConnection = mongoClient.db(this.officeName);
                 console.log(`Connected successfully to MongoDB and to database: ${this.officeName}`);
-
-                // Initialize CabinetManager and ensure default cabinet
-                this.cabinetManager = new CabinetManager({officeDbConnection: this.officeDbConnection});
-                console.log('CabinetManager initialized successfully.')
+                
+                // Instantiate CabinetManager with the connected database
+                this.cabinetManager = new CabinetManager({ officeDbConnection: this.officeDbConnection });
+                console.log('CabinetManager initialized successfully.');
                 return;
             } catch (error: any) {
                 attempts++;
@@ -62,4 +61,13 @@ export class OfficeManager {
             console.log("Database connection is already established.");
         }
     }
+
+    // Delegate method to list cabinets using CabinetManager
+    public async listCabinets(): Promise<string[]> {
+        if (!this.cabinetManager) {
+            throw new Error("CabinetManager is not initialized.");
+        }
+        return this.cabinetManager.listCabinets();
+    }
+
 }

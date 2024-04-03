@@ -3,8 +3,12 @@ import { performAction } from "./utils/performAction";
 import { CredentialManager } from "./CredentialManager";
 import { createReadlineInterface } from './utils/createReadlineInterface';
 
-async function startMenu({ credentialManager = new CredentialManager() }) {
-  await credentialManager.ensureDBInit();
+async function startMenu() {
+  // Initialize the CredentialManager
+  const credentialManager = new CredentialManager();
+
+  // Initialize the CredentialManager (ensure connection, etc.)
+  await credentialManager.initialize();
 
   while (true) {
     const readlineInterfaceResult = createReadlineInterface();
@@ -15,17 +19,6 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
     }
 
     const readLineInterface = readlineInterfaceResult.interfaceInstance as any;
-    const result = await credentialManager.getAllCredentials();
-
-    if (!result.status) {
-      console.log("No credentials found.");
-      return;
-    }
-
-    // Display the credentials
-    console.log(`\nCREDENTIALS & KEYS`);
-    console.log(`- Database: ${result.databaseName} | Collection: ${result.collectionName}`);
-    console.log(`- Services: ${result.servicesCount} | Credentials: ${result.credentialsCount}\n`);
 
     // Await the user's action choice
     const menuResult = await promptMenu({ readLineInterface });
@@ -36,7 +29,7 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
 
     const action = menuResult.choice;
 
-    const {continueApp} = await performAction({ credentialManager, action, readLineInterface });
+    const { continueApp } = await performAction({ credentialManager, action, readLineInterface });
     if (!continueApp) break;
   }
 
@@ -44,4 +37,4 @@ async function startMenu({ credentialManager = new CredentialManager() }) {
   process.exit(0);
 }
 
-startMenu({});
+startMenu(); // Removed empty object passed as an argument
