@@ -28,6 +28,7 @@ class CredentialManager {
       // Log details about the office setup
       console.log(`Initialization successful: Office '${this.officeManager.officeName}' is ready for use.`);
       // Optionally, log details about available cabinets if needed
+      
       const cabinetsList = await this.officeManager.listCabinets();
       console.log(`Available cabinets in '${this.officeManager.officeName}': ${cabinetsList.join(', ')}`);
     } catch (error: any) {

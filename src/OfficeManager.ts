@@ -58,13 +58,13 @@ export class OfficeManager {
     }
 // OfficeManager class
 
-public getCabinetManager(cabinetName: string): CabinetManager {
-    // Ensure the officeDbConnection is established
+public getCabinetManager(cabinetName?: string): CabinetManager {
     if (!this.officeDbConnection) {
         throw new Error("Office database connection is not established.");
     }
-    // Return a new CabinetManager for the specified cabinet
-    return new CabinetManager({ officeDbConnection: this.officeDbConnection, cabinetName });
+    // Use the provided cabinetName or fallback to a default
+    const targetCabinetName = cabinetName || 'DefaultCabinet';
+    return new CabinetManager({ officeDbConnection: this.officeDbConnection, cabinetName: targetCabinetName });
 }
 
     public async ensureConnection(): Promise<void> {
