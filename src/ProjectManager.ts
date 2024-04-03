@@ -66,13 +66,29 @@ export class ProjectManager {
         return cabinets.map(cabinet => cabinet.name);
     }
 
-    public async addCredentialToCabinet(cabinetName: string, credentialName: string, credentialData: object): Promise<void> {
+    public async addCredentialToCabinet(cabinetName: string, credentialData: Credential): Promise<void> {
         this.checkConnection();
-        await this.projectDbConnection!.collection(cabinetName).insertOne({ name: credentialName, ...credentialData });
-        console.log(`Credential '${credentialName}' added to cabinet '${cabinetName}'.`);
+        const now = new Date();
+        // Ensure createdAt is set
+        const dataWithTimestamp = { ...credentialData, createdAt: credentialData.createdAt || now };
+        await this.projectDbConnection!.collection(cabinetName).insertOne(dataWithTimestamp);
+        console.log(`Credential '${credentialData.name}' added to cabinet '${cabinetName}'.`);
     }
 
     private checkConnection(): void {
         if (!this.projectDbConnection) throw new Error("Database connection not established.");
     }
+}
+
+
+// If you're adding it to your existing 'types' module
+import { ObjectId } from 'mongodb';
+
+export interface Credential {
+    _id?: ObjectId; // Assuming you want to include the MongoDB ObjectId for the credential
+    name: string; // Name of the credential, assuming it's what you referred to as serviceName
+    envName: string; // Environment name for the credential
+    createdAt: Date; // Creation date for the credential
+    // Add other fields as necessary
+    [key: string]: any; // To allow for flexibility with additional data
 }

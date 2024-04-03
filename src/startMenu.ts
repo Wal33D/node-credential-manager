@@ -19,9 +19,18 @@ async function startMenu() {
     console.error(`Project '${defaultProjectName}' not found.`);
     return;
   }
-
-  // Call the addCredentialToCabinet method to insert the new credential with the random value
-  await projectManager.addCredentialToCabinet('OpenAI', "bestkey", { value });
+  const credentialName = "bestkey";
+  const envName = "production"; // or any appropriate environment name
+  
+  const credentialData = {
+    name: credentialName,
+    envName: envName,
+    createdAt: new Date(), // Set the creation date to now
+    value: value, // Assuming 'value' is part of the additional data you want to store
+  };
+  
+  // Call the addCredentialToCabinet method to insert the new service with the random value
+  await projectManager.addCredentialToCabinet('OpenAI', credentialData);
   console.log(`Credential 'OpenAI' with random value ${value} added to cabinet 'OpenAI' in project '${defaultProjectName}'.`);
 
   while (true) {
