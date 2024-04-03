@@ -24,18 +24,17 @@ class CredentialManager {
 
   public async initialize(): Promise<void> {
     try {
-      await this.officeManager.ensureConnection();
-      // Log details about the office setup
-      console.log(`Initialization successful: Office '${this.officeManager.officeName}' is ready for use.`);
-      // Optionally, log details about available cabinets if needed
-      
-      const cabinetsList = await this.officeManager.listCabinets();
-      console.log(`Available cabinets in '${this.officeManager.officeName}': ${cabinetsList.join(', ')}`);
+        await this.officeManager.ensureConnection();
+
+        console.log(`Initialization successful: Office '${this.officeManager.officeName}' is ready for use.`);
+        const cabinetsList = await this.officeManager.listCabinets();
+        console.log(`Available cabinets in '${this.officeManager.officeName}': ${cabinetsList.join(', ')}`);
     } catch (error: any) {
-      console.error(`Initialization failed: ${error.message}`);
-      throw error; 
+        console.error(`Initialization failed: ${error.message}`);
+        throw error;
     }
-  }
+}
+
 }
 
 export { CredentialManager };

@@ -11,7 +11,7 @@ export class ServiceManager {
         this.cabinetName = cabinetName;
     }
 
-    private async init(): Promise<void> {
+    public async init(): Promise<void> {
         if (!this.isInitialized) {
             await this.loadCredentials();
             this.isInitialized = true; // Set flag to true after successful initialization

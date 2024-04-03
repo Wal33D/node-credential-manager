@@ -4,8 +4,8 @@ import { ServiceManager } from './ServiceManager';
 export class CabinetManager {
     private officeDbConnection: Db;
     public cabinetName: string;
-    public serviceManagers: Map<string, ServiceManager> = new Map(); 
-    public cabinets: string[] = []; 
+    public serviceManagers: Map<string, ServiceManager> = new Map();
+    public cabinets: string[] = [];
 
     constructor({ officeDbConnection, cabinetName }: { officeDbConnection: Db, cabinetName?: string }) {
         this.officeDbConnection = officeDbConnection;
@@ -16,29 +16,34 @@ export class CabinetManager {
     private async initializeCabinets(): Promise<void> {
         try {
             this.cabinets = await this.listCabinets();
-            
+
             if (!this.cabinets.includes(this.cabinetName)) {
                 console.log(`Cabinet '${this.cabinetName}' not found. Creating default cabinet: '${this.cabinetName}'`);
                 await this.createCabinet(this.cabinetName);
+                // Ensure the cabinets list is updated immediately
                 this.cabinets.push(this.cabinetName);
             }
 
-            this.cabinets.forEach(cabinet => {
+            // Initialize ServiceManagers and wait for all to be ready
+            await Promise.all(this.cabinets.map(async (cabinet) => {
                 const serviceManager = new ServiceManager({ dbConnection: this.officeDbConnection, cabinetName: cabinet });
+                await serviceManager.init(); // Assuming ServiceManager has an async init method
                 this.serviceManagers.set(cabinet, serviceManager);
-            });
-            console.log(this.serviceManagers)
+            }));
+
+            console.log('All ServiceManagers are initialized and set.', this.serviceManagers);
         } catch (error: any) {
             console.error(`Error during cabinet initialization: ${error.message}`);
         }
     }
+
 
     public async listCabinets(): Promise<string[]> {
         if (this.cabinets.length > 0) {
             console.log(`Returning cached cabinet list: ${this.cabinets.join(', ')}`);
             return this.cabinets;
         }
-        
+
         try {
             const cabinets = await this.officeDbConnection.listCollections({}, { nameOnly: true }).toArray();
             this.cabinets = cabinets.map(cabinet => cabinet.name);
