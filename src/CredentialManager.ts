@@ -2,7 +2,6 @@ require('dotenv').config({ path: './.env.local' });
 
 import { OfficeManager } from './OfficeManager';
 
-// Define TypeScript interfaces for the constructor parameters to clarify expected types
 interface CredentialManagerParams {
   officeName?: string;
   dbUsername?: string;
@@ -23,16 +22,22 @@ class CredentialManager {
       throw new Error("Missing MongoDB credentials. Please provide them via environment variables or constructor parameters.");
     }
 
-    // Assuming OfficeManager's constructor and/or methods are adjusted to accept these credentials as parameters
-    this.officeManager = new OfficeManager({officeName, dbUsername, dbPassword, dbCluster});
+    this.officeManager = new OfficeManager({ officeName, dbUsername, dbPassword, dbCluster });
   }
 
   public async initialize(): Promise<void> {
-    // Initialization logic...
+    try {
+      await this.officeManager.ensureConnection();
+      console.log(`Initialization successful: Office '${this.officeManager.officeName}' is ready for use.`);
+    } catch (error: any) {
+      console.error(`Initialization failed: ${error.message}`);
+      throw error; 
+    }
   }
 
   public cabinet(cabinetName: string = process.env.DEFAULT_CABINET_NAME || "DefaultCabinet") {
-    return this.officeManager.cabinet(cabinetName);
+    console.log(`Returning cabinet: ${cabinetName}`);
+    // return this.officeManager.cabinet(cabinetName);
   }
 }
 
