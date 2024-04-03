@@ -32,9 +32,21 @@ export class OfficeManager {
             await mongoClient.connect();
             this.officeDbConnection = mongoClient.db(this.officeName);
             console.log(`Connected successfully to MongoDB and to database: ${this.officeName}`);
+            
+            // Ensure a default collection exists to "create" the database
+            await this.ensureDefaultCollectionExists();
         } catch (error:any) {
             console.error(`Failed to connect to MongoDB: ${error.message}`);
             throw error;
+        }
+    }
+
+    private async ensureDefaultCollectionExists(): Promise<void> {
+        const collections = await this.officeDbConnection.listCollections({}, { nameOnly: true }).toArray();
+        if (collections.length === 0) {
+            // Create a default collection if no collections are found
+            await this.officeDbConnection.createCollection("defaultCollection");
+            console.log(`Default collection created in database: ${this.officeName}`);
         }
     }
 
