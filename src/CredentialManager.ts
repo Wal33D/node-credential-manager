@@ -29,26 +29,36 @@ class CredentialManager {
       const cabinetsList = await this.officeManager.listCabinets();
       console.log(`Available cabinets in '${this.officeManager.officeName}': ${cabinetsList.join(', ')}`);
       
-      // Iterate over each CabinetManager in the cabinetManagers map
-      this.officeManager.cabinetManagers.forEach((cabinetManager, cabinetName) => {
-        console.log(`Cabinet: ${cabinetName}`);
-        // Now you have access to each CabinetManager instance
-        // For example, logging the cabinet's name
-        console.log(`CabinetManager for '${cabinetName}' has cabinets: ${cabinetManager.cabinets.join(', ')}`);
-        
-        // If you want to access the ServiceManager for a specific cabinet
-        const serviceManager = cabinetManager.serviceManagers.get(cabinetName)?.addCredential('apiKey', 'password');
+      // Assuming 'UserCredentials' is the name of the cabinet you want to add a credential to
+      const cabinetName = 'DefaultCabinet';
+      const credentialName = 'ExampleCredentialName';
+      const credentialValue = { username: 'exampleUser', password: 'examplePass' };
+
+      // Access the CabinetManager for the specific cabinet
+      const cabinetManager = this.officeManager.cabinetManagers.get(cabinetName);
+      if (cabinetManager) {
+        // Use the CabinetManager's ServiceManager to add a credential
+        const serviceManager = cabinetManager.serviceManagers.get(cabinetName);
         if (serviceManager) {
-          // Perform operations with the serviceManager or log its details
-          console.log(`ServiceManager for '${cabinetName}' manages credentials:`, serviceManager);
+          const addResult = await serviceManager.addCredential(credentialName, credentialValue);
+          if (addResult.status) {
+            console.log(`Credential added successfully to '${cabinetName}' cabinet.`);
+          } else {
+            console.error(`Failed to add credential: ${addResult.message}`);
+          }
+        } else {
+          console.error(`ServiceManager for '${cabinetName}' not found.`);
         }
-      });
-  
+      } else {
+        console.error(`CabinetManager for '${cabinetName}' not found.`);
+      }
     } catch (error: any) {
       console.error(`Initialization failed: ${error.message}`);
       throw error;
     }
-  }
+}
+
+  
   
 }
 
