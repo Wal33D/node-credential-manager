@@ -26,6 +26,7 @@ export class ServiceManager {
                 name: doc.name,
                 value: doc.value
             }));
+            console.log(this.credentials)
         } catch (error: any) {
             console.error(`Failed to load credentials: ${error.message}`);
         }
