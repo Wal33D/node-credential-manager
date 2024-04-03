@@ -41,6 +41,7 @@ export class OfficeManager {
 
                 // Instantiate CabinetManager with the connected database
                 this.cabinetManager = await new CabinetManager({ officeDbConnection: this.officeDbConnection });
+                console.log( this.cabinetManager.cabinets)
                 return;
             } catch (error: any) {
                 attempts++;

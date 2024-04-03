@@ -3,20 +3,24 @@ import { Db, ObjectId } from 'mongodb';
 export class ServiceManager {
     private dbConnection: Db;
     public cabinetName: string;
-    // Changing the type of credentials to have a clearer structure
     public credentials: { _id: ObjectId, name: string, value: any }[] = [];
+    private isInitialized: boolean = false; // Flag to track initialization status
 
     constructor({ dbConnection, cabinetName }: { dbConnection: Db, cabinetName: string }) {
         this.dbConnection = dbConnection;
         this.cabinetName = cabinetName;
-        this.loadCredentials();
-        
     }
 
-    public async loadCredentials(): Promise<void> {
+    private async init(): Promise<void> {
+        if (!this.isInitialized) {
+            await this.loadCredentials();
+            this.isInitialized = true; // Set flag to true after successful initialization
+        }
+    }
+
+    private async loadCredentials(): Promise<void> {
         try {
             const docs = await this.dbConnection.collection(this.cabinetName).find({}).toArray();
-            // Transform each document into a structured credential object
             this.credentials = docs.map(doc => ({
                 _id: doc._id,
                 name: doc.name,
@@ -24,27 +28,27 @@ export class ServiceManager {
             }));
         } catch (error: any) {
             console.error(`Failed to load credentials: ${error.message}`);
-            // Not changing the credentials array in case of error
         }
     }
 
-    // Add a new credential to the cabinet
+    private async ensureInitAndExecute(action: () => Promise<any>): Promise<any> {
+        await this.init(); // Ensure initialization is completed before proceeding
+        return action();
+    }
+
     public async addCredential(name: string, value: any): Promise<{ status: boolean; message: string; credentialId?: string }> {
-        try {
+        return this.ensureInitAndExecute(async () => {
             const result = await this.dbConnection.collection(this.cabinetName).insertOne({ name, value });
             return {
                 status: true,
                 message: "Credential added successfully.",
                 credentialId: result.insertedId.toString(),
             };
-        } catch (error: any) {
-            return { status: false, message: `Failed to add credential: ${error.message}` };
-        }
+        });
     }
 
-    // Update an existing credential in the cabinet
     public async updateCredential(credentialId: string, value: any): Promise<{ status: boolean; message: string }> {
-        try {
+        return this.ensureInitAndExecute(async () => {
             const result = await this.dbConnection.collection(this.cabinetName).updateOne(
                 { _id: new ObjectId(credentialId) },
                 { $set: { value } }
@@ -55,14 +59,11 @@ export class ServiceManager {
             }
 
             return { status: true, message: "Credential updated successfully." };
-        } catch (error: any) {
-            return { status: false, message: `Failed to update credential: ${error.message}` };
-        }
+        });
     }
 
-    // Delete a credential from the cabinet
     public async deleteCredential(credentialId: string): Promise<{ status: boolean; message: string }> {
-        try {
+        return this.ensureInitAndExecute(async () => {
             const result = await this.dbConnection.collection(this.cabinetName).deleteOne({ _id: new ObjectId(credentialId) });
 
             if (result.deletedCount === 0) {
@@ -70,9 +71,6 @@ export class ServiceManager {
             }
 
             return { status: true, message: "Credential deleted successfully." };
-        } catch (error: any) {
-            return { status: false, message: `Failed to delete credential: ${error.message}` };
-        }
+        });
     }
-
 }

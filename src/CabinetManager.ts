@@ -27,6 +27,7 @@ export class CabinetManager {
                 const serviceManager = new ServiceManager({ dbConnection: this.officeDbConnection, cabinetName: cabinet });
                 this.serviceManagers.set(cabinet, serviceManager);
             });
+            console.log(this.serviceManagers)
         } catch (error: any) {
             console.error(`Error during cabinet initialization: ${error.message}`);
         }
