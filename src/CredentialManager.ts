@@ -18,11 +18,15 @@ class CredentialManager {
     this.initializeAllOffices();
   }
 
+  // Inside CredentialManager
+
   public async initializeAllOffices(): Promise<void> {
     const databaseNames = await this.listAllDatabases();
     let metadataFound = false;
 
     for (const dbName of databaseNames) {
+      if (dbName === 'admin' || dbName === 'local') continue; // Skip 'admin' and 'local' databases
+
       const officeManager = new OfficeManager({
         officeName: dbName,
         ...this.globalDbConfig,
@@ -35,18 +39,17 @@ class CredentialManager {
         this.offices.set(dbName, officeManager);
         console.log(`Office '${dbName}' loaded into Credential Manager.`);
         metadataFound = true;
+      } else {
+        // For databases without _appMetadata, ensure the default collection
+        await officeManager.ensureDefaultCollectionIfNeeded();
       }
     }
 
-    // Create the default office only if no office with _appMetadata was found
-    if (!metadataFound) {
-      console.log("No existing offices found with metadata. Creating the default office...");
+    // If no databases were found with _appMetadata, consider initializing the default office
+    if (!metadataFound && !this.offices.has(this.defaultOfficeName)) {
+      console.log("Initializing default office...");
       await this.addOffice({ officeName: this.defaultOfficeName });
     }
-  }
-
-  private async addDefaultOffice(): Promise<void> {
-    await this.addOffice({ officeName: this.defaultOfficeName });
   }
 
   public async addOffice(officeParams: { officeName: string }): Promise<void> {
@@ -68,10 +71,16 @@ class CredentialManager {
 
   private async listAllDatabases(): Promise<string[]> {
     const client = new MongoClient(this.connectionString());
-    await client.connect();
-    const databasesList = await client.db().admin().listDatabases();
-    client.close();
-    return databasesList.databases.map(db => db.name);
+    try {
+      await client.connect();
+      const databasesList = await client.db().admin().listDatabases();
+      const filteredDatabases = databasesList.databases
+        .map(db => db.name)
+        .filter(name => name !== 'admin' && name !== 'local');
+      return filteredDatabases;
+    } finally {
+      await client.close();
+    }
   }
 
   private connectionString(): string {

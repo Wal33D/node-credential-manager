@@ -57,7 +57,7 @@ export class OfficeManager {
             description: "Metadata for CredentialManager application.",
             createdAt: now,
             updatedAt: now,
-            lastAccessed: now 
+            lastAccessed: now
         });
 
         console.log("Application metadata collection created.");
@@ -83,5 +83,15 @@ export class OfficeManager {
 
     private checkConnection(): void {
         if (!this.officeDbConnection) throw new Error("Database connection not established.");
+    }
+
+    // Adjust the ensureDefaultCollection method to be callable from CredentialManager
+    public async ensureDefaultCollectionIfNeeded(): Promise<void> {
+        const requiresManagement = await this.collectionExists("_appMetadata");
+
+        if (requiresManagement || !(await this.collectionExists(process.env.DEFAULT_CABINET_NAME || "DefaultCabinet"))) {
+            await this.officeDbConnection!.createCollection(process.env.DEFAULT_CABINET_NAME || "DefaultCabinet");
+            console.log(`Default collection '${process.env.DEFAULT_CABINET_NAME || "DefaultCabinet"}' ensured in database: ${this.officeName}`);
+        }
     }
 }
