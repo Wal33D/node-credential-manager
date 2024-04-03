@@ -15,10 +15,10 @@ class CredentialManager {
   private defaultCabinetName: string;
 
   constructor({
-    officeName = process.env.DEFAULT_OFFICE_NAME || "DefaultOffice",
     dbUsername = process.env.DB_USERNAME || "admin", 
     dbPassword = process.env.DB_PASSWORD || "password", 
     dbCluster = process.env.DB_CLUSTER || "cluster0.example.mongodb.net", 
+    officeName = process.env.DEFAULT_OFFICE_NAME || "DefaultOffice",
     defaultCabinetName = process.env.DEFAULT_CABINET_NAME || "DefaultCabinet" 
   }: CredentialManagerParams = {}) {
     this.defaultCabinetName = defaultCabinetName;

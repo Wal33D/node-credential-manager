@@ -1,20 +1,67 @@
 import { Db } from 'mongodb';
-const DEFAULT_CABINET_NAME = "DefaultCabinet"; 
 
 export class CabinetManager {
-  private dbConnection: Db;
-  private collectionName: string;
+    private officeDbConnection: Db;
+    private defaultCabinetName: string = process.env.DEFAULT_CABINET_NAME || 'DefaultCabinet';
 
-  constructor(dbConnection: Db, collectionName: string = DEFAULT_CABINET_NAME) {
-    this.dbConnection = dbConnection;
-    this.collectionName = collectionName;
-  }
+    constructor({ officeDbConnection }: { officeDbConnection: Db }) {
+        this.officeDbConnection = officeDbConnection;
+        this.ensureDefaultCabinet();
+    }
 
-  // Example method to add or update a document in the cabinet
-  public async upsertDocument(documentId: string, documentBody: any): Promise<{ status: boolean; message: string }> {
-  }
+    // Ensures the existence of the default cabinet if no other cabinets exist
+    private async ensureDefaultCabinet(): Promise<void> {
+        (async () => {
+            try {
+                const cabinets = await this.listCabinets();
+                if (cabinets.length === 0) {
+                    console.log(`No cabinets found in the office. Creating default cabinet: '${this.defaultCabinetName}'`);
+                    await this.createCabinet(this.defaultCabinetName);
+                }
+            } catch (error: any) {
+                console.error(`Error ensuring the default cabinet: ${error.message}`);
+            }
+        })();
+    }
 
-  // Example method to delete a document from the cabinet
-  public async removeDocument(documentId: string): Promise<{ status: boolean; message: string }> {
-  }
+    // Lists all cabinets (collections) within the office (database)
+    public async listCabinets(): Promise<string[]> {
+        try {
+            const cabinets = await this.officeDbConnection.listCollections({}, { nameOnly: true }).toArray();
+            return cabinets.map(cabinet => cabinet.name);
+        } catch (error: any) {
+            console.error(`Failed to list cabinets: ${error.message}`);
+            throw new Error(`Failed to list cabinets: ${error.message}`);
+        }
+    }
+
+    // Creates a new cabinet (collection) if it does not already exist
+    public async createCabinet(cabinetName: string): Promise<{ status: boolean; message: string }> {
+        try {
+            const cabinets = await this.listCabinets();
+            if (cabinets.includes(cabinetName)) {
+                return { status: false, message: `Cabinet '${cabinetName}' already exists.` };
+            }
+            await this.officeDbConnection.createCollection(cabinetName);
+            return { status: true, message: `Cabinet '${cabinetName}' created successfully.` };
+        } catch (error: any) {
+            console.error(`Failed to create cabinet '${cabinetName}': ${error.message}`);
+            return { status: false, message: `Failed to create cabinet '${cabinetName}': ${error.message}` };
+        }
+    }
+
+    // Deletes an existing cabinet (collection) if it exists
+    public async deleteCabinet(cabinetName: string): Promise<{ status: boolean; message: string }> {
+        try {
+            const cabinets = await this.listCabinets();
+            if (!cabinets.includes(cabinetName)) {
+                return { status: false, message: `Cabinet '${cabinetName}' does not exist.` };
+            }
+            await this.officeDbConnection.dropCollection(cabinetName);
+            return { status: true, message: `Cabinet '${cabinetName}' deleted successfully.` };
+        } catch (error: any) {
+            console.error(`Failed to delete cabinet '${cabinetName}': ${error.message}`);
+            return { status: false, message: `Failed to delete cabinet '${cabinetName}': ${error.message}` };
+        }
+    }
 }

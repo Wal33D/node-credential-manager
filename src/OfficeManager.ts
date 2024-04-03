@@ -1,10 +1,12 @@
 import { Db, MongoClient } from 'mongodb';
+import { CabinetManager } from './CabinetManager'; // Ensure this path is correct
 
 interface OfficeManagerParams {
     officeName: string;
     dbUsername: string;
     dbPassword: string;
     dbCluster: string;
+    defaultCabinetName: string;
 }
 
 export class OfficeManager {
@@ -13,6 +15,7 @@ export class OfficeManager {
     private dbUsername: string;
     private dbPassword: string;
     private dbCluster: string;
+    private cabinetManager?: CabinetManager;
 
     constructor({ officeName, dbUsername, dbPassword, dbCluster }: OfficeManagerParams) {
         this.officeName = officeName;
@@ -36,6 +39,10 @@ export class OfficeManager {
                 await mongoClient.connect();
                 this.officeDbConnection = mongoClient.db(this.officeName);
                 console.log(`Connected successfully to MongoDB and to database: ${this.officeName}`);
+
+                // Initialize CabinetManager and ensure default cabinet
+                this.cabinetManager = new CabinetManager({officeDbConnection: this.officeDbConnection});
+                console.log('CabinetManager initialized successfully.')
                 return;
             } catch (error: any) {
                 attempts++;
@@ -55,6 +62,4 @@ export class OfficeManager {
             console.log("Database connection is already established.");
         }
     }
-
-
 }
