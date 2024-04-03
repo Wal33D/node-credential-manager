@@ -2,36 +2,51 @@ require('dotenv').config({ path: './.env.local' });
 
 import { OfficeManager } from './OfficeManager';
 
-interface CredentialManagerParams {
-  dbUsername?: string;
-  dbPassword?: string;
-  dbCluster?: string;
-  officeName?: string;
+interface OfficeParams {
+  officeName: string;
+  dbUsername: string;
+  dbPassword: string;
+  dbCluster: string;
 }
 
 class CredentialManager {
-  private officeManager: OfficeManager;
+  private offices: Map<string, OfficeManager> = new Map();
 
-  constructor({
-    dbUsername = process.env.DB_USERNAME || "admin",
-    dbPassword = process.env.DB_PASSWORD || "password",
-    dbCluster = process.env.DB_CLUSTER || "cluster0.example.mongodb.net",
-    officeName = process.env.DEFAULT_OFFICE_NAME || "DefaultOffice"
-  }: CredentialManagerParams = {}) {
-    this.officeManager = new OfficeManager({ officeName, dbUsername, dbPassword, dbCluster });
+  constructor(private globalDbConfig: { dbUsername?: string; dbPassword?: string; dbCluster?: string; } = {}) {
+    // Initially, no offices are loaded.
   }
 
-  public async initialize(): Promise<void> {
-    try {
-      await this.officeManager.ensureConnection();
+  public async addOffice({ officeName, dbUsername, dbPassword, dbCluster }: OfficeParams): Promise<void> {
+    const officeManager = new OfficeManager({
+      officeName,
+      dbUsername: dbUsername || process.env.DB_USERNAME || "admin",
+      dbPassword: dbPassword || process.env.DB_PASSWORD || "password",
+      dbCluster: dbCluster || process.env.DB_CLUSTER || "cluster0.example.mongodb.net",
+    });
 
-      console.log(`Initialization successful: Office '${this.officeManager.officeName}' is ready for use.`);
-      const cabinetsList = await this.officeManager.listCabinets();
-      console.log(`Available cabinets in '${this.officeManager.officeName}': ${cabinetsList.join(', ')}`);
-      console.log(this.officeManager)
-    } catch (error: any) {
-      console.error(`Initialization failed: ${error.message}`);
-      throw error;
+    try {
+      await officeManager.ensureConnection();
+      this.offices.set(officeName, officeManager);
+      console.log(`Office '${officeName}' has been successfully added and connected.`);
+    } catch (error:any) {
+      console.error(`Failed to initialize office '${officeName}': ${error.message}`);
+    }
+  }
+
+  public async initializeOffice(officeName: string): Promise<void> {
+    const officeManager = this.offices.get(officeName);
+    if (!officeManager) {
+      console.error(`Office '${officeName}' does not exist.`);
+      return;
+    }
+
+    try {
+      await officeManager.ensureConnection();
+      console.log(`Office '${officeManager.officeName}' is ready for use.`);
+      const cabinetsList = await officeManager.listCabinets();
+      console.log(`Available cabinets in '${officeManager.officeName}': ${cabinetsList.join(', ')}`);
+    } catch (error:any) {
+      console.error(`Initialization of office '${officeName}' failed: ${error.message}`);
     }
   }
 

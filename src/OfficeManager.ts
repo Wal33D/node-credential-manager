@@ -1,5 +1,4 @@
 import { Db, MongoClient } from 'mongodb';
-import { CabinetManager } from './CabinetManager';
 
 interface OfficeManagerParams {
     officeName: string;
@@ -14,7 +13,6 @@ export class OfficeManager {
     private dbUsername: string;
     private dbPassword: string;
     private dbCluster: string;
-    public cabinetManagers: Map<string, CabinetManager> = new Map();
 
     constructor({ officeName, dbUsername, dbPassword, dbCluster }: OfficeManagerParams) {
         this.officeName = officeName;
@@ -27,28 +25,16 @@ export class OfficeManager {
         const USERNAME = encodeURIComponent(this.dbUsername);
         const PASSWORD = encodeURIComponent(this.dbPassword);
         const CLUSTER = this.dbCluster;
-
-        let attempts = 0;
         const URI = `mongodb+srv://${USERNAME}:${PASSWORD}@${CLUSTER}/${this.officeName}?retryWrites=true&w=majority`;
 
-        while (attempts < 3) {
-            try {
-                const mongoClient = new MongoClient(URI, {});
-                await mongoClient.connect();
-                this.officeDbConnection = mongoClient.db(this.officeName);
-                console.log(`Connected successfully to MongoDB and to database: ${this.officeName}`);
-
-                // Now we initialize the CabinetManager here
-                await this.initializeCabinetManagers();
-                return;
-            } catch (error: any) {
-                attempts++;
-                console.error(`Attempt ${attempts}: Failed to connect to MongoDB: ${error.message}`);
-                if (attempts >= 3) {
-                    console.error(`Final attempt failed: ${error.message}`);
-                    throw new Error(`Failed to connect to MongoDB: ${error.message}`);
-                }
-            }
+        try {
+            const mongoClient = new MongoClient(URI, {});
+            await mongoClient.connect();
+            this.officeDbConnection = mongoClient.db(this.officeName);
+            console.log(`Connected successfully to MongoDB and to database: ${this.officeName}`);
+        } catch (error:any) {
+            console.error(`Failed to connect to MongoDB: ${error.message}`);
+            throw error;
         }
     }
 
@@ -60,20 +46,6 @@ export class OfficeManager {
         }
     }
 
-    private async initializeCabinetManagers(): Promise<void> {
-        const cabinetNames = await this.listCabinets();
-
-        // For each cabinet, initialize a CabinetManager and add it to the map
-        cabinetNames.forEach(cabinetName => {
-            const cabinetManager = new CabinetManager({ officeDbConnection: this.officeDbConnection!, cabinetName });
-            this.cabinetManagers.set(cabinetName, cabinetManager);
-
-            
-        });
-
-        console.log('CabinetManagers initialized for all cabinets.');
-    }
-
     public async listCabinets(): Promise<string[]> {
         if (!this.officeDbConnection) {
             throw new Error("Database connection not established.");
@@ -82,4 +54,17 @@ export class OfficeManager {
         const cabinets = await this.officeDbConnection.listCollections({}, { nameOnly: true }).toArray();
         return cabinets.map(cabinet => cabinet.name);
     }
+
+    // Example method to add a document to a collection (Cabinet)
+    public async addServiceToCabinet(cabinetName: string, serviceName: string, serviceData: object): Promise<void> {
+        if (!this.officeDbConnection) {
+            throw new Error("Database connection not established.");
+        }
+
+        const cabinet = this.officeDbConnection.collection(cabinetName);
+        await cabinet.insertOne({ name: serviceName, ...serviceData });
+        console.log(`Service '${serviceName}' added to cabinet '${cabinetName}'.`);
+    }
+
+    // You can add more methods here to manage documents within collections
 }
