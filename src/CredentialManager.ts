@@ -24,17 +24,32 @@ class CredentialManager {
   public async initialize(): Promise<void> {
     try {
       await this.officeManager.ensureConnection();
-
+  
       console.log(`Initialization successful: Office '${this.officeManager.officeName}' is ready for use.`);
       const cabinetsList = await this.officeManager.listCabinets();
       console.log(`Available cabinets in '${this.officeManager.officeName}': ${cabinetsList.join(', ')}`);
-      console.log(this.officeManager.cabinetManagers)
+      
+      // Iterate over each CabinetManager in the cabinetManagers map
+      this.officeManager.cabinetManagers.forEach((cabinetManager, cabinetName) => {
+        console.log(`Cabinet: ${cabinetName}`);
+        // Now you have access to each CabinetManager instance
+        // For example, logging the cabinet's name
+        console.log(`CabinetManager for '${cabinetName}' has cabinets: ${cabinetManager.cabinets.join(', ')}`);
+        
+        // If you want to access the ServiceManager for a specific cabinet
+        const serviceManager = cabinetManager.serviceManagers.get(cabinetName)?.addCredential('apiKey', 'password');
+        if (serviceManager) {
+          // Perform operations with the serviceManager or log its details
+          console.log(`ServiceManager for '${cabinetName}' manages credentials:`, serviceManager);
+        }
+      });
+  
     } catch (error: any) {
       console.error(`Initialization failed: ${error.message}`);
       throw error;
     }
   }
-
+  
 }
 
 export { CredentialManager };
