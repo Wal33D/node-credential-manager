@@ -26,9 +26,9 @@ export const promptMenu = async ({ readLineInterface }: { readLineInterface?: re
                 ' 1. Add a new credential\n' +
                 ' 3. View all credentials\n' +
                 ' 4. Search for a specific key\n' +
-                ' 5. Search by service name\n' +
+                ' 5. Search by credential name\n' +
                 ' 6. Initialize DB with default structure\n' +
-                ' 7. Add a new service\n' +
+                ' 7. Add a new credential\n' +
                 ' 8. Create and Switch to a collection\n' +
                 ' 9. Delete a collection\n' +
                 '10. Reset collection name to default\n' + // New option for resetting collection name

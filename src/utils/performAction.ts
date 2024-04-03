@@ -8,7 +8,7 @@ export const performAction = async ({ action, readLineInterface, credentialManag
 
     try {
         const credentialManager = new CredentialManager();
-  await credentialManager.initializeAllOffices();
+  await credentialManager.initializeAllProjects();
 
     } catch (error: any) {
         message = `An error occurred: ${error.message}`;

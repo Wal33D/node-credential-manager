@@ -29,7 +29,7 @@ export const viewAllCredentials = async ({ credentialManager, readLineInterface 
     message = "Credentials fetched successfully.";
     credentialsMessage = `\nCREDENTIALS & KEYS
 - Database: ${result.databaseName} | Collection: ${result.collectionName}
-- Services: ${result.servicesCount} | Credentials: ${result.credentialsCount}
+- Credentials: ${result.credentialsCount} | Credentials: ${result.credentialsCount}
 - Credentials: ${JSON.stringify(result.credentials, null, 2)}`;
 
   } catch (error: any) {

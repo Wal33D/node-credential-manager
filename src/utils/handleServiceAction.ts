@@ -1,9 +1,9 @@
-// File: ./serviceActions.js
+// File: ./credentialActions.js
 import { promptForKeyType } from '../utils/promptForKeyType';
-import { promptForServiceName } from '../utils/promptForServiceName';
-import { findSpecificCredentialForService } from '../utils/findSpecificCredentialForService';
+import { promptForCredentialName } from '../utils/promptForCredentialName';
+import { findSpecificCredentialForCredential } from '../utils/findSpecificCredentialForCredential';
 
-export async function handleServiceAction({
+export async function handleCredentialAction({
     action,
     readLineInterface,
     credentialManager,
@@ -12,14 +12,14 @@ export async function handleServiceAction({
     readLineInterface: any,
     credentialManager: any,
 }) {
-    const serviceNameResult = await promptForServiceName({ credentialManager, readLineInterface });
-    if (!serviceNameResult || !serviceNameResult.status) {
-        return { status: false, message: serviceNameResult?.message || 'Exiting to main menu...' };
+    const credentialNameResult = await promptForCredentialName({ credentialManager, readLineInterface });
+    if (!credentialNameResult || !credentialNameResult.status) {
+        return { status: false, message: credentialNameResult?.message || 'Exiting to main menu...' };
     }
 
     if (action === '5') {
-        // For action '5', return after fetching service name.
-        return { status: true, message: 'Service name retrieved successfully.', serviceName: serviceNameResult.serviceName, credentials:serviceNameResult.credentials };
+        // For action '5', return after fetching credential name.
+        return { status: true, message: 'Credential name retrieved successfully.', credentialName: credentialNameResult.credentialName, credentials:credentialNameResult.credentials };
     }
 
     // Proceed with fetching the key for action '4'.
@@ -30,14 +30,14 @@ export async function handleServiceAction({
             return { status: false, message: keyTypeResult?.message || 'Exiting to main menu...' };
         }
 
-        const findKeyResult = await findSpecificCredentialForService({
-            serviceName: serviceNameResult.serviceName as any,
+        const findKeyResult = await findSpecificCredentialForCredential({
+            credentialName: credentialNameResult.credentialName as any,
             credentialName: keyTypeResult.result as any,
             dbConnection: credentialManager.dbConnection,
         });
 
         if (findKeyResult.status) {
-            return { status: true, message: 'Credential retrieved successfully.',serviceName:serviceNameResult.serviceName, credential: findKeyResult.credential };
+            return { status: true, message: 'Credential retrieved successfully.',credentialName:credentialNameResult.credentialName, credential: findKeyResult.credential };
         }
     } while (!keyTypeResult.status);
 

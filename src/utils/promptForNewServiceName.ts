@@ -2,7 +2,7 @@ import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 
-export const promptForNewServiceName = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
+export const promptForNewCredentialName = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; credentialName?: string; message: string; continueApp: boolean; }> => {
     let createdInternally = false;
 
     if (!readLineInterface) {
@@ -16,9 +16,9 @@ export const promptForNewServiceName = async ({ credentialManager, readLineInter
         }
     }
 
-    const promptLoop = async (): Promise<{ status: boolean; serviceName?: string; message: string; continueApp: boolean; }> => {
+    const promptLoop = async (): Promise<{ status: boolean; credentialName?: string; message: string; continueApp: boolean; }> => {
         return new Promise((resolve) => {
-            const question = 'Enter the name of the new service you want to add (or type "exit" to return to the menu):\n';
+            const question = 'Enter the name of the new credential you want to add (or type "exit" to return to the menu):\n';
             readLineInterface!.question(question, async (input: string) => {
                 let message = ''; // Reset message for each iteration
                 if (input.toLowerCase() === "exit") {
@@ -41,14 +41,14 @@ export const promptForNewServiceName = async ({ credentialManager, readLineInter
                         resolve({ status: false, message, continueApp: false });
                     } else {
                         const dbCollection = credentialManager.dbConnection.collection(credentialManager.collectionName);
-                        const serviceExists = await dbCollection.findOne({ name: input });
-                        if (serviceExists) {
+                        const credentialExists = await dbCollection.findOne({ name: input });
+                        if (credentialExists) {
                             message = ` - Hint:  '${input}' already exists. Please try again.`;
-                            console.log(message); // Immediate feedback if service exists
+                            console.log(message); // Immediate feedback if credential exists
                             resolve(await promptLoop());
                         } else {
                             message = ' - Hint:  name validated and ready for addition.';
-                            resolve({ status: true, serviceName: input, message, continueApp: true });
+                            resolve({ status: true, credentialName: input, message, continueApp: true });
                         }
                     }
                 }

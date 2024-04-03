@@ -2,7 +2,7 @@ import readline from 'readline';
 import { CredentialManager } from "../CredentialManager";
 import { createReadlineInterface } from './createReadlineInterface';
 import { promptForKeyType } from './promptForKeyType';
-import { findSpecificCredentialForService } from './findSpecificCredentialForService';
+import { findSpecificCredentialForCredential } from './findSpecificCredentialForCredential';
 
 export const promptForSpecificKey = async ({ credentialManager, readLineInterface }: { credentialManager: CredentialManager, readLineInterface?: readline.Interface }): Promise<{ status: boolean; message: string; credential?: any }> => {
     let createdInternally = false;
@@ -20,9 +20,9 @@ export const promptForSpecificKey = async ({ credentialManager, readLineInterfac
     }
 
     try {
-        const serviceNameQuestion = 'Enter the service name you want to retrieve the key for (or type "exit" to return to the menu):\n ';
-        const serviceName = await new Promise<string | null>((resolve) => {
-            readLineInterface!.question(serviceNameQuestion, (input: string) => {
+        const credentialNameQuestion = 'Enter the credential name you want to retrieve the key for (or type "exit" to return to the menu):\n ';
+        const credentialName = await new Promise<string | null>((resolve) => {
+            readLineInterface!.question(credentialNameQuestion, (input: string) => {
                 if (input.toLowerCase() === "exit") {
                     message = 'Exiting to main menu...';
                     console.log(message); // Provide immediate feedback for exit
@@ -33,7 +33,7 @@ export const promptForSpecificKey = async ({ credentialManager, readLineInterfac
             });
         });
 
-        if (!serviceName) {
+        if (!credentialName) {
             return { status: true, message: 'User exited to main menu.', credential: null };
         }
 
@@ -42,8 +42,8 @@ export const promptForSpecificKey = async ({ credentialManager, readLineInterfac
             return { status: false, message: keyType.message, credential: null }; // Use the message from promptForKeyType
         }
 
-        const keySearchResult = await findSpecificCredentialForService({
-            serviceName: serviceName,
+        const keySearchResult = await findSpecificCredentialForCredential({
+            credentialName: credentialName,
             credentialName: keyType.result!,
             dbConnection: credentialManager.dbConnection as any,
         });

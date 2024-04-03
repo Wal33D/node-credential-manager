@@ -4,28 +4,25 @@ import { CredentialManager } from "./CredentialManager";
 import { createReadlineInterface } from './utils/createReadlineInterface';
 
 async function startMenu() {
-  // Initialize CredentialManager and its offices
+  // Initialize CredentialManager and its projects
   const credentialManager = new CredentialManager();
 
-  // Define default office and cabinet names
-  const defaultOfficeName = process.env.DEFAULT_OFFICE_NAME as string ;
-  const defaultCabinetName = process.env.DEFAULT_CABINET_NAME as string;
+  // Define default project and cabinet names
+  const defaultProjectName = process.env.DEFAULT_OFFICE_NAME as string ;
 
-  // Generate a random value for demonstration purposes
-  const randomValue = Math.floor(Math.random() * 100);
-  await delay(1000); // Wait for 3000 milliseconds (3 seconds)
-  // Retrieve the OfficeManager instance for the default office
-  const officeManager = credentialManager.offices.get(defaultOfficeName);
-  await delay(1000); // Wait for 3000 milliseconds (3 seconds)
+  const value = `${Math.floor(Math.random() * 100)}`;
+  await delay(1000);
+  const projectManager = credentialManager.projects.get(defaultProjectName);
+  await delay(1000); // Added delay
 
-  if (!officeManager) {
-    console.error(`Office '${defaultOfficeName}' not found.`);
+  if (!projectManager) {
+    console.error(`Project '${defaultProjectName}' not found.`);
     return;
   }
 
-  // Call the addServiceToCabinet method to insert the new service with the random value
-  await officeManager.addServiceToCabinet(defaultCabinetName, "OpenAI", { randomValue });
-  console.log(`Service 'OpenAI' with random value ${randomValue} added to cabinet '${defaultCabinetName}' in office '${defaultOfficeName}'.`);
+  // Call the addCredentialToCabinet method to insert the new credential with the random value
+  await projectManager.addCredentialToCabinet('OpenAI', "bestkey", { value });
+  console.log(`Credential 'OpenAI' with random value ${value} added to cabinet 'OpenAI' in project '${defaultProjectName}'.`);
 
   while (true) {
     const readlineInterfaceResult = createReadlineInterface();
