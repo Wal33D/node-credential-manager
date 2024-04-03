@@ -21,48 +21,37 @@ class CredentialManager {
     this.initDBPromise = this.initializeDB();
   }
 
-  private async initializeDB(officeName: string): Promise<{ status: boolean; message: string }> {
+  private async setupDatabase(officeName: string): Promise<{ status: boolean; message: string }> {
     let message = '';
     let status = false;
-  
-    try {
-      // Adjusted to pass 'officeName' to 'initializeMongo' and updated the destructured response variable
-      const { status: mongoDBStatus, databaseConnection, message: mongoMessage } = await initializeMongo({ officeName });
-      if (!mongoDBStatus) {
-        // This will now properly halt the application by throwing an error if the connection fails
-        throw new Error(mongoMessage || 'Failed to initialize MongoDB connection.');
-      }
-      this.dbConnection = databaseConnection; // Ensure this line correctly assigns the database connection
-      // Assuming 'createCabinetFunction' expects a 'dbConnection'. Adjust as needed.
-      const { message: credMessage } = await createCabinetFunction({ officeConnection: databaseConnection, collectionName: this.collectionName });
-      status = true;
-      message = `Database initialized successfully, ${credMessage}`;
-    } catch (error: any) {
-      status = false;
-      message = `Database initialization error: ${error.message}`;
-      throw new Error(message); 
-    }
-    return { status, message };
-  }
-  
-  public async ensureDBInit(): Promise<{ status: boolean; message: string }> {
-    let status = false;
-    let message = '';
 
     try {
-      await this.initDBPromise;
+      // Attempt to initialize MongoDB connection
+      const { status: mongoDBStatus, databaseConnection, message: mongoMessage } = await initializeMongo({ officeName });
+      if (!mongoDBStatus) {
+        // This will halt the application by throwing an error if the connection fails
+        throw new Error(mongoMessage || 'Failed to initialize MongoDB connection.');
+      }
+      this.dbConnection = databaseConnection; // Assigns the database connection
+      // Ensure the database is ready for operations by initializing the necessary cabinet (collection)
+      const { message: credMessage } = await createCabinetFunction({ officeConnection: databaseConnection, collectionName: this.collectionName });
+
+      // Check if dbConnection is truthy, implying initialization was successful
       if (!this.dbConnection) {
         throw new Error("Database connection is not initialized.");
       }
-      status = true;
-      message = "Database connection is initialized.";
+
+      status = true; // Set status to true indicating success
+      message = `Database initialized and ready for use, ${credMessage}`;
     } catch (error: any) {
-      status = false; 
-      message = `Error: ${error.message}`;
+      status = false;
+      message = `Database initialization and readiness check error: ${error.message}`;
+      throw new Error(message); // Propagate error for external handling if necessary
     }
 
     return { status, message };
   }
+
 
   public async getAllCredentials(): Promise<{ status: boolean; message: string; credentials: any[]; databaseName: string; collectionName: string; servicesCount: number; credentialsCount: number; }> {
     await this.ensureDBInit();
@@ -104,11 +93,11 @@ class CredentialManager {
     }
   }
 
-  public async addOrUpdateKey(recordName: string, credential: any, cabinetName?: string): Promise<{ status: boolean; recordId: string|null; message: string }> {
+  public async addOrUpdateKey(recordName: string, credential: any, cabinetName?: string): Promise<{ status: boolean; recordId: string | null; message: string }> {
     await this.ensureDBInit();
 
     if (!this.dbConnection) {
-      return { status: false, recordId:null,  message: "Database connection is not initialized." };
+      return { status: false, recordId: null, message: "Database connection is not initialized." };
     }
 
     const targetCabinetName = cabinetName || this.collectionName || DEFAULT_CABINET_NAME;
@@ -117,12 +106,12 @@ class CredentialManager {
       const result = await insertRecordIntoCabinet({
         dbConnection: this.dbConnection,
         cabinetName: targetCabinetName,
-        recordData: {name:recordName, credential} as any,
+        recordData: { name: recordName, credential } as any,
       });
 
       return result;
     } catch (error: any) {
-      return { status: false, recordId:null,  message: `An error occurred while adding/updating the key: ${error.message}` };
+      return { status: false, recordId: null, message: `An error occurred while adding/updating the key: ${error.message}` };
     }
   }
 }
