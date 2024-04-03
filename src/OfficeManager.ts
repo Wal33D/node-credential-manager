@@ -42,6 +42,9 @@ export class OfficeManager {
                 // Instantiate CabinetManager with the connected database
                 this.cabinetManager = new CabinetManager({ officeDbConnection: this.officeDbConnection });
                 console.log('CabinetManager initialized successfully.');
+                const serviceManager = this.cabinetManager.getServiceManager('MyServiceCabinet');
+                console.log('ServiceManager initialized successfully.', serviceManager);
+
                 return;
             } catch (error: any) {
                 attempts++;
@@ -53,6 +56,16 @@ export class OfficeManager {
             }
         }
     }
+// OfficeManager class
+
+public getCabinetManager(cabinetName: string): CabinetManager {
+    // Ensure the officeDbConnection is established
+    if (!this.officeDbConnection) {
+        throw new Error("Office database connection is not established.");
+    }
+    // Return a new CabinetManager for the specified cabinet
+    return new CabinetManager({ officeDbConnection: this.officeDbConnection, cabinetName });
+}
 
     public async ensureConnection(): Promise<void> {
         if (!this.officeDbConnection) {

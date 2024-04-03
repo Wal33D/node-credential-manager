@@ -1,9 +1,10 @@
 import { Db } from 'mongodb';
+import { ServiceManager } from './ServiceManager'; // Ensure this path is correct
 
 export class CabinetManager {
     private officeDbConnection: Db;
     private defaultCabinetName: string = process.env.DEFAULT_CABINET_NAME || 'DefaultCabinet';
-
+    
     constructor({ officeDbConnection }: { officeDbConnection: Db }) {
         this.officeDbConnection = officeDbConnection;
         this.ensureDefaultCabinet();
@@ -63,5 +64,9 @@ export class CabinetManager {
             console.error(`Failed to delete cabinet '${cabinetName}': ${error.message}`);
             return { status: false, message: `Failed to delete cabinet '${cabinetName}': ${error.message}` };
         }
+    }
+    public getServiceManager(cabinetName: string): ServiceManager {
+        // Ensures that the requested cabinet exists before returning a ServiceManager for it
+        return new ServiceManager(this.officeDbConnection, cabinetName);
     }
 }
