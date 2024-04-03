@@ -51,7 +51,7 @@ export class OfficeManager {
         const collections = await this.officeDbConnection.listCollections({}, { nameOnly: true }).toArray();
         if (collections.length === 0) {
             // Since we've already checked for null, we can confidently use officeDbConnection here
-            await this.officeDbConnection.createCollection("defaultCollection");
+            await this.officeDbConnection.createCollection(process.env.DEFAULT_CABINET_NAME || "DefaultCollection");
             console.log(`Default collection created in database: ${this.officeName}`);
         }
     }
