@@ -87,7 +87,8 @@ import { ObjectId } from 'mongodb';
 export interface Credential {
     _id?: ObjectId; // Assuming you want to include the MongoDB ObjectId for the credential
     name: string; // Name of the credential, assuming it's what you referred to as serviceName
-    envName: string; // Environment name for the credential
+    envType: string; // Environment name for the credential
+    envVariableName:string;
     createdAt: Date; // Creation date for the credential
     // Add other fields as necessary
     [key: string]: any; // To allow for flexibility with additional data

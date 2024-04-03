@@ -20,11 +20,13 @@ async function startMenu() {
     return;
   }
   const credentialName = "bestkey";
-  const envName = "production"; // or any appropriate environment name
-  
+  const envVariableName = "OPEN_AI_API_KEY"; // or any appropriate environment name
+  const envType = "production"; // or any appropriate environment name
+
   const credentialData = {
     name: credentialName,
-    envName: envName,
+    envType,
+    envVariableName,
     createdAt: new Date(), // Set the creation date to now
     value: value, // Assuming 'value' is part of the additional data you want to store
   };
