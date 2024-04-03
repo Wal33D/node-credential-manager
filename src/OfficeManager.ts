@@ -44,26 +44,27 @@ export class OfficeManager {
 
     private async ensureAppMetadata(): Promise<void> {
         const metadataCollection = this.officeDbConnection!.collection<AppMetadata>("_appMetadata");
-    
+
         const exists = await this.collectionExists("_appMetadata");
         if (exists) {
             // Assuming you'd update the existing document's updatedAt here in a real scenario
             console.log("App metadata already exists.");
             return;
         }
-        
+
         const now = new Date();
         await metadataCollection.insertOne({
             application: "CredentialManager",
             description: "Metadata for CredentialManager application.",
             createdAt: now,
-            updatedAt: now // Initially the same as createdAt
+            updatedAt: now,
+            lastAccessed: now 
         });
-    
-        console.log("Application metadata collection created.");
-    }    
 
-    private async collectionExists(collectionName: string): Promise<boolean> {
+        console.log("Application metadata collection created.");
+    }
+
+    public async collectionExists(collectionName: string): Promise<boolean> {
         const collections = await this.officeDbConnection!.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
         return collections.length > 0;
     }
@@ -78,9 +79,18 @@ export class OfficeManager {
         this.checkConnection();
         await this.officeDbConnection!.collection(cabinetName).insertOne({ name: serviceName, ...serviceData });
         console.log(`Service '${serviceName}' added to cabinet '${cabinetName}'.`);
+        await this.updateAppMetadataAccess();
     }
 
     private checkConnection(): void {
         if (!this.officeDbConnection) throw new Error("Database connection not established.");
+    }
+    private async updateAppMetadataAccess(): Promise<void> {
+        const now = new Date();
+        const metadataCollection = this.officeDbConnection!.collection<AppMetadata>("_appMetadata");
+
+        // Update the metadata document with new updatedAt and lastAccessed values
+        await metadataCollection.updateOne({}, { $set: { updatedAt: now, lastAccessed: now } });
+        console.log("App metadata updated.");
     }
 }

@@ -3,5 +3,6 @@ export interface AppMetadata {
     description: string;
     createdAt: Date;
     updatedAt: Date;
+    lastAccessed: Date;
   }
   
