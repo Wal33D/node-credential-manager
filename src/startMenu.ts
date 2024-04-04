@@ -3,8 +3,8 @@ require('dotenv').config({ path: './.env' });
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { listAllProjects, createProject, deleteProject } from "./database/database";
 import { listServices, removeService } from "./database/collections";
-import { addSecret, countSecretsInCollection, findSecretByName, updateSecretInCollection } from "./database/documents";
-import { Secret } from "./database/types";
+import { addSecret, countSecretsInCollection, findSecretByName, addSecretVersion } from "./database/documents";
+import { Secret, SecretValue } from "./database/types";
 import { MongoClient, ObjectId } from "mongodb";
 
 async function startMenuDemo() {
@@ -42,9 +42,9 @@ async function startMenuDemo() {
 
   // Specify the version of the secret you want to update along with the new value
   const versionToUpdate = "1.0.1";
-  const newValue = "updatedValue";
+  const newValue = "updatedValue" as SecretValue;
   
-  await updateSecretInCollection(dbClient, defaultProjectName, "DemoService", "DemoSecret", versionToUpdate, newValue);
+  await addSecretVersion({dbClient, defaultProjectName, serviceName:"DemoService", secretName:"DemoSecret", versionToUpdate, newValue)};
   
   console.log(`Counting secrets in 'DemoService'...`);
   await countSecretsInCollection(dbClient, defaultProjectName, "DemoService", {});

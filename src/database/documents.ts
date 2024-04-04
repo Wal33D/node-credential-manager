@@ -1,6 +1,41 @@
 import { MongoClient, ObjectId } from "mongodb";
 import { dbSecretOperationResponse, Secret, SecretValue, UpdateResult, DeleteResult } from "./types";
 
+// Update secrets in a collection
+export const updateSecretInCollection = async (
+    dbClient: MongoClient,
+    projectName: string,
+    serviceName: string,
+    secretName: string,
+    version: string,
+    newValue: any
+): Promise<dbSecretOperationResponse & UpdateResult> => {
+    try {
+        const filter = { SecretName: secretName };
+        const update = {
+            $set: { [`values.${version}.value`]: newValue },
+        };
+        const result: UpdateResult = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update);
+
+        return {
+            status: result.modifiedCount === 1,
+            message: result.modifiedCount === 1 ? `Updated secret '${secretName}' in '${serviceName}'.` : "No secret matched the filter, or no changes were needed.",
+            projectName,
+            serviceName,
+            secretName,
+            version,
+            newValue,
+        };
+    } catch (error) {
+        return {
+            status: false,
+            message: "An error occurred while updating the secret.",
+            projectName,
+            serviceName,
+        };
+    }
+};
+
 
 
 // Delete secrets from a collection
@@ -142,20 +177,59 @@ export const addSecret = async (
     }
 };
 
-export const updateSecretInCollection = async (dbClient: MongoClient, projectName: string, serviceName: string, secretName: string, version: string, newValue: any): Promise<dbSecretOperationResponse & UpdateResult> => {
+
+
+// Function to add a new secret version
+export const addSecretVersion = async ({
+    dbClient,
+    projectName,
+    serviceName,
+    secretName,
+    version,
+    newValue
+}: {
+    dbClient: MongoClient,
+    projectName: string,
+    serviceName: string,
+    secretName: string,
+    version: string,
+    newValue: SecretValue
+}): Promise<any> => {
+    let status = false;
+    let message = '';
+
     try {
+        // Construct the filter and update operation
         const filter = { secretName: secretName };
-        const update = {
-            $set: { [`values.${version}`]: { value: newValue } },
-            $currentDate: { updatedAt: true } 
+        const updateOperation = {
+            $set: { [`values.${version}`]: newValue },
+            $currentDate: { lastAccessAt: true, updatedAt: true }
         } as any;
 
-        const result: UpdateResult = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update);
+        // Perform the update operation
+        const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, updateOperation);
 
-        return { status: result.modifiedCount === 1, message: result.modifiedCount === 1 ? `Secret '${secretName}' updated successfully in service '${serviceName}'.` : "No secret matched the filter, or no changes were needed.", projectName, serviceName, secretName, version, newValue, };
+        // Check if the document was successfully updated
+        if (result.matchedCount === 1 && result.modifiedCount === 1) {
+            status = true;
+            message = `Added version '${version}' to secret '${secretName}' in service '${serviceName}'.`;
+        } else if (result.matchedCount === 0) {
+            message = `Secret '${secretName}' not found in service '${serviceName}'.`;
+        } else {
+            message = `No update performed for secret '${secretName}' in service '${serviceName}'.`;
+        }
     } catch (error) {
-        console.error("Error updating secret:", error);
-        return { status: false, message: "An error occurred while updating the secret.", projectName, serviceName, };
+        console.error("Error adding secret version:", error);
+        message = "An error occurred while adding the secret version.";
     }
-};
 
+    return {
+        status,
+        message,
+        projectName,
+        serviceName,
+        secretName,
+        version,
+        newValue
+    };
+};
