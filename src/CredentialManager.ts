@@ -8,7 +8,6 @@ class CredentialManager {
   private defaultProjectName = process.env.DEFAULT_OFFICE_NAME || "DefaultProject";
   private dbClient: MongoClient; 
 
-  // Adjust constructor to accept a MongoClient instance
   constructor(dbClient: MongoClient) {
     this.dbClient = dbClient;
     console.log('CredentialManager initialized with MongoDB client');
@@ -19,12 +18,10 @@ class CredentialManager {
     const databaseNames = await this.listAllDatabases();
     let metadataFound = false;
   
-    // Check each database for the _appMetadata collection
     for (const dbName of databaseNames) {
-      // Adjust ProjectManager instances to use the shared MongoClient
       const projectManager = new ProjectManager({
         projectName: dbName,
-        dbClient: this.dbClient, 
+        dbCluster: this.dbClient, 
       });
   
       const hasMetadata = await projectManager.collectionExists("_appMetadata");
