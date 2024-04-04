@@ -1,6 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 
-// Credential type for encapsulating version and value
+type EnvType = 'production' | 'test' | 'development';
+
 interface Credential {
     version: string;
     value: string;
@@ -28,7 +29,7 @@ interface Secret {
     _id: ObjectId;
     secretName: string;
     envName: string;
-    envType: 'production' | 'test' | 'development';
+    envType: EnvType;
     credential: Credential[];
     updatedAt: Date;
     createdAt: Date;
@@ -63,7 +64,6 @@ export const addSecretVersion = async ({
         message = "An error occurred while adding/updating the secret version.";
     }
 
-    // Create the Credential object for the response
     const credential: Credential = { version, value: newValue };
 
     return { status, message, projectName, serviceName, secret, credential };
@@ -74,19 +74,25 @@ export const updateSecretVersion = async ({
 }: AddSecretVersionParams): Promise<SecretVersionResponse> => {
     let status = false;
     let message = '';
+    let secret: Secret | null = null;
 
     try {
-        const filter = { secretName: secretName };
+        const filter = { secretName: secretName }; 
         const update = {
-            $set: { [`credential.$[elem].value`]: newValue },
+            $set: { "credential.$[elem].value": newValue },
         };
         const arrayFilters = [{ "elem.version": version }];
 
         const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update, { arrayFilters });
 
         if (result.modifiedCount === 1) {
-            status = true;
-            message = `Updated version '${version}' for secret '${secretName}' in service '${serviceName}'.`;
+            secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>(filter);
+            if (secret) {
+                status = true;
+                message = `Updated version '${version}' for secret '${secretName}' in service '${serviceName}'.`;
+            } else {
+                message = "Secret updated but not found afterwards.";
+            }
         } else {
             message = "No secret matched the filter, or no changes were needed.";
         }
@@ -97,5 +103,5 @@ export const updateSecretVersion = async ({
 
     const credential: Credential = { version, value: newValue };
 
-    return { status, message, projectName, serviceName, credential };
+    return { status, message, projectName, serviceName, secret, credential };
 };

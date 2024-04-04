@@ -4,7 +4,7 @@ import { initializeDbConnection } from "./database/initializeDbConnection";
 import { listAllProjects, createProject } from "./database/database";
 import { listServices } from "./database/collections";
 import { addSecret, findSecretValueByVersion, findSecretByName } from "./database/documents";
-import { addSecretVersion } from "./database/version";
+import { addSecretVersion, updateSecretVersion } from "./database/version";
 import { MongoClient } from "mongodb";
 
 async function startMenuDemo() {
@@ -32,17 +32,14 @@ async function startMenuDemo() {
   const secretName = "DemoSecret";
   const envName = "DemoEnvironment";
   const envType = "production";
-  const values = {
-    "1.0.0": { value: "sampleSecretValue" }
-  };
 
   await addSecret(dbClient, defaultProjectName, "DemoService", secretName, envName, envType, [{ version: '1.0', value: 'mySecretValue' }]
   );
 
   console.log(`Updating 'DemoSecret' in 'DemoService'...`);
-const resut = await findSecretValueByVersion( dbClient,  defaultProjectName,  "DemoService",  "DemoSecret", '1.0');
+  const resut = await findSecretValueByVersion(dbClient, defaultProjectName, "DemoService", "DemoSecret", '1.0');
 
-console.log(resut)
+  console.log(resut)
   const addSecretVersionResponse = await addSecretVersion({
     dbClient: dbClient,
     projectName: "SomnusLabs",
@@ -51,7 +48,20 @@ console.log(resut)
     version: "1.0.1",
     newValue: "yourNewSecretValue"
   });
-  console.log(`Adding version '1.0.1' to 'DemoSecret' in 'DemoService':`,JSON.stringify(addSecretVersionResponse, null,2));
+
+  console.log(`Adding version '1.0.1' to 'DemoSecret' in 'DemoService':`, JSON.stringify(addSecretVersionResponse, null, 2));
+  // Update a secret version using the previously defined function
+  const updateSecretVersionResponse = await updateSecretVersion({
+    dbClient: dbClient,
+    projectName: "SomnusLabs",
+    serviceName: "DemoService",
+    secretName: "DemoSecret",
+    version: "1.0.2", // Assuming you want to update to a new version or modify the existing one
+    newValue: "yourUpdatedSecretValue" // New value for the specified version
+  });
+
+  // Log the result of the update operation
+  console.log(`Updating version '1.0.2' for 'DemoSecret' in 'DemoService':`, JSON.stringify(updateSecretVersionResponse, null, 2));
 
 
   console.log(`Finding 'DemoSecret' in 'DemoService'...`);
