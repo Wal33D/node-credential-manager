@@ -13,8 +13,11 @@ export interface dbSecretOperationResponse {
     message: string;
     projectName: string;
     serviceName: string;
+    secretName?: string;
     filter?: object;
     secret?: Secret;
+    version?: any;
+
 }
 export interface dbServiceOperationResponse {
     status: boolean;
@@ -30,9 +33,10 @@ export interface SecretValue {
 }
 
 export interface UpdateResult {
-    matchedCount: number;
-    modifiedCount: number;
+    matchedCount?: number;
+    modifiedCount?: number;
     upsertedCount?: number;
+    newValue?: any;
 }
 
 export interface DeleteResult {

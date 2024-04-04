@@ -1,25 +1,7 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import { dbSecretOperationResponse, Secret, SecretValue, UpdateResult, DeleteResult } from "./types";
 
-// Update secrets in a collection
-export const updateSecretsInCollection = async (
-    dbClient: MongoClient, projectName: string, serviceName: string, filter: object, update: object
-): Promise<dbSecretOperationResponse & UpdateResult> => {
-    const result: UpdateResult = await dbClient.db(projectName).collection(serviceName).updateMany(filter, update);
-    return {
-        status: true, message: `Updated ${result.modifiedCount} secrets in '${serviceName}'.`, projectName, serviceName, filter, ...result
-    };
-};
 
-// Update an individual secret in a collection
-export const updateSecretInCollection = async (
-    dbClient: MongoClient, projectName: string, serviceName: string, filter: object, update: object
-): Promise<dbSecretOperationResponse & UpdateResult> => {
-    const result: UpdateResult = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update);
-    return {
-        status: result.modifiedCount === 1, message: result.modifiedCount === 1 ? `Updated a secret in '${serviceName}'.` : `No secrets matched the filter, or no changes were needed.`, projectName, serviceName, filter, ...result
-    };
-};
 
 // Delete secrets from a collection
 export const deleteSecretsFromCollection = async (
@@ -119,17 +101,83 @@ export const findSecretValueByVersion = async (dbClient: MongoClient, projectNam
     }
 };
 
-export const addSecret = async (dbClient: MongoClient, projectName: string, serviceName: string, secretData: Omit<Secret, '_id'>): Promise<dbSecretOperationResponse> => {
+export const addSecret = async (
+    dbClient: MongoClient,
+    projectName: string,
+    serviceName: string,
+    secretName: string,
+    envName: string,
+    envType: 'production' | 'test' | 'development',
+    values: { [version: string]: SecretValue }
+): Promise<dbSecretOperationResponse> => {
     try {
-        const project = dbClient.db(projectName);
-        const service = project.collection(serviceName);
+        const secretData: Secret = {
+            SecretName: secretName,
+            envName: envName,
+            envType: envType,
+            values: values,
+            updatedAt: new Date(),
+            createdAt: new Date(),
+            lastAccessAt: new Date(),
+            _id: new ObjectId
+        };
 
-        const { insertedId } = await service.insertOne(secretData);
-        const secret: Secret = { _id: insertedId, ...secretData };
+        const result = await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
 
-        return { status: true, message: `Secret '${secret.SecretName}' added successfully to service '${serviceName}' in project '${projectName}'.`, projectName, serviceName, secret };
+        return {
+            status: true,
+            message: `Secret '${secretName}' added successfully to service '${serviceName}' in project '${projectName}'.`,
+            projectName,
+            serviceName,
+            secret: { ...secretData },
+        };
     } catch (error) {
         console.error("Error adding secret:", error);
-        return { status: false, message: "An error occurred while adding the secret.", projectName, serviceName };
+        return {
+            status: false,
+            message: "An error occurred while adding the secret.",
+            projectName,
+            serviceName,
+        };
+    }
+};
+
+// Update an individual secret in a collection
+export const updateSecretInCollection = async (
+    dbClient: MongoClient,
+    projectName: string,
+    serviceName: string,
+    secretName: string,
+    version: string,
+    newValue: any
+): Promise<dbSecretOperationResponse|any> => {
+    try {
+        // Ensure the version key is handled as a single string identifier
+        const versionKey = `values.${version}.value`;
+        const update = { $set: { [versionKey]: newValue } };
+
+        const result = await dbClient.db(projectName).collection(serviceName).updateOne(
+            { SecretName: secretName },
+            update
+        );
+
+        return {
+            status: result.modifiedCount === 1,
+            message: result.modifiedCount === 1 ? `Updated secret '${secretName}' in '${serviceName}' with version '${version}'.` : "No secret matched the filter, or no changes were needed.",
+            projectName,
+            serviceName,
+            updateDetails: {
+                secretName,
+                version,
+                newValue,
+            }
+        };
+    } catch (error:any) {
+        return {
+            status: false,
+            message: "An error occurred while updating the secret: " + error.message,
+            projectName,
+            serviceName,
+        };
     }
 };

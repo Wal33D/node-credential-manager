@@ -40,11 +40,25 @@ async function startMenuDemo() {
   };
 
   console.log(`Adding a new secret to 'DemoService'...`);
-  await addSecret(dbClient, defaultProjectName, "DemoService", secretData);
 
+  // Constructing secret data as individual arguments
+  const secretName = "DemoSecret";
+  const envName = "DemoEnvironment";
+  const envType = "production";
+  const values = {
+      "1.0.0": { value: "sampleSecretValue" }
+  };
+  
+  await addSecret(dbClient, defaultProjectName, "DemoService", secretName, envName, envType, values);
+  
   console.log(`Updating 'DemoSecret' in 'DemoService'...`);
-  await updateSecretInCollection(dbClient, defaultProjectName, "DemoService", { SecretName: "DemoSecret" }, { $set: { "values.1.0.1": { value: "updatedValue" } } });
 
+  // Specify the version of the secret you want to update along with the new value
+  const versionToUpdate = "1.0.1";
+  const newValue = "updatedValue";
+  
+  await updateSecretInCollection(dbClient, defaultProjectName, "DemoService", "DemoSecret", versionToUpdate, newValue);
+  
   console.log(`Counting secrets in 'DemoService'...`);
   await countSecretsInCollection(dbClient, defaultProjectName, "DemoService", {});
 
