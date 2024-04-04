@@ -51,18 +51,17 @@ export async function initializeDbConnection(params: DbConnectionParams): Promis
 export async function databaseOperation(dbClient: MongoClient, dbName: string, action: (db: any) => Promise<OperationResult>): Promise<OperationResult> {
     return performDbOperation(async () => await action(dbClient.db(dbName)));
 }
-// Adapted functions using the streamlined approach
+
+export const getDatabaseConnection = (dbClient: MongoClient, dbName: string): OperationResult => ({
+    status: true, message: `Database '${dbName}' accessed successfully.`, database: dbClient.db(dbName),
+});
+
 export const listAllDatabases = async (dbClient: MongoClient): Promise<OperationResult> =>
     performDbOperation(async () => {
         const dbs = await dbClient.db().admin().listDatabases();
         return { status: true, message: "Successfully retrieved database list.", databases: dbs.databases.map(db => db.name) };
     });
 
-export const getDatabaseConnection = (dbClient: MongoClient, dbName: string): OperationResult => ({
-    status: true, message: `Database '${dbName}' accessed successfully.`, database: dbClient.db(dbName),
-});
-
-// Example adapted function using databaseOperation
 export const databaseExists = async (dbClient: MongoClient, dbName: string): Promise<OperationResult> =>
     databaseOperation(dbClient, "", async (client) => {
         const dbs = await client.db().admin().listDatabases();
@@ -70,14 +69,12 @@ export const databaseExists = async (dbClient: MongoClient, dbName: string): Pro
         return { status: true, message: exists ? `Database '${dbName}' exists.` : `Database '${dbName}' does not exist.` };
     });
 
-// Consolidated function for creating a database by adding a collection
 export const createDatabase = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<OperationResult> =>
     databaseOperation(dbClient, dbName, async (db) => {
         await db.createCollection(collectionName);
         return { status: true, message: `Database '${dbName}' created successfully with collection '${collectionName}'.` };
     });
 
-// Additional operations adapted similarly
 export const listAllCollectionsInDatabase = (dbClient: MongoClient, dbName: string): Promise<OperationResult> =>
     databaseOperation(dbClient, dbName, async (db) => {
         const collections = await db.listCollections().toArray();
@@ -89,37 +86,33 @@ export const getAllDocumentsFromCollection = (dbClient: MongoClient, dbName: str
         const documents = await db.collection(collectionName).find({}).toArray();
         return { status: true, message: "Successfully retrieved all documents.", data: documents };
     });
-// Update documents in a collection
-export const updateDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object, update: object): Promise<OperationResult> => 
-  databaseOperation(dbClient, dbName, async (db) => {
-    const result = await db.collection(collectionName).updateMany(filter, update);
-    return { status: true, message: `Updated ${result.modifiedCount} documents in '${collectionName}'.`, data: result };
-  });
 
-// Delete documents from a collection
-export const deleteDocumentsFromCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object): Promise<OperationResult> => 
-  databaseOperation(dbClient, dbName, async (db) => {
-    const result = await db.collection(collectionName).deleteMany(filter);
-    return { status: true, message: `Deleted ${result.deletedCount} documents from '${collectionName}'.`, data: result };
-  });
+export const updateDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object, update: object): Promise<OperationResult> =>
+    databaseOperation(dbClient, dbName, async (db) => {
+        const result = await db.collection(collectionName).updateMany(filter, update);
+        return { status: true, message: `Updated ${result.modifiedCount} documents in '${collectionName}'.`, data: result };
+    });
 
-// Find documents in a collection with optional filter
-export const findDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<OperationResult> => 
-  databaseOperation(dbClient, dbName, async (db) => {
-    const documents = await db.collection(collectionName).find(filter).toArray();
-    return { status: true, message: `Found documents in '${collectionName}'.`, data: documents };
-  });
+export const deleteDocumentsFromCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object): Promise<OperationResult> =>
+    databaseOperation(dbClient, dbName, async (db) => {
+        const result = await db.collection(collectionName).deleteMany(filter);
+        return { status: true, message: `Deleted ${result.deletedCount} documents from '${collectionName}'.`, data: result };
+    });
 
-// Count documents in a collection with optional filter
-export const countDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<OperationResult> => 
-  databaseOperation(dbClient, dbName, async (db) => {
-    const count = await db.collection(collectionName).countDocuments(filter);
-    return { status: true, message: `Counted ${count} documents in '${collectionName}'.`, data: [{ count }] };
-  });
+export const findDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<OperationResult> =>
+    databaseOperation(dbClient, dbName, async (db) => {
+        const documents = await db.collection(collectionName).find(filter).toArray();
+        return { status: true, message: `Found documents in '${collectionName}'.`, data: documents };
+    });
 
-// Aggregate documents in a collection
-export const aggregateDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, pipeline: object[]): Promise<OperationResult> => 
-  databaseOperation(dbClient, dbName, async (db) => {
-    const documents = await db.collection(collectionName).aggregate(pipeline).toArray();
-    return { status: true, message: `Aggregated documents in '${collectionName}'.`, data: documents };
-  });
+export const countDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<OperationResult> =>
+    databaseOperation(dbClient, dbName, async (db) => {
+        const count = await db.collection(collectionName).countDocuments(filter);
+        return { status: true, message: `Counted ${count} documents in '${collectionName}'.`, data: [{ count }] };
+    });
+
+export const aggregateDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, pipeline: object[]): Promise<OperationResult> =>
+    databaseOperation(dbClient, dbName, async (db) => {
+        const documents = await db.collection(collectionName).aggregate(pipeline).toArray();
+        return { status: true, message: `Aggregated documents in '${collectionName}'.`, data: documents };
+    });
