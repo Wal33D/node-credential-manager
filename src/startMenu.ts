@@ -1,36 +1,46 @@
-import { CredentialManager } from "./CredentialManager";
-import { initializeDbConnection } from "./utils/initializeDbConnection"; 
-async function startMenu() {
-  const credentialManager = new CredentialManager();
+import { initializeDbConnection } from "./database/initializeDbConnection";
+import { listAllProjects, createProject, deleteProject } from "./database/database";
+import { listServices, removeService } from "./database/collections";
+import { addSecret, findSecretByName } from "./database/documents";
+// Simulating some operations for demo purposes
+async function startMenuDemo() {
+  const defaultProjectName = process.env.DEFAULT_PROJECT_NAME || "DefaultProject";
 
-  const defaultProjectName = process.env.DEFAULT_OFFICE_NAME as string ;
+  console.log("Initializing database connection...");
+  const dbClient = await initializeDbConnection({/* Your connection params */});
 
-  await delay(1000);
-  const projectManager = credentialManager.projects.get(defaultProjectName);
-  await delay(1000); 
+  console.log("Listing all projects...");
+  await listAllProjects(dbClient);
 
-  if (!projectManager) {
-    console.error(`Project '${defaultProjectName}' not found.`);
-    return;
-  }
+  console.log(`Creating a new project: ${defaultProjectName}...`);
+  await createProject(dbClient, defaultProjectName, "DemoService");
+  
+  console.log("Listing all services in the project...");
+  await listServices(dbClient, defaultProjectName);
 
-  const credentialData = {
-    name: "bestkey",
-    envType:"production",
-    envVariableName:"OPEN_AI_API_KEY",
-    createdAt: new Date(), 
-    value: "sampleKey123",
+  const secretData = {
+    name: "DemoSecret",
+    envType: "production",
+    value: "sampleSecretValue",
+    createdAt: new Date()
   };
   
-  await projectManager.addCredentialToCabinet('OpenAI', credentialData);
-  console.log(`Credential 'OpenAI' with random value ${credentialData.value} added to cabinet 'OpenAI' in project '${defaultProjectName}'.`);
+  console.log(`Adding a new secret to 'DemoService'...`);
+  await addSecret(dbClient, defaultProjectName, "DemoService", secretData);
+  
+  console.log(`Finding 'DemoSecret' in 'DemoService'...`);
+  await findSecretByName({dbClient, projectName:defaultProjectName, serviceName:"DemoService", secretName:"DemoSecret"});
+
+  // Add more operations as needed for your demo...
+  
+  console.log("Cleaning up: removing service...");
+  await removeService(dbClient, defaultProjectName, "DemoService");
+  
+  console.log("Cleaning up: dropping project...");
+  await deleteProject(dbClient, defaultProjectName);
 
   console.log('Exiting application...');
   process.exit(0);
 }
 
-
-startMenu(); 
-function delay(milliseconds:any) {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
-}
+startMenuDemo();

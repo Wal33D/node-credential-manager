@@ -91,10 +91,10 @@ export const findSecretByName = async (
     };
 };
 
-export const findSecretValueByVersion = async ( dbClient: MongoClient, projectName: string, serviceName: string, secretName: string, version: string = "latest" ): Promise<dbSecretOperationResponse & { secretValue?: SecretValue }> => {
+export const findSecretValueByVersion = async (dbClient: MongoClient, projectName: string, serviceName: string, secretName: string, version: string = "latest"): Promise<dbSecretOperationResponse & { secretValue?: SecretValue }> => {
     try {
         const db = dbClient.db(projectName);
-        const secret: Secret | null = await db.collection(serviceName).findOne({ SecretName: secretName }) as Secret; 
+        const secret: Secret | null = await db.collection(serviceName).findOne({ SecretName: secretName }) as Secret;
 
         if (!secret) {
             return { status: false, message: `Secret with name '${secretName}' not found.`, projectName, serviceName };
@@ -116,5 +116,20 @@ export const findSecretValueByVersion = async ( dbClient: MongoClient, projectNa
     } catch (error) {
         console.error("Error finding secret value by version:", error);
         return { status: false, message: "An error occurred while finding the secret value.", projectName, serviceName };
+    }
+};
+
+export const addSecret = async (dbClient: MongoClient, projectName: string, serviceName: string, secretData: Omit<Secret, '_id'>): Promise<dbSecretOperationResponse> => {
+    try {
+        const project = dbClient.db(projectName);
+        const service = project.collection(serviceName);
+
+        const { insertedId } = await service.insertOne(secretData);
+        const secret: Secret = { _id: insertedId, ...secretData };
+
+        return { status: true, message: `Secret '${secret.SecretName}' added successfully to service '${serviceName}' in project '${projectName}'.`, projectName, serviceName, secret };
+    } catch (error) {
+        console.error("Error adding secret:", error);
+        return { status: false, message: "An error occurred while adding the secret.", projectName, serviceName };
     }
 };

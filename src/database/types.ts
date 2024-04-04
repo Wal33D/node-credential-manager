@@ -14,6 +14,7 @@ export interface dbSecretOperationResponse {
     projectName: string;
     serviceName: string;
     filter?: object;
+    secret?: Secret;
 }
 export interface dbServiceOperationResponse {
     status: boolean;
