@@ -4,8 +4,7 @@ import { initializeDbConnection } from "./database/initializeDbConnection";
 import { listAllProjects, createProject, deleteProject } from "./database/database";
 import { listServices, removeService } from "./database/collections";
 import { addSecret, countSecretsInCollection, findSecretByName, addSecretVersion } from "./database/documents";
-import { Secret, SecretValue } from "./database/types";
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient } from "mongodb";
 
 async function startMenuDemo() {
   console.log("Initializing database connection...");
@@ -33,24 +32,23 @@ async function startMenuDemo() {
   const envName = "DemoEnvironment";
   const envType = "production";
   const values = {
-      "1.0.0": { value: "sampleSecretValue" }
+    "1.0.0": { value: "sampleSecretValue" }
   };
-  
-  await addSecret(dbClient, defaultProjectName, "DemoService", secretName, envName, envType, values);
-  
+
+  await addSecret(dbClient, defaultProjectName, "DemoService", secretName, envName, envType, [{ version: '1.0', value: 'mySecretValue' }]
+  );
+
   console.log(`Updating 'DemoSecret' in 'DemoService'...`);
 
-  const version = "1.0.1";
-  const newValue:SecretValue = {value:"updatedValue"} ;
-  
+
   await addSecretVersion({
     dbClient: dbClient,
     projectName: "SomnusLabs",
     serviceName: "DemoService",
     secretName: "DemoSecret",
     version: "1.0.1",
-    newValue: { version:'1.0.1', value: "yourNewSecretValue" } // This matches the SecretValue interface
-});
+    newValue: "yourNewSecretValue"
+  });
   console.log(`Counting secrets in 'DemoService'...`);
   await countSecretsInCollection(dbClient, defaultProjectName, "DemoService", {});
 

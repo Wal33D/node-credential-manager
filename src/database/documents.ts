@@ -1,5 +1,5 @@
 import { MongoClient, ObjectId } from "mongodb";
-import { dbSecretOperationResponse, Secret, SecretValue, UpdateResult, DeleteResult } from "./types";
+import { dbSecretOperationResponse, Secret, UpdateResult, DeleteResult } from "./types";
 
 // Update secrets in a collection
 export const updateSecretInCollection = async (
@@ -199,7 +199,7 @@ export const addSecretVersion = async ({
         const updateOperation = {
             $push: { credential: { version, value: newValue } }, // Adds a new credential version
             $currentDate: { lastAccessAt: true, updatedAt: true }
-        } as any;
+        } as;
 
         const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, updateOperation);
 
