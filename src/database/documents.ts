@@ -108,33 +108,42 @@ export const findSecretByName = async (
     };
 };
 
-export const findSecretValueByVersion = async (dbClient: MongoClient, projectName: string, serviceName: string, secretName: string, version: string = "latest"): Promise<dbSecretOperationResponse & { secretValue?: SecretValue }> => {
+export const findSecretValueByVersion = async (
+    dbClient: MongoClient, 
+    projectName: string, 
+    serviceName: string, 
+    secretName: string, 
+    version: string = "latest"
+): Promise<dbSecretOperationResponse & { secretValue?: {version: string, value: string} }> => {
     try {
         const db = dbClient.db(projectName);
-        const secret: Secret | null = await db.collection(serviceName).findOne({ SecretName: secretName }) as Secret;
+        const secret: Secret | null = await db.collection(serviceName).findOne({ secretName: secretName }) as Secret;
 
         if (!secret) {
             return { status: false, message: `Secret with name '${secretName}' not found.`, projectName, serviceName };
         }
 
-        let secretValue: SecretValue | undefined;
+        let secretValue: {version: string, value: string} | undefined;
+
         if (version === "latest") {
-            const latestVersionKey = Object.keys(secret.values).sort().pop();
-            secretValue = latestVersionKey ? secret.values[latestVersionKey] : undefined;
+            // Assumes the latest version is the last in the array
+            secretValue = secret.credential[secret.credential.length - 1];
         } else {
-            secretValue = secret.values[version];
+            // Find the specific version in the credential array
+            secretValue = secret.credential.find(cred => cred.version === version);
         }
 
         if (!secretValue) {
             return { status: false, message: `Version '${version}' not found for secret '${secretName}'.`, projectName, serviceName };
         }
 
-        return { status: true, message: `Found version '${version}' for secret '${secretName}'.`, projectName, serviceName, secretValue, };
+        return { status: true, message: `Found version '${version}' for secret '${secretName}'.`, projectName, serviceName, secretValue };
     } catch (error) {
         console.error("Error finding secret value by version:", error);
         return { status: false, message: "An error occurred while finding the secret value.", projectName, serviceName };
     }
 };
+
 
 export const addSecret = async (
     dbClient: MongoClient,
@@ -199,7 +208,7 @@ export const addSecretVersion = async ({
         const updateOperation = {
             $push: { credential: { version, value: newValue } }, // Adds a new credential version
             $currentDate: { lastAccessAt: true, updatedAt: true }
-        } as;
+        } as any;
 
         const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, updateOperation);
 
