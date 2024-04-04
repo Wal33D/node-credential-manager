@@ -112,7 +112,7 @@ export const addSecret = async (
 ): Promise<dbSecretOperationResponse> => {
     try {
         const secretData: Secret = {
-            SecretName: secretName,
+            secretName: secretName,
             envName: envName,
             envType: envType,
             values: values,
@@ -142,42 +142,20 @@ export const addSecret = async (
     }
 };
 
-// Update an individual secret in a collection
-export const updateSecretInCollection = async (
-    dbClient: MongoClient,
-    projectName: string,
-    serviceName: string,
-    secretName: string,
-    version: string,
-    newValue: any
-): Promise<dbSecretOperationResponse|any> => {
+export const updateSecretInCollection = async (dbClient: MongoClient, projectName: string, serviceName: string, secretName: string, version: string, newValue: any): Promise<dbSecretOperationResponse & UpdateResult> => {
     try {
-        // Ensure the version key is handled as a single string identifier
-        const versionKey = `values.${version}.value`;
-        const update = { $set: { [versionKey]: newValue } };
+        const filter = { secretName: secretName };
+        const update = {
+            $set: { [`values.${version}`]: { value: newValue } },
+            $currentDate: { updatedAt: true } 
+        } as any;
 
-        const result = await dbClient.db(projectName).collection(serviceName).updateOne(
-            { SecretName: secretName },
-            update
-        );
+        const result: UpdateResult = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update);
 
-        return {
-            status: result.modifiedCount === 1,
-            message: result.modifiedCount === 1 ? `Updated secret '${secretName}' in '${serviceName}' with version '${version}'.` : "No secret matched the filter, or no changes were needed.",
-            projectName,
-            serviceName,
-            updateDetails: {
-                secretName,
-                version,
-                newValue,
-            }
-        };
-    } catch (error:any) {
-        return {
-            status: false,
-            message: "An error occurred while updating the secret: " + error.message,
-            projectName,
-            serviceName,
-        };
+        return { status: result.modifiedCount === 1, message: result.modifiedCount === 1 ? `Secret '${secretName}' updated successfully in service '${serviceName}'.` : "No secret matched the filter, or no changes were needed.", projectName, serviceName, secretName, version, newValue, };
+    } catch (error) {
+        console.error("Error updating secret:", error);
+        return { status: false, message: "An error occurred while updating the secret.", projectName, serviceName, };
     }
 };
+

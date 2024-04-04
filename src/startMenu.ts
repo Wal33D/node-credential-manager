@@ -26,19 +26,6 @@ async function startMenuDemo() {
   console.log("Listing all services in the project...");
   await listServices(dbClient, defaultProjectName);
 
-  const secretData: Secret = {
-    _id: new ObjectId(),
-    SecretName: "DemoSecret",
-    envName: "DemoEnvironment",
-    envType: "production",
-    values: {
-      "1.0.0": { value: "sampleSecretValue" },
-    },
-    updatedAt: new Date(),
-    createdAt: new Date(),
-    lastAccessAt: new Date(),
-  };
-
   console.log(`Adding a new secret to 'DemoService'...`);
 
   // Constructing secret data as individual arguments

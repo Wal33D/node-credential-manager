@@ -45,7 +45,7 @@ export interface DeleteResult {
 
 export interface Secret {
     _id: ObjectId;
-    SecretName: string;
+    secretName: string;
     envName: string;
     envType: 'production' | 'test' | 'development';
     values: {
