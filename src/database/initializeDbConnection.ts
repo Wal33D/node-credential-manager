@@ -79,8 +79,8 @@ export const copyDatabase = async ({ dbClient, sourceDbName, targetDbName, }: { 
         return { status: false, message: `Error copying database: ${error.message}` };
     }
 };
-//collections
 
+//collections
 export const listCollections = async (dbClient: MongoClient, dbName: string): Promise<any> =>
     databaseOperation(dbClient, dbName, async (db) => {
         const collections = await db.listCollections().toArray();
@@ -104,48 +104,3 @@ export const removeCollection = async ({ dbClient, dbName, collectionName, }: { 
         await db.dropCollection(collectionName);
         return { status: true, message: `Collection '${collectionName}' removed.` };
     });
-
-
-//collection
-export const getAllDocumentsFromCollection = (dbClient: MongoClient, dbName: string, collectionName: string): Promise<any> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        const documents = await db.collection(collectionName).find({}).toArray();
-        return { status: true, message: "Successfully retrieved all documents.", data: documents };
-    });
-
-export const updateDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object, update: object): Promise<any> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        const result = await db.collection(collectionName).updateMany(filter, update);
-        return { status: true, message: `Updated ${result.modifiedCount} documents in '${collectionName}'.`, data: result };
-    });
-
-export const deleteDocumentsFromCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object): Promise<any> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        const result = await db.collection(collectionName).deleteMany(filter);
-        return { status: true, message: `Deleted ${result.deletedCount} documents from '${collectionName}'.`, data: result };
-    });
-
-export const findDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<any> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        const documents = await db.collection(collectionName).find(filter).toArray();
-        return { status: true, message: `Found documents in '${collectionName}'.`, data: documents };
-    });
-
-export const countDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<any> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        const count = await db.collection(collectionName).countDocuments(filter);
-        return { status: true, message: `Counted ${count} documents in '${collectionName}'.`, data: [{ count }] };
-    });
-
-export const aggregateDocumentsInCollection = (dbClient: MongoClient, dbName: string, collectionName: string, pipeline: object[]): Promise<any> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        const documents = await db.collection(collectionName).aggregate(pipeline).toArray();
-        return { status: true, message: `Aggregated documents in '${collectionName}'.`, data: documents };
-    });
-
-export const findDocumentByName = async ({ dbClient, dbName, collectionName, documentName, }: any): Promise<any> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        const document = await db.collection(collectionName).findOne({ name: documentName });
-        return { status: !!document, message: document ? `Document with name '${documentName}' found successfully.` : `Document with name '${documentName}' not found in '${collectionName}'.`, data: document || null };
-    });
-
