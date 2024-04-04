@@ -1,36 +1,42 @@
-require('dotenv').config({ path: './.env' });
+require('dotenv').config({ path: './.env.local' });
 
 import { MongoClient } from 'mongodb';
 import { ProjectManager } from './ProjectManager';
 
 const defaultProjectName = process.env.DEFAULT_OFFICE_NAME || "DefaultProject";
 
+// Initialize the MongoDB client connection with the environment variables
+const initializeDbConnection = () => {
+  const dbUsername = process.env.DB_USERNAME || "admin";
+  const dbPassword = process.env.DB_PASSWORD || "password";
+  const dbCluster = process.env.DB_CLUSTER || "cluster0.example.mongodb.net";
+
+  const uri = `mongodb+srv://${encodeURIComponent(dbUsername)}:${encodeURIComponent(dbPassword)}@${dbCluster}`;
+  return new MongoClient(uri);
+};
+
 export const projects = new Map();
 
-const connectionString = ({ dbUsername, dbPassword, dbCluster }:{ dbUsername:any, dbPassword:any, dbCluster:any }) => 
-  `mongodb+srv://${encodeURIComponent(dbUsername)}:${encodeURIComponent(dbPassword)}@${dbCluster}`;
-
-const listAllDatabases = async (config:any) => {
-  const client = new MongoClient(connectionString(config));
+const listAllDatabases = async (client:any) => {
   try {
     await client.connect();
     const databasesList = await client.db().admin().listDatabases();
     const filteredDatabases = databasesList.databases
-      .map(db => db.name)
-      .filter(name => name !== 'admin' && name !== 'local');
+      .map((db: { name: any; }) => db.name)
+      .filter((name: string) => name !== 'admin' && name !== 'local');
     return filteredDatabases;
   } finally {
     await client.close();
   }
 };
 
-export const addProject = async (projectName:any, config:any) => {
+export const addProject = async (projectName:any, client:any) => {
   if (projects.has(projectName)) {
     console.log(`Project '${projectName}' already exists in the Credential Manager.`);
     return;
   }
 
-  const projectManager = new ProjectManager({ projectName, ...config });
+  const projectManager = new ProjectManager({ projectName, client });
   try {
     await projectManager.ensureConnection();
     projects.set(projectName, projectManager);
@@ -40,15 +46,13 @@ export const addProject = async (projectName:any, config:any) => {
   }
 };
 
-export const initializeAllProjects = async (config:any) => {
-  const databaseNames = await listAllDatabases(config);
+export const initializeAllProjects = async () => {
+  const client = initializeDbConnection();
+  const databaseNames = await listAllDatabases(client as any);
   let metadataFound = false;
 
   for (const dbName of databaseNames) {
-    const projectManager = new ProjectManager({
-      projectName: dbName,
-      ...config,
-    });
+    const projectManager = new ProjectManager({ projectName: dbName, client });
 
     await projectManager.ensureConnection();
     const hasMetadata = await projectManager.collectionExists("_appMetadata");
@@ -63,7 +67,7 @@ export const initializeAllProjects = async (config:any) => {
 
   if (!metadataFound) {
     console.log("Creating the default project with _appMetadata...");
-    await addProject(defaultProjectName, config);
+    await addProject(defaultProjectName, client as any);
 
     const defaultProjectManager = projects.get(defaultProjectName);
     if (defaultProjectManager) {
@@ -71,4 +75,3 @@ export const initializeAllProjects = async (config:any) => {
     }
   }
 };
-
