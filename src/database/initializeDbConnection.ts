@@ -24,9 +24,7 @@ export async function performDbOperation(operation: () => Promise<any>): Promise
     }
 }
 
-export async function databaseOperation(dbClient: MongoClient, dbName: string, action: (db: any) => Promise<any>): Promise<any> {
-    return performDbOperation(async () => await action(dbClient.db(dbName)));
-}
+
 
 export async function initializeDbConnection(params: any): Promise<any> {
     const uri = `mongodb+srv://${encodeURIComponent(params.dbUsername || process.env.DB_USERNAME as any)}:${encodeURIComponent(params.dbPassword || process.env.DB_PASSWORD as any)}@${params.dbCluster || process.env.DB_CLUSTER}`;
@@ -105,31 +103,14 @@ export const removeCollection = async ({ dbClient, dbName, collectionName, }: { 
         return { status: true, message: `Collection '${collectionName}' removed.` };
     });
 
-export const collectionExists = async (
-    dbClient: MongoClient,
-    dbName: string,
-    collectionName: string
-): Promise<OperationResponse & { exists: boolean }> => {
+    export const collectionExists = async ( dbClient: MongoClient, dbName: string, collectionName: string ): Promise<OperationResponse & { exists: boolean }> => {
     try {
         const db = dbClient.db(dbName);
-        // MongoDB's listCollections can be used with a filter. 
         const collections = await db.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
         const exists = collections.length > 0;
-        return {
-            status: true,
-            message: exists ? `Collection '${collectionName}' exists in database '${dbName}'.` : `Collection '${collectionName}' does not exist in database '${dbName}'.`,
-            dbName,
-            collectionName,
-            exists
-        };
+        return { status: true, message: exists ? `Collection '${collectionName}' exists in database '${dbName}'.` : `Collection '${collectionName}' does not exist in database '${dbName}'.`, dbName, collectionName, exists };
     } catch (error: any) {
         console.error("Error checking if collection exists:", error);
-        return {
-            status: false,
-            message: "An error occurred while checking if the collection exists.",
-            dbName,
-            collectionName,
-            exists: false
-        };
+        return { status: false, message: "An error occurred while checking if the collection exists.", dbName, collectionName, exists: false };
     }
 };
