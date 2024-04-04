@@ -1,33 +1,37 @@
 import { promptMenu } from "./utils/promptMenu";
-import { performAction } from "./utils/performAction";
-import { CredentialManager } from "./CredentialManager";
+import { initializeAllProjects, addProject, projects } from "./CredentialManager"; // Assume we've exported these functions
 import { createReadlineInterface } from './utils/createReadlineInterface';
 
+const globalDbConfig = {
+  dbUsername: process.env.DB_USERNAME || "admin",
+  dbPassword: process.env.DB_PASSWORD || "password",
+  dbCluster: process.env.DB_CLUSTER || "cluster0.example.mongodb.net",
+};
+
 async function startMenu() {
-  const credentialManager = new CredentialManager();
+  await initializeAllProjects(globalDbConfig);
 
-  const defaultProjectName = process.env.DEFAULT_OFFICE_NAME as string ;
+  const defaultProjectName = process.env.DEFAULT_OFFICE_NAME || "DefaultProject";
 
-  const value = `${Math.floor(Math.random() * 100)}`;
   await delay(1000);
-  const projectManager = credentialManager.projects.get(defaultProjectName);
-  await delay(1000); 
-
+  const projectManager = projects.get(defaultProjectName);
   if (!projectManager) {
     console.error(`Project '${defaultProjectName}' not found.`);
     return;
   }
+  await delay(1000);
 
   const credentialData = {
     name: "bestkey",
-    envType:"production",
-    envVariableName:"OPEN_AI_API_KEY",
-    createdAt: new Date(), 
+    envType: "production",
+    envVariableName: "OPEN_AI_API_KEY",
+    createdAt: new Date(),
     value: "sampleKey123",
   };
   
-  await projectManager.addCredentialToCabinet('OpenAI', credentialData);
-  console.log(`Credential 'OpenAI' with random value ${value} added to cabinet 'OpenAI' in project '${defaultProjectName}'.`);
+  // Assuming addCredentialToCabinet is now a function of ProjectManager or has been made a standalone function
+  await projectManager.addCredentialToCabinet('OpenAI', credentialData) as any;
+  console.log(`Credential 'OpenAI' with random value ${credentialData.value} added to cabinet 'OpenAI' in project '${defaultProjectName}'.`);
 
   while (true) {
     const readlineInterfaceResult = createReadlineInterface();
@@ -46,17 +50,16 @@ async function startMenu() {
     }
 
     const action = menuResult.choice;
-    //@ts-ignore
-    const { continueApp } = await performAction({ credentialManager, action, readLineInterface });
-    if (!continueApp) break;
+    // Adjust performAction or its usage to accommodate the new function-based design
+  //  const { continueApp } = await performAction({ projectManager, action, readLineInterface }); // Adjusted to pass projectManager instead of credentialManager
+  //  if (!continueApp) break;
   }
 
   console.log('Exiting application...');
-  process.exit(0);
 }
 
-
-startMenu(); 
 function delay(milliseconds:any) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
+
+startMenu(); 

@@ -10,7 +10,7 @@ const globalDbConfig = {
   dbCluster: process.env.DB_CLUSTER || "cluster0.example.mongodb.net",
 };
 
-const projects = new Map();
+export const projects = new Map();
 
 const connectionString = ({ dbUsername, dbPassword, dbCluster }:{ dbUsername:any, dbPassword:any, dbCluster:any }) => 
   `mongodb+srv://${encodeURIComponent(dbUsername)}:${encodeURIComponent(dbPassword)}@${dbCluster}`;
@@ -29,7 +29,7 @@ const listAllDatabases = async (config:any) => {
   }
 };
 
-const addProject = async (projectName:any, config:any) => {
+export const addProject = async (projectName:any, config:any) => {
   if (projects.has(projectName)) {
     console.log(`Project '${projectName}' already exists in the Credential Manager.`);
     return;
@@ -45,7 +45,7 @@ const addProject = async (projectName:any, config:any) => {
   }
 };
 
-const initializeAllProjects = async (config:any) => {
+export const initializeAllProjects = async (config:any) => {
   const databaseNames = await listAllDatabases(config);
   let metadataFound = false;
 
@@ -77,5 +77,4 @@ const initializeAllProjects = async (config:any) => {
   }
 };
 
-// Usage
 initializeAllProjects(globalDbConfig).then(() => console.log('All projects have been initialized.'));
