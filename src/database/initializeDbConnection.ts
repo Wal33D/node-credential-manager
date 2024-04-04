@@ -1,3 +1,4 @@
+require('dotenv').config({ path: './.env' });
 import { MongoClient } from "mongodb";
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -15,8 +16,9 @@ async function connectWithRetry(uri: string, attempts = 5): Promise<MongoClient>
     throw new Error("Connection attempts exceeded.");
 }
 
-export async function initializeDbConnection(params: any): Promise<any> {
-    const uri = `mongodb+srv://${encodeURIComponent(params.dbUsername || process.env.DB_USERNAME as string)}:${encodeURIComponent(params.dbPassword || process.env.DB_PASSWORD as string)}@${params.dbCluster || process.env.DB_CLUSTER as string}`;
+export async function initializeDbConnection({ dbUsername, dbPassword, dbCluster }:
+    { dbUsername?: string; dbPassword?: string; dbCluster?: string; }): Promise<any> {
+    const uri = `mongodb+srv://${encodeURIComponent(dbUsername|| process.env.DB_USERNAME as string)}:${encodeURIComponent(dbPassword || process.env.DB_PASSWORD as string)}@${dbCluster || process.env.DB_CLUSTER as string}`;
     try {
         const client = await connectWithRetry(uri);
         return { status: true, message: "Database connection initialized successfully.", client };
