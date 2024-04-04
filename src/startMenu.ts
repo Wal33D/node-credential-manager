@@ -1,4 +1,5 @@
 import { promptMenu } from "./utils/promptMenu";
+import { performAction } from "./utils/performAction";
 import { initializeAllProjects, addProject, projects } from "./CredentialManager"; // Assume we've exported these functions
 import { createReadlineInterface } from './utils/createReadlineInterface';
 
