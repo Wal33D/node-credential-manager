@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './.env.local' });
+require('dotenv').config({ path: './.env' });
 
 import { MongoClient } from 'mongodb';
 import { ProjectManager } from './ProjectManager';
