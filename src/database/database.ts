@@ -1,57 +1,57 @@
 import { MongoClient } from "mongodb";
-import { dbDatabaseOperationResponse } from "./types";
+import { dbProjectOperationResponse } from "./types";
 
-export const getDatabaseConnection = (dbClient: MongoClient, dbName: string): any => ({
-    status: true, message: `Database '${dbName}' accessed successfully.`, database: dbClient.db(dbName),
+export const getProjectConnection = (dbClient: MongoClient, projectName: string): any => ({
+    status: true, message: `Project '${projectName}' accessed successfully.`, project: dbClient.db(projectName),
 });
 
-export const databaseExists = async (dbClient: MongoClient, dbName: string): Promise<dbDatabaseOperationResponse> => {
+export const projectExists = async (dbClient: MongoClient, projectName: string): Promise<dbProjectOperationResponse> => {
     try {
-        const dbs = await dbClient.db().admin().listDatabases();
-        const exists = dbs.databases.some(db => db.name === dbName);
-        return { status: true, message: exists ? `Database '${dbName}' exists.` : `Database '${dbName}' does not exist.`, dbName };
+        const projects = await dbClient.db().admin().listDatabases();
+        const exists = projects.databases.some(project => project.name === projectName);
+        return { status: true, message: exists ? `Project '${projectName}' exists.` : `Project '${projectName}' does not exist.`, projectName };
     } catch (error:any) {
-        return { status: false, message: error.message, dbName };
+        return { status: false, message: error.message, projectName };
     }
 };
 
-export const listAllDatabases = async (dbClient: MongoClient): Promise<dbDatabaseOperationResponse> => {
+export const listAllProjects = async (dbClient: MongoClient): Promise<dbProjectOperationResponse> => {
     try {
-        const dbs = await dbClient.db().admin().listDatabases();
-        return { status: true, message: "Successfully retrieved database list.", databases: dbs.databases.map(db => db.name) };
+        const projects = await dbClient.db().admin().listDatabases();
+        return { status: true, message: "Successfully retrieved project list.", projects: projects.databases.map(project => project.name) };
     } catch (error:any) {
         return { status: false, message: error.message };
     }
 };
 
-export const createDatabase = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<dbDatabaseOperationResponse> => {
+export const createProject = async (dbClient: MongoClient, projectName: string, serviceName: string): Promise<dbProjectOperationResponse> => {
     try {
-        await dbClient.db(dbName).createCollection(collectionName);
-        return { status: true, message: `Collection '${collectionName}' created in '${dbName}'.`, dbName, collectionName };
+        await dbClient.db(projectName).createCollection(serviceName);
+        return { status: true, message: `Service '${serviceName}' created in project '${projectName}'.`, projectName, serviceName };
     } catch (error:any) {
-        return { status: false, message: error.message, dbName, collectionName };
+        return { status: false, message: error.message, projectName, serviceName };
     }
 };
 
-export const dropDatabase = async (dbClient: MongoClient, dbName: string): Promise<dbDatabaseOperationResponse> => {
+export const deleteProject = async (dbClient: MongoClient, projectName: string): Promise<dbProjectOperationResponse> => {
     try {
-        await dbClient.db(dbName).dropDatabase();
-        return { status: true, message: `Database '${dbName}' dropped successfully.`, dbName };
+        await dbClient.db(projectName).dropDatabase();
+        return { status: true, message: `Project '${projectName}' dropped successfully.`, projectName };
     } catch (error:any) {
-        return { status: false, message: error.message, dbName };
+        return { status: false, message: error.message, projectName };
     }
 };
 
-export const copyDatabase = async (dbClient: MongoClient, sourceDbName: string, targetDbName: string): Promise<dbDatabaseOperationResponse> => {
+export const copyProject = async (dbClient: MongoClient, sourceProjectName: string, targetProjectName: string): Promise<dbProjectOperationResponse> => {
     try {
-        const sourceDb = dbClient.db(sourceDbName);
-        const targetDb = dbClient.db(targetDbName);
-        const collections = await sourceDb.listCollections().toArray();
-        for (let collection of collections) {
-            const docs = await sourceDb.collection(collection.name).find({}).toArray();
-            await targetDb.collection(collection.name).insertMany(docs);
+        const sourceProject = dbClient.db(sourceProjectName);
+        const targetProject = dbClient.db(targetProjectName);
+        const services = await sourceProject.listCollections().toArray();
+        for (let service of services) {
+            const docs = await sourceProject.collection(service.name).find({}).toArray();
+            await targetProject.collection(service.name).insertMany(docs);
         }
-        return { status: true, message: `Database '${sourceDbName}' copied to '${targetDbName}'.` };
+        return { status: true, message: `Project '${sourceProjectName}' copied to '${targetProjectName}'.` };
     } catch (error:any) {
         return { status: false, message: error.message };
     }

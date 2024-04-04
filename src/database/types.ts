@@ -1,26 +1,26 @@
 
 import {  ObjectId } from "mongodb";
 
-export interface dbDatabaseOperationResponse {
+export interface dbProjectOperationResponse {
     status: boolean;
     message: string;
-    dbName?: string;
-    collectionName?: string;
-    databases?: string[];
+    projectName?: string;
+    serviceName?: string;
+    projects?: string[];
 }
-export interface dbDocumentOperationResponse {
+export interface dbSecretOperationResponse {
     status: boolean;
     message: string;
-    dbName: string;
-    collectionName: string;
+    projectName: string;
+    serviceName: string;
     filter?: object;
 }
-export interface dbCollectionOperationResponse {
+export interface dbServiceOperationResponse {
     status: boolean;
     message: string;
-    dbName: string;
-    collectionName?: string;
-    collections?: string[];
+    projectName: string;
+    serviceName?: string;
+    services?: string[];
     exists?: boolean;
 } 
 
@@ -49,4 +49,8 @@ export interface Secret {
     updatedAt: Date;
     createdAt: Date;
     lastAccessAt: Date;
+}
+
+export interface Service {
+    serviceName: string;
 }
