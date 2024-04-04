@@ -94,14 +94,22 @@ export const findSecretByName = async (
     };
 };
 
-export const addSecret = async (
-    dbClient: MongoClient,
-    projectName: string,
-    serviceName: string,
-    secretName: string,
-    envName: string,
-    envType: 'production' | 'test' | 'development',
-    credentials: { version: string, value: string }[]
+export const addSecret = async ({
+    dbClient,
+    projectName,
+    serviceName,
+    secretName,
+    envName,
+    envType,
+    credentials }: {
+        dbClient: MongoClient,
+        projectName: string,
+        serviceName: string,
+        secretName: string,
+        envName: string,
+        envType: 'production' | 'test' | 'development',
+        credentials: { version: string, value: string }[]
+    }
 ): Promise<dbSecretOperationResponse> => {
     try {
         // First, check if a secret with the same name already exists

@@ -1,77 +1,65 @@
-
 require('dotenv').config({ path: './.env' });
-import { initializeDbConnection } from "./database/initializeDbConnection";
-import { listAllProjects, createProject } from "./database/database";
-import { listServices } from "./database/collections";
-import { addSecret, findSecretByName } from "./database/secrets";
-import { addSecretVersion, updateSecretVersion } from "./database/version";
+import { addSecret } from "./database/secrets";
 import { MongoClient } from "mongodb";
+import { addSecretVersion, updateSecretVersion } from "./database/version";
+import { initializeDbConnection } from "./database/initializeDbConnection";
 
-async function startMenuDemo() {
+async function secretTests() {
+  let testResults = [];
+
   console.log("Initializing database connection...");
   const connectionResult = await initializeDbConnection({});
   if (!connectionResult.status) {
     console.error("Failed to initialize database connection:", connectionResult.message);
+    testResults.push({ test: "Database Connection", passed: false, message: connectionResult.message });
+    logFinalResults(testResults);
     return;
   }
   const dbClient: MongoClient = connectionResult.client;
+  const defaultProjectName = process.env.DEFAULT_PROJECT_NAME || "DefaultProject";
 
-  const defaultProjectName = process.env.DEFAULT_PROJECT_NAME || "DefaultProject" as string;
-  console.log("Listing all projects...");
-  await listAllProjects(dbClient);
+  // Add a new secret
+  const secretAddResponse = await addSecret({dbClient, projectName:defaultProjectName, serviceName:"DemoService", secretName:"DemoSecret", envName:"DEMO_SECRET", envType:"production", [{ version: '1.0', value: 'initialValue' }]});
+  testResults.push({ test: "Add Secret", passed: secretAddResponse.status, message: secretAddResponse.message });
 
-  console.log(`Creating a new project: ${defaultProjectName}...`);
-  await createProject(dbClient, defaultProjectName, "DemoService");
-
-  console.log("Listing all services in the project...");
-  await listServices(dbClient, defaultProjectName);
-
-  console.log(`Adding a new secret to 'DemoService'...`);
-
-  // Constructing secret data as individual arguments
-  const secretName = "DemoSecret";
-  const envName = "DemoEnvironment";
-  const envType = "production";
-
-  await addSecret(dbClient, defaultProjectName, "DemoService", secretName, envName, envType, [{ version: '1.0.3', value: 'mySecretValue' }]
-  );
-
-
-  const addSecretVersionResponse = await addSecretVersion({
-    dbClient: dbClient,
-    projectName: "SomnusLabs",
+  // Add a new version
+  const addVersionResponse = await addSecretVersion({
+    dbClient,
+    projectName: defaultProjectName,
     serviceName: "DemoService",
     secretName: "DemoSecret",
-    version: "1.0.4",
-    newValue: "yourNewSecretValue"
+    version: "1.0.1",
+    newValue: "newValue"
   });
+  testResults.push({ test: "Add Secret Version", passed: addVersionResponse.status, message: addVersionResponse.message });
 
-  console.log(`Adding version '1.0.1' to 'DemoSecret' in 'DemoService':`, JSON.stringify(addSecretVersionResponse, null, 2));
-  // Update a secret version using the previously defined function
-  const updateSecretVersionResponse = await updateSecretVersion({
-    dbClient: dbClient,
-    projectName: "SomnusLabs",
+  // Attempt to add a duplicate version (should fail)
+  const addDuplicateVersionResponse = await addSecretVersion({
+    dbClient,
+    projectName: defaultProjectName,
     serviceName: "DemoService",
     secretName: "DemoSecret",
-    version: "1.0.2", // Assuming you want to update to a new version or modify the existing one
-    newValue: "yourUpdatedSecretValue" // New value for the specified version
+    version: "1.0.1",
+    newValue: "duplicateValue"
   });
+  testResults.push({ test: "Add Duplicate Secret Version", passed: !addDuplicateVersionResponse.status, message: addDuplicateVersionResponse.message });
 
-  // Log the result of the update operation
-  console.log(`Updating version '1.0.2' for 'DemoSecret' in 'DemoService':`, JSON.stringify(updateSecretVersionResponse, null, 2));
+  // Update an existing version
+  const updateVersionResponse = await updateSecretVersion({
+    dbClient,
+    projectName: defaultProjectName,
+    serviceName: "DemoService",
+    secretName: "DemoSecret",
+    version: "1.0.1",
+    newValue: "updatedValue"
+  });
+  testResults.push({ test: "Update Secret Version", passed: updateVersionResponse.status, message: updateVersionResponse.message });
 
-
-  console.log(`Finding 'DemoSecret' in 'DemoService'...`);
-  await findSecretByName({ dbClient, projectName: defaultProjectName, serviceName: "DemoService", secretName: "DemoSecret" });
-
-  console.log("Cleaning up: removing 'DemoService'...");
-  //await removeService(dbClient, defaultProjectName, "DemoService");
-
-  console.log(`Cleaning up: dropping project '${defaultProjectName}'...`);
-  //await deleteProject(dbClient, defaultProjectName);
-
-  console.log('Exiting application...');
-  process.exit(0);
+  logFinalResults(testResults);
+  dbClient.close();
 }
 
-startMenuDemo();
+function logFinalResults(testResults) {
+  console.log("\nTest Summary:");
+  testResults.forEach(result => {
+    console.log(`${result.test}: ${result.passed ? "
