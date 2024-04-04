@@ -1,14 +1,13 @@
 import { MongoClient, ObjectId } from "mongodb";
 
-export interface dbSecretOperationResponse {
+export interface SecretVersionResponse {
     status: boolean;
-    message: string;
     projectName: string;
     serviceName: string;
-    secretName?: string;
-    filter?: object;
-    secret?: Secret;
-    version?: any;
+    message: string;
+    secret?: Secret | null;
+    version?: string;
+    newValue?: string;
 }
 
 interface AddSecretVersionParams {
@@ -31,16 +30,8 @@ interface Secret {
     lastAccessAt: Date;
 }
 
-interface AddSecretVersion {
-    status: boolean;
-    message: string;
-    projectName: string;
-    serviceName: string;
-    secret?: Secret | null;
-}
-
 export const addSecretVersion = async ({ dbClient, projectName, serviceName, secretName, version, newValue }: AddSecretVersionParams):
-    Promise<AddSecretVersion> => {
+    Promise<SecretVersionResponse> => {
     let status = false;
     let message = '';
     let secret: Secret | null = null;
@@ -56,8 +47,8 @@ export const addSecretVersion = async ({ dbClient, projectName, serviceName, sec
 
         if (result.matchedCount === 1) {
             status = true;
+            secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>(filter);
             message = `Version '${version}' added to secret '${secretName}' in service '${serviceName}'.`;
-            secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>(filter) as Secret;
         } else {
             message = `Secret '${secretName}' not found in service '${serviceName}'.`;
         }
@@ -66,20 +57,33 @@ export const addSecretVersion = async ({ dbClient, projectName, serviceName, sec
         message = "An error occurred while adding/updating the secret version.";
     }
 
-    return { status, message, projectName, serviceName, secret };
+    return { status, message, projectName, serviceName, secret, version, newValue };
 };
 
-export const updateSecretInService = async ({ dbClient, projectName, serviceName, secretName, version, newValue }: AddSecretVersionParams):
- Promise<any> => {
-    try {
-        const filter = { SecretName: secretName };
-        const update = {
-            $set: { [`values.${version}.value`]: newValue },
-        };
-        const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update);
+export const updateSecretVersion = async ({ dbClient, projectName, serviceName, secretName, version, newValue }: AddSecretVersionParams):
+    Promise<SecretVersionResponse> => {
+    let status = false;
+    let message = '';
 
-        return { status: result.modifiedCount === 1, message: result.modifiedCount === 1 ? `Updated secret '${secretName}' in '${serviceName}'.` : "No secret matched the filter, or no changes were needed.", projectName, serviceName, secretName, version, newValue, };
+    try {
+        const filter = { secretName: secretName };
+        const update = {
+            $set: { [`credential.$[elem].value`]: newValue },
+        };
+        const arrayFilters = [{ "elem.version": version }];
+
+        const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update, { arrayFilters });
+
+        if (result.modifiedCount === 1) {
+            status = true;
+            message = `Updated version '${version}' for secret '${secretName}' in service '${serviceName}'.`;
+        } else {
+            message = "No secret matched the filter, or no changes were needed.";
+        }
     } catch (error) {
-        return { status: false, message: "An error occurred while updating the secret.", projectName, serviceName, };
+        console.error("Error updating secret version:", error);
+        message = "An error occurred while updating the secret.";
     }
+
+    return { status, message, projectName, serviceName, version, newValue };
 };
