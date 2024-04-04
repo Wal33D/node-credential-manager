@@ -1,9 +1,10 @@
 
 require('dotenv').config({ path: './.env' });
 import { initializeDbConnection } from "./database/initializeDbConnection";
-import { listAllProjects, createProject, deleteProject } from "./database/database";
-import { listServices, removeService } from "./database/collections";
-import { addSecret, findSecretValueByVersion, countSecretsInCollection, findSecretByName, addSecretVersion } from "./database/documents";
+import { listAllProjects, createProject } from "./database/database";
+import { listServices } from "./database/collections";
+import { addSecret, findSecretValueByVersion, findSecretByName } from "./database/documents";
+import { addSecretVersion } from "./database/version";
 import { MongoClient } from "mongodb";
 
 async function startMenuDemo() {
@@ -40,8 +41,9 @@ async function startMenuDemo() {
 
   console.log(`Updating 'DemoSecret' in 'DemoService'...`);
 const resut = await findSecretValueByVersion( dbClient,  defaultProjectName,  "DemoService",  "DemoSecret", '1.0');
+
 console.log(resut)
-  await addSecretVersion({
+  const addSecretVersionResponse = await addSecretVersion({
     dbClient: dbClient,
     projectName: "SomnusLabs",
     serviceName: "DemoService",
@@ -49,8 +51,8 @@ console.log(resut)
     version: "1.0.1",
     newValue: "yourNewSecretValue"
   });
-  console.log(`Counting secrets in 'DemoService'...`);
-  await countSecretsInCollection(dbClient, defaultProjectName, "DemoService", {});
+  console.log(`Adding version '1.0.1' to 'DemoSecret' in 'DemoService':`,JSON.stringify(addSecretVersionResponse, null,2));
+
 
   console.log(`Finding 'DemoSecret' in 'DemoService'...`);
   await findSecretByName({ dbClient, projectName: defaultProjectName, serviceName: "DemoService", secretName: "DemoSecret" });

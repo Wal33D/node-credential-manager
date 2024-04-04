@@ -1,13 +1,18 @@
 import { MongoClient, ObjectId } from "mongodb";
 
+// Credential type for encapsulating version and value
+interface Credential {
+    version: string;
+    value: string;
+}
+
 export interface SecretVersionResponse {
     status: boolean;
     projectName: string;
     serviceName: string;
     message: string;
     secret?: Secret | null;
-    version?: string;
-    newValue?: string;
+    credential?: Credential;
 }
 
 interface AddSecretVersionParams {
@@ -24,14 +29,15 @@ interface Secret {
     secretName: string;
     envName: string;
     envType: 'production' | 'test' | 'development';
-    credential: { version: string, value: string }[];
+    credential: Credential[];
     updatedAt: Date;
     createdAt: Date;
     lastAccessAt: Date;
 }
 
-export const addSecretVersion = async ({ dbClient, projectName, serviceName, secretName, version, newValue }: AddSecretVersionParams):
-    Promise<SecretVersionResponse> => {
+export const addSecretVersion = async ({
+    dbClient, projectName, serviceName, secretName, version, newValue
+}: AddSecretVersionParams): Promise<SecretVersionResponse> => {
     let status = false;
     let message = '';
     let secret: Secret | null = null;
@@ -57,11 +63,15 @@ export const addSecretVersion = async ({ dbClient, projectName, serviceName, sec
         message = "An error occurred while adding/updating the secret version.";
     }
 
-    return { status, message, projectName, serviceName, secret, version, newValue };
+    // Create the Credential object for the response
+    const credential: Credential = { version, value: newValue };
+
+    return { status, message, projectName, serviceName, secret, credential };
 };
 
-export const updateSecretVersion = async ({ dbClient, projectName, serviceName, secretName, version, newValue }: AddSecretVersionParams):
-    Promise<SecretVersionResponse> => {
+export const updateSecretVersion = async ({
+    dbClient, projectName, serviceName, secretName, version, newValue
+}: AddSecretVersionParams): Promise<SecretVersionResponse> => {
     let status = false;
     let message = '';
 
@@ -85,5 +95,7 @@ export const updateSecretVersion = async ({ dbClient, projectName, serviceName, 
         message = "An error occurred while updating the secret.";
     }
 
-    return { status, message, projectName, serviceName, version, newValue };
+    const credential: Credential = { version, value: newValue };
+
+    return { status, message, projectName, serviceName, credential };
 };
