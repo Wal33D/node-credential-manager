@@ -3,14 +3,8 @@ import { performAction } from "./utils/performAction";
 import { initializeAllProjects, addProject, projects } from "./CredentialManager"; // Assume we've exported these functions
 import { createReadlineInterface } from './utils/createReadlineInterface';
 
-const globalDbConfig = {
-  dbUsername: process.env.DB_USERNAME || "admin",
-  dbPassword: process.env.DB_PASSWORD || "password",
-  dbCluster: process.env.DB_CLUSTER || "cluster0.example.mongodb.net",
-};
-
 async function startMenu() {
-  await initializeAllProjects(globalDbConfig);
+  await initializeAllProjects({dbUsername, dbPassword, dbCluster});
 
   const defaultProjectName = process.env.DEFAULT_OFFICE_NAME || "DefaultProject";
 
@@ -53,7 +47,7 @@ async function startMenu() {
     const action = menuResult.choice;
     // Adjust performAction or its usage to accommodate the new function-based design
   //  const { continueApp } = await performAction({ projectManager, action, readLineInterface }); // Adjusted to pass projectManager instead of credentialManager
-  //  if (!continueApp) break;
+    if (!continueApp) break;
   }
 
   console.log('Exiting application...');
