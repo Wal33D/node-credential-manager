@@ -58,18 +58,20 @@ class CredentialManager {
     console.log(`Project '${projectName}' has been successfully added.`);
   }
 
-  private async listAllDatabases(): Promise<string[]> {
+  public async listAllDatabases(dbClient: MongoClient): Promise<string[]> {
     try {
-      await this.dbClient.connect();
-      const databasesList = await this.dbClient.db().admin().listDatabases();
+      await dbClient.connect(); 
+      const databasesList = await dbClient.db().admin().listDatabases();
       const filteredDatabases = databasesList.databases
-                              .map(db => db.name)
-                              .filter(name => name !== 'admin' && name !== 'local');
+        .map(db => db.name)
+        .filter(name => name !== 'admin' && name !== 'local');
       return filteredDatabases;
-    } finally {
-      // Do not close the client; it is shared and managed externally
+    } catch (error) {
+      console.error("Error listing databases:", error);
+      return []; 
     }
   }
+  
 }
 
 export { CredentialManager };

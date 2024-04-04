@@ -6,105 +6,135 @@ interface DbConnectionParams {
     dbCluster?: string;
 }
 
-interface DbConnectionResult {
+interface CreateDatabaseResult {
+    status: boolean;
+    message: string;
+}
+
+interface ListCollectionsResult {
+    status: boolean;
+    message: string;
+    collections?: string[];
+}
+
+interface DbOperationResult {
     status: boolean;
     message: string;
     client?: MongoClient;
-}
-
-interface GetDatabaseConnectionResult {
-    status: boolean;
-    message: string;
     database?: Db;
+    databases?: string[];
 }
 
-export const initializeDbConnection = async ({
-    dbUsername = process.env.DB_USERNAME as string,
-    dbPassword = process.env.DB_PASSWORD as string,
-    dbCluster = process.env.DB_CLUSTER as string,
-}: DbConnectionParams = {}): Promise<DbConnectionResult> => {
-    let status = false;
-    let message = "";
-    let client: MongoClient | undefined;
-    let attempts = 0;
-    const maxAttempts = 5;
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-    while (attempts < maxAttempts) {
-        try {
-            const uri = `mongodb+srv://${encodeURIComponent(dbUsername)}:${encodeURIComponent(dbPassword)}@${dbCluster}`;
-            client = new MongoClient(uri);
-            await client.connect();
-            status = true;
-            message = "Database connection initialized successfully.";
-            break;
-        } catch (error: any) {
-            attempts++;
-            message = `Attempt ${attempts}: Error initializing database connection: ${error.message}`;
-            if (attempts < maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+export const initializeDbConnection = async (params: DbConnectionParams): Promise<DbOperationResult> => {
+    const { dbUsername = process.env.DB_USERNAME as string, dbPassword = process.env.DB_PASSWORD as string, dbCluster = process.env.DB_CLUSTER as string } = params;
+    let message = "";
+    try {
+        for (let attempts = 0, maxAttempts = 5; attempts < maxAttempts; attempts++) {
+            try {
+                const uri = `mongodb+srv://${encodeURIComponent(dbUsername)}:${encodeURIComponent(dbPassword)}@${dbCluster}`;
+                const client = new MongoClient(uri);
+                await client.connect();
+                return { status: true, message: "Database connection initialized successfully.", client };
+            } catch (error: any) {
+                message = `Attempt ${attempts + 1}: Error initializing database connection: ${error.message}`;
+                if (attempts < maxAttempts - 1) await delay(1000);
             }
         }
+    } catch (error: any) {
+        message = `Failed to initialize database connection: ${error.message}`;
     }
-
-    if (!status) {
-        message = `Failed to initialize database connection after ${maxAttempts} attempts.`;
-    }
-
-    return { status, message, client };
+    return { status: false, message };
 };
 
-export const getDatabaseConnection = async ({
-    dbClient,
-    dbName
-}: {
-    dbClient: MongoClient,
-    dbName: string
-}): Promise<GetDatabaseConnectionResult> => {
+export const getDatabaseConnection = async ({ dbClient, dbName }: { dbClient: MongoClient, dbName: string }): Promise<DbOperationResult> => {
     try {
         const database = dbClient.db(dbName);
+        return { status: true, message: `Database '${dbName}' accessed successfully.`, database };
+    } catch (error: any) {
+        return { status: false, message: `Failed to access database '${dbName}': ${error.message}` };
+    }
+};
+
+export const databaseExists = async ({ dbClient, dbName }: { dbClient: MongoClient, dbName: string }): Promise<DbOperationResult> => {
+    try {
+        await dbClient.connect();
+        const dbs = await dbClient.db().admin().listDatabases();
+        const exists = dbs.databases.some(db => db.name === dbName);
+        const message = exists ? `Database '${dbName}' exists.` : `Database '${dbName}' does not exist.`;
+        return { status: true, message, databases: dbs.databases.map(db => db.name) };
+    } catch (error: any) {
+        return { status: false, message: `Failed to check if database exists: ${error.message}` };
+    }
+};
+
+export const listAllDatabases = async ({ dbClient }: { dbClient: MongoClient }): Promise<DbOperationResult> => {
+    try {
+        await dbClient.connect();
+        const dbs = await dbClient.db().admin().listDatabases();
+        return { status: true, message: "Successfully retrieved database list.", databases: dbs.databases.map(db => db.name) };
+    } catch (error: any) {
+        return { status: false, message: `Failed to list databases: ${error.message}` };
+    }
+};
+
+export const createDatabase = async ({
+    dbClient,
+    dbName,
+    collectionName
+}: {
+    dbClient: MongoClient,
+    dbName: string,
+    collectionName: string
+}): Promise<CreateDatabaseResult> => {
+    try {
+        await dbClient.connect();
+        const database = dbClient.db(dbName);
+        await database.createCollection(collectionName);
 
         return {
             status: true,
-            message: `Database '${dbName}' accessed successfully.`,
-            database
+            message: `Database '${dbName}' created successfully with collection '${collectionName}'.`
         };
     } catch (error: any) {
         return {
             status: false,
-            message: `Failed to access database '${dbName}': ${error.message}`
+            message: `Failed to create database '${dbName}': ${error.message}`
         };
     }
 };
 
-interface DatabaseExistsResult {
-    exists: boolean;
-    message: string;
-}
-
-export const checkIfDatabaseExists = async ({
+export const listAllCollectionsInDatabase = async ({
     dbClient,
     dbName
 }: {
     dbClient: MongoClient,
     dbName: string
-}): Promise<DatabaseExistsResult> => {
+}): Promise<ListCollectionsResult> => {
     try {
+        // Ensure the client is connected
         await dbClient.connect();
 
-        const adminDb = dbClient.db("admin");
-        const { databases } = await adminDb.admin().listDatabases();
-        
-        const databaseExists = databases.some(database => database.name === dbName);
+        // Access the specified database
+        const database = dbClient.db(dbName);
+
+        // Use the listCollections method to get an array of collection info objects
+        const collections = await database.listCollections().toArray();
+
+        // Map the collection info objects to get an array of collection names
+        const collectionNames = collections.map(collection => collection.name);
 
         return {
-            exists: databaseExists,
-            message: databaseExists ? `Database '${dbName}' exists.` : `Database '${dbName}' does not exist.`
+            status: true,
+            message: `Successfully retrieved collections list for database '${dbName}'.`,
+            collections: collectionNames,
         };
     } catch (error: any) {
+        console.error(`An error occurred while listing collections in database '${dbName}': ${error.message}`);
         return {
-            exists: false,
-            message: `Error checking database existence: ${error.message}`
+            status: false,
+            message: `Failed to list collections in database '${dbName}': ${error.message}`,
         };
     }
 };
-
