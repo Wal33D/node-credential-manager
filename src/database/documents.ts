@@ -1,9 +1,41 @@
 import { MongoClient, ObjectId } from "mongodb";
-import { dbSecretOperationResponse, Secret, UpdateResult, DeleteResult } from "./types";
+
+export interface dbSecretOperationResponse {
+    status: boolean;
+    message: string;
+    projectName: string;
+    serviceName: string;
+    secretName?: string;
+    filter?: object;
+    secret?: Secret;
+    version?: any;
+
+}
+export interface UpdateResult {
+    matchedCount?: number;
+    modifiedCount?: number;
+    upsertedCount?: number;
+    newValue?: any;
+}
+
+export interface DeleteResult {
+    deletedCount: number;
+}
+
+export interface Secret {
+    _id: ObjectId;
+    secretName: string;
+    envName: string;
+    envType: 'production' | 'test' | 'development';
+    credential: [{ version: string, value: string }];
+    updatedAt: Date;
+    createdAt: Date;
+    lastAccessAt: Date;
+}
 
 
 // Delete secrets from a collection
-export const deleteSecretsFromCollection = async (
+export const deleteSecretsFromService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object
 ): Promise<dbSecretOperationResponse & DeleteResult> => {
     const result: DeleteResult = await dbClient.db(projectName).collection(serviceName).deleteMany(filter);
@@ -13,7 +45,7 @@ export const deleteSecretsFromCollection = async (
 };
 
 // Delete an individual secret from a collection
-export const deleteSecretFromCollection = async (
+export const deleteSecretFromService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object
 ): Promise<dbSecretOperationResponse & DeleteResult> => {
     const result: DeleteResult = await dbClient.db(projectName).collection(serviceName).deleteOne(filter);
@@ -23,7 +55,7 @@ export const deleteSecretFromCollection = async (
 };
 
 // Count secrets in a collection
-export const countSecretsInCollection = async (
+export const countSecretsInService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object = {}
 ): Promise<dbSecretOperationResponse & { count: number }> => {
     const count = await dbClient.db(projectName).collection(serviceName).countDocuments(filter);
@@ -33,7 +65,7 @@ export const countSecretsInCollection = async (
 };
 
 // Get all secrets from a collection
-export const getAllSecretsFromCollection = async (
+export const getAllSecretsFromService = async (
     dbClient: MongoClient, projectName: string, serviceName: string
 ): Promise<dbSecretOperationResponse & { secrets: Secret[] }> => {
     const secrets = await dbClient.db(projectName).collection(serviceName).find({}).toArray() as Secret[];
@@ -43,7 +75,7 @@ export const getAllSecretsFromCollection = async (
 };
 
 // Find secrets in a collection
-export const findSecretsInCollection = async (
+export const findSecretsInService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object = {}
 ): Promise<dbSecretOperationResponse & { secrets: Secret[] }> => {
     const secrets: Secret[] = await dbClient.db(projectName).collection(serviceName).find(filter).toArray() as Secret[];
@@ -53,7 +85,7 @@ export const findSecretsInCollection = async (
 };
 
 // Aggregate secrets in a collection
-export const aggregateSecretsInCollection = async (
+export const aggregateSecretsInService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, pipeline: object[]
 ): Promise<dbSecretOperationResponse & { secrets: Secret[] }> => {
     const secrets: Secret[] = await dbClient.db(projectName).collection(serviceName).aggregate(pipeline).toArray() as Secret[];;
@@ -108,14 +140,21 @@ export const findSecretValueByVersion = async (
     }
 };
 
-
-export const addSecret = async ( dbClient: MongoClient, projectName: string, serviceName: string, secretName: string, envName: string, envType: 'production' | 'test' | 'development', credentials: { version: string, value: string }[] ): Promise<dbSecretOperationResponse> => {
+export const addSecret = async (
+    dbClient: MongoClient,
+    projectName: string,
+    serviceName: string,
+    secretName: string,
+    envName: string,
+    envType: 'production' | 'test' | 'development',
+    credentials: { version: string, value: string }[]
+): Promise<dbSecretOperationResponse> => {
     try {
         const secretData: Secret = {
             secretName: secretName,
             envName: envName,
             envType: envType,
-            credential: credentials as any, 
+            credential: credentials as any,
             updatedAt: new Date(),
             createdAt: new Date(),
             lastAccessAt: new Date(),
@@ -124,7 +163,22 @@ export const addSecret = async ( dbClient: MongoClient, projectName: string, ser
 
         const result = await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
 
-        return { status: true, message: `Secret '${secretName}' added successfully to service '${serviceName}' in project '${projectName}'.`, projectName, serviceName, secret: { ...secretData }, };
+        if (result.insertedId) {
+            return {
+                status: true,
+                message: `Secret '${secretName}' added successfully to service '${serviceName}' in project '${projectName}'. New secret ID: ${result.insertedId}.`,
+                projectName,
+                serviceName,
+                secret: { ...secretData, _id: result.insertedId },
+            };
+        } else {
+            return {
+                status: false,
+                message: `Failed to add the secret '${secretName}'.`,
+                projectName,
+                serviceName,
+            };
+        }
     } catch (error) {
         console.error("Error adding secret:", error);
         return {
@@ -135,6 +189,7 @@ export const addSecret = async ( dbClient: MongoClient, projectName: string, ser
         };
     }
 };
+
 
 export const addSecretVersion = async ({ dbClient, projectName, serviceName, secretName, version, newValue }: { dbClient: MongoClient, projectName: string, serviceName: string, secretName: string, version: string, newValue: string }): Promise<any> => {
     let status = false;
@@ -160,17 +215,10 @@ export const addSecretVersion = async ({ dbClient, projectName, serviceName, sec
         message = "An error occurred while adding/updating the secret version.";
     }
 
-    return { status, message, projectName, serviceName, secretName, version, newValue };
+    return { status, message, projectName, serviceName,};
 };
 
-export const updateSecretInService = async (
-    dbClient: MongoClient,
-    projectName: string,
-    serviceName: string,
-    secretName: string,
-    version: string,
-    newValue: any
-): Promise<dbSecretOperationResponse & UpdateResult> => {
+export const updateSecretInService = async ( dbClient: MongoClient, projectName: string, serviceName: string, secretName: string, version: string, newValue: any ): Promise<dbSecretOperationResponse & UpdateResult> => {
     try {
         const filter = { SecretName: secretName };
         const update = {
@@ -178,33 +226,8 @@ export const updateSecretInService = async (
         };
         const result: UpdateResult = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update);
 
-        return {
-            status: result.modifiedCount === 1,
-            message: result.modifiedCount === 1 ? `Updated secret '${secretName}' in '${serviceName}'.` : "No secret matched the filter, or no changes were needed.",
-            projectName,
-            serviceName,
-            secretName,
-            version,
-            newValue,
-        };
+        return { status: result.modifiedCount === 1, message: result.modifiedCount === 1 ? `Updated secret '${secretName}' in '${serviceName}'.` : "No secret matched the filter, or no changes were needed.", projectName, serviceName, secretName, version, newValue, };
     } catch (error) {
-        return {
-            status: false,
-            message: "An error occurred while updating the secret.",
-            projectName,
-            serviceName,
-        };
+        return { status: false, message: "An error occurred while updating the secret.", projectName, serviceName, };
     }
 };
-
-
-export interface Secret {
-    _id: ObjectId;
-    secretName: string;
-    envName: string;
-    envType: 'production' | 'test' | 'development';
-    credential: [{ version: string, value: string }];
-    updatedAt: Date;
-    createdAt: Date;
-    lastAccessAt: Date;
-}
