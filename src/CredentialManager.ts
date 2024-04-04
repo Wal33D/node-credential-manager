@@ -1,7 +1,31 @@
-require('dotenv').config({ path: './.env.local' });
+require('dotenv').config({ path: './.env' });
 
-import { MongoClient } from 'mongodb';
 import { ProjectManager } from './ProjectManager';
+
+import { MongoClient } from "mongodb";
+
+export const initializeDbConnection = async ({
+  dbUsername = process.env.DB_USERNAME || "admin",
+  dbPassword = process.env.DB_PASSWORD || "password",
+  dbCluster = process.env.DB_CLUSTER || "cluster0.example.mongodb.net"
+} = {}): Promise<{ status: boolean; message: string; client?: MongoClient }> => {
+  let status = false;
+  let message = "";
+  let client: MongoClient | undefined;
+
+  try {
+    const uri = `mongodb+srv://${encodeURIComponent(dbUsername)}:${encodeURIComponent(dbPassword)}@${dbCluster}`;
+    client = new MongoClient(uri);
+
+    await client.connect();
+    status = true;
+    message = "Database connection initialized successfully.";
+  } catch (error: any) {
+    message = `Error initializing database connection: ${error.message}`;
+  }
+
+  return { status, message, client };
+};
 
 class CredentialManager {
   public projects: Map<string, ProjectManager> = new Map();
