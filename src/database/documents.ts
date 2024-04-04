@@ -1,6 +1,5 @@
 import { MongoClient } from "mongodb";
-import { OperationResponse, Secret, SecretValue, UpdateResult, DeleteResult } from "./types";
-
+import { dbDocumentOperationResponse, Secret, SecretValue, UpdateResult, DeleteResult } from "./types";
 
 // Update secrets in a collection
 export const updateSecretsInCollection = async (

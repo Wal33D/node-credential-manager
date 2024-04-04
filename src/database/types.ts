@@ -4,8 +4,19 @@ import {  ObjectId } from "mongodb";
 export interface OperationResponse {
     status: boolean;
     message: string;
+    dbName?: string;
+    collectionName?: string;
+    exists?: boolean;
+    filter?: object;
+    collections?: string[];
+    databases?: string[];
+}
+export interface dbDocumentOperationResponse {
+    status: boolean;
+    message: string;
     dbName: string;
     collectionName: string;
+    databases?: string[];
     filter?: object;
 }
 
