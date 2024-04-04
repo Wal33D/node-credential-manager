@@ -1,14 +1,11 @@
 
 import {  ObjectId } from "mongodb";
 
-export interface OperationResponse {
+export interface dbDatabaseOperationResponse {
     status: boolean;
     message: string;
     dbName?: string;
     collectionName?: string;
-    exists?: boolean;
-    filter?: object;
-    collections?: string[];
     databases?: string[];
 }
 export interface dbDocumentOperationResponse {
@@ -16,9 +13,16 @@ export interface dbDocumentOperationResponse {
     message: string;
     dbName: string;
     collectionName: string;
-    databases?: string[];
     filter?: object;
 }
+export interface dbCollectionOperationResponse {
+    status: boolean;
+    message: string;
+    dbName: string;
+    collectionName?: string;
+    collections?: string[];
+    exists?: boolean;
+} 
 
 export interface SecretValue {
     value: any;

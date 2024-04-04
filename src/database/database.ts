@@ -1,11 +1,11 @@
 import { MongoClient } from "mongodb";
-import { OperationResponse } from "./types";
+import { dbDatabaseOperationResponse } from "./types";
 
 export const getDatabaseConnection = (dbClient: MongoClient, dbName: string): any => ({
     status: true, message: `Database '${dbName}' accessed successfully.`, database: dbClient.db(dbName),
 });
 
-export const databaseExists = async (dbClient: MongoClient, dbName: string): Promise<OperationResponse> => {
+export const databaseExists = async (dbClient: MongoClient, dbName: string): Promise<dbDatabaseOperationResponse> => {
     try {
         const dbs = await dbClient.db().admin().listDatabases();
         const exists = dbs.databases.some(db => db.name === dbName);
@@ -15,7 +15,7 @@ export const databaseExists = async (dbClient: MongoClient, dbName: string): Pro
     }
 };
 
-export const listAllDatabases = async (dbClient: MongoClient): Promise<OperationResponse> => {
+export const listAllDatabases = async (dbClient: MongoClient): Promise<dbDatabaseOperationResponse> => {
     try {
         const dbs = await dbClient.db().admin().listDatabases();
         return { status: true, message: "Successfully retrieved database list.", databases: dbs.databases.map(db => db.name) };
@@ -24,7 +24,7 @@ export const listAllDatabases = async (dbClient: MongoClient): Promise<Operation
     }
 };
 
-export const createDatabase = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<OperationResponse> => {
+export const createDatabase = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<dbDatabaseOperationResponse> => {
     try {
         await dbClient.db(dbName).createCollection(collectionName);
         return { status: true, message: `Collection '${collectionName}' created in '${dbName}'.`, dbName, collectionName };
@@ -33,7 +33,7 @@ export const createDatabase = async (dbClient: MongoClient, dbName: string, coll
     }
 };
 
-export const dropDatabase = async (dbClient: MongoClient, dbName: string): Promise<OperationResponse> => {
+export const dropDatabase = async (dbClient: MongoClient, dbName: string): Promise<dbDatabaseOperationResponse> => {
     try {
         await dbClient.db(dbName).dropDatabase();
         return { status: true, message: `Database '${dbName}' dropped successfully.`, dbName };
@@ -42,7 +42,7 @@ export const dropDatabase = async (dbClient: MongoClient, dbName: string): Promi
     }
 };
 
-export const copyDatabase = async (dbClient: MongoClient, sourceDbName: string, targetDbName: string): Promise<OperationResponse> => {
+export const copyDatabase = async (dbClient: MongoClient, sourceDbName: string, targetDbName: string): Promise<dbDatabaseOperationResponse> => {
     try {
         const sourceDb = dbClient.db(sourceDbName);
         const targetDb = dbClient.db(targetDbName);

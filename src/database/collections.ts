@@ -1,7 +1,7 @@
 import { MongoClient } from "mongodb";
-import { OperationResponse } from "./types";
+import { dbCollectionOperationResponse } from "./types";
 
-export const listCollections = async (dbClient: MongoClient, dbName: string): Promise<OperationResponse> => {
+export const listCollections = async (dbClient: MongoClient, dbName: string): Promise<dbCollectionOperationResponse> => {
     try {
         const collections = await dbClient.db(dbName).listCollections().toArray();
         return { status: true, message: "Collections listed successfully.", dbName, collectionName: undefined, collections: collections.map(c => c.name) };
@@ -10,7 +10,7 @@ export const listCollections = async (dbClient: MongoClient, dbName: string): Pr
     }
 };
 
-export const addNewCollection = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<OperationResponse> => {
+export const addNewCollection = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<dbCollectionOperationResponse> => {
     try {
         await dbClient.db(dbName).createCollection(collectionName);
         return { status: true, message: `Collection '${collectionName}' added.`, dbName, collectionName };
@@ -19,7 +19,7 @@ export const addNewCollection = async (dbClient: MongoClient, dbName: string, co
     }
 };
 
-export const renameCollection = async (dbClient: MongoClient, dbName: string, oldCollectionName: string, newCollectionName: string): Promise<OperationResponse> => {
+export const renameCollection = async (dbClient: MongoClient, dbName: string, oldCollectionName: string, newCollectionName: string): Promise<dbCollectionOperationResponse> => {
     try {
         await dbClient.db(dbName).collection(oldCollectionName).rename(newCollectionName);
         return { status: true, message: `Collection renamed from '${oldCollectionName}' to '${newCollectionName}'.`, dbName, collectionName: newCollectionName };
@@ -28,7 +28,7 @@ export const renameCollection = async (dbClient: MongoClient, dbName: string, ol
     }
 };
 
-export const removeCollection = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<OperationResponse> => {
+export const removeCollection = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<dbCollectionOperationResponse> => {
     try {
         await dbClient.db(dbName).dropCollection(collectionName);
         return { status: true, message: `Collection '${collectionName}' removed.`, dbName, collectionName };
@@ -37,7 +37,7 @@ export const removeCollection = async (dbClient: MongoClient, dbName: string, co
     }
 };
 
-export const collectionExists = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<OperationResponse> => {
+export const collectionExists = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<dbCollectionOperationResponse> => {
     try {
         const collections = await dbClient.db(dbName).listCollections({ name: collectionName }, { nameOnly: true }).toArray();
         const exists = collections.length > 0;
