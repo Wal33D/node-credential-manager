@@ -1,39 +1,5 @@
-import { MongoClient, ObjectId } from "mongodb";
-
-interface OperationResponse {
-    status: boolean;
-    message: string;
-    dbName: string;
-    collectionName: string;
-    filter?: object;
-}
-
-interface SecretValue {
-    value: any;
-}
-
-interface UpdateResult {
-    matchedCount: number;
-    modifiedCount: number;
-    upsertedCount?: number;
-}
-
-interface DeleteResult {
-    deletedCount: number;
-}
-
-interface Secret {
-    _id: ObjectId;
-    SecretName: string;
-    envName: string;
-    envType: 'production' | 'test' | 'development';
-    values: {
-        [version: string]: SecretValue;
-    };
-    updatedAt: Date;
-    createdAt: Date;
-    lastAccessAt: Date;
-}
+import { MongoClient } from "mongodb";
+import { OperationResponse, Secret, SecretValue, UpdateResult, DeleteResult } from "./types";
 
 
 // Update secrets in a collection
@@ -124,4 +90,32 @@ export const findSecretByName = async (
     return {
         status: !!secret, message: secret ? `Secret with name '${secretName}' found successfully.` : `Secret with name '${secretName}' not found in '${collectionName}'.`, dbName, collectionName, secret
     };
+};
+
+export const findSecretValueByVersion = async ( dbClient: MongoClient, dbName: string, collectionName: string, secretName: string, version: string = "latest" ): Promise<OperationResponse & { secretValue?: SecretValue }> => {
+    try {
+        const db = dbClient.db(dbName);
+        const secret: Secret | null = await db.collection(collectionName).findOne({ SecretName: secretName }) as Secret; 
+
+        if (!secret) {
+            return { status: false, message: `Secret with name '${secretName}' not found.`, dbName, collectionName };
+        }
+
+        let secretValue: SecretValue | undefined;
+        if (version === "latest") {
+            const latestVersionKey = Object.keys(secret.values).sort().pop();
+            secretValue = latestVersionKey ? secret.values[latestVersionKey] : undefined;
+        } else {
+            secretValue = secret.values[version];
+        }
+
+        if (!secretValue) {
+            return { status: false, message: `Version '${version}' not found for secret '${secretName}'.`, dbName, collectionName };
+        }
+
+        return { status: true, message: `Found version '${version}' for secret '${secretName}'.`, dbName, collectionName, secretValue, };
+    } catch (error) {
+        console.error("Error finding secret value by version:", error);
+        return { status: false, message: "An error occurred while finding the secret value.", dbName, collectionName };
+    }
 };

@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-
+import { OperationResponse } from "./types";
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function connectWithRetry(uri: string, attempts = 5): Promise<MongoClient> {
@@ -104,3 +104,32 @@ export const removeCollection = async ({ dbClient, dbName, collectionName, }: { 
         await db.dropCollection(collectionName);
         return { status: true, message: `Collection '${collectionName}' removed.` };
     });
+
+export const collectionExists = async (
+    dbClient: MongoClient,
+    dbName: string,
+    collectionName: string
+): Promise<OperationResponse & { exists: boolean }> => {
+    try {
+        const db = dbClient.db(dbName);
+        // MongoDB's listCollections can be used with a filter. 
+        const collections = await db.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
+        const exists = collections.length > 0;
+        return {
+            status: true,
+            message: exists ? `Collection '${collectionName}' exists in database '${dbName}'.` : `Collection '${collectionName}' does not exist in database '${dbName}'.`,
+            dbName,
+            collectionName,
+            exists
+        };
+    } catch (error: any) {
+        console.error("Error checking if collection exists:", error);
+        return {
+            status: false,
+            message: "An error occurred while checking if the collection exists.",
+            dbName,
+            collectionName,
+            exists: false
+        };
+    }
+};
