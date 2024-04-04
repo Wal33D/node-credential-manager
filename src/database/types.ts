@@ -28,10 +28,6 @@ export interface dbServiceOperationResponse {
     exists?: boolean;
 } 
 
-export interface SecretValue {
-    value: any;
-}
-
 export interface UpdateResult {
     matchedCount?: number;
     modifiedCount?: number;
@@ -48,9 +44,7 @@ export interface Secret {
     secretName: string;
     envName: string;
     envType: 'production' | 'test' | 'development';
-    values: {
-        [version: string]: SecretValue;
-    };
+    credential: [{ version: string, value: string }];
     updatedAt: Date;
     createdAt: Date;
     lastAccessAt: Date;

@@ -143,18 +143,18 @@ export const addSecret = async (
     secretName: string,
     envName: string,
     envType: 'production' | 'test' | 'development',
-    values: { [version: string]: SecretValue }
+    credentials: { version: string, value: string }[]
 ): Promise<dbSecretOperationResponse> => {
     try {
         const secretData: Secret = {
             secretName: secretName,
             envName: envName,
             envType: envType,
-            values: values,
+            credential: credentials as any, // Changed from 'values' to 'credential'
             updatedAt: new Date(),
             createdAt: new Date(),
             lastAccessAt: new Date(),
-            _id: new ObjectId
+            _id: new ObjectId()
         };
 
         const result = await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
@@ -176,10 +176,6 @@ export const addSecret = async (
         };
     }
 };
-
-
-
-// Function to add a new secret version
 export const addSecretVersion = async ({
     dbClient,
     projectName,
@@ -193,34 +189,29 @@ export const addSecretVersion = async ({
     serviceName: string,
     secretName: string,
     version: string,
-    newValue: SecretValue
+    newValue: string
 }): Promise<any> => {
     let status = false;
     let message = '';
 
     try {
-        // Construct the filter and update operation
         const filter = { secretName: secretName };
         const updateOperation = {
-            $set: { [`values.${version}`]: newValue },
+            $push: { credential: { version, value: newValue } }, // Adds a new credential version
             $currentDate: { lastAccessAt: true, updatedAt: true }
         } as any;
 
-        // Perform the update operation
         const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, updateOperation);
 
-        // Check if the document was successfully updated
-        if (result.matchedCount === 1 && result.modifiedCount === 1) {
+        if (result.matchedCount === 1) {
             status = true;
-            message = `Added version '${version}' to secret '${secretName}' in service '${serviceName}'.`;
-        } else if (result.matchedCount === 0) {
-            message = `Secret '${secretName}' not found in service '${serviceName}'.`;
+            message = `Version '${version}' added to secret '${secretName}' in service '${serviceName}'.`;
         } else {
-            message = `No update performed for secret '${secretName}' in service '${serviceName}'.`;
+            message = `Secret '${secretName}' not found in service '${serviceName}'.`;
         }
     } catch (error) {
-        console.error("Error adding secret version:", error);
-        message = "An error occurred while adding the secret version.";
+        console.error("Error adding/updating secret version:", error);
+        message = "An error occurred while adding/updating the secret version.";
     }
 
     return {

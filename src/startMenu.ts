@@ -40,12 +40,17 @@ async function startMenuDemo() {
   
   console.log(`Updating 'DemoSecret' in 'DemoService'...`);
 
-  // Specify the version of the secret you want to update along with the new value
-  const versionToUpdate = "1.0.1";
-  const newValue = "updatedValue" as SecretValue;
+  const version = "1.0.1";
+  const newValue:SecretValue = {value:"updatedValue"} ;
   
-  await addSecretVersion({dbClient, defaultProjectName, serviceName:"DemoService", secretName:"DemoSecret", versionToUpdate, newValue)};
-  
+  await addSecretVersion({
+    dbClient: dbClient,
+    projectName: "SomnusLabs",
+    serviceName: "DemoService",
+    secretName: "DemoSecret",
+    version: "1.0.1",
+    newValue: { version:'1.0.1', value: "yourNewSecretValue" } // This matches the SecretValue interface
+});
   console.log(`Counting secrets in 'DemoService'...`);
   await countSecretsInCollection(dbClient, defaultProjectName, "DemoService", {});
 
