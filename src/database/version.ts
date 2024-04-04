@@ -44,20 +44,35 @@ export const addSecretVersion = async ({
     let secret: Secret | null = null;
 
     try {
-        const filter = { secretName: secretName };
+        // First, find the secret to check if the version already exists
+        secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName: secretName });
+
+        if (!secret) {
+            message = `Secret '${secretName}' not found in service '${serviceName}'.`;
+            return { status, message, projectName, serviceName };
+        }
+
+        // Check if the version already exists in the credentials
+        if (secret.credential.some(cred => cred.version === version)) {
+            message = `Credential version '${version}' already exists for secret '${secretName}' in service '${serviceName}'. No new credential was added.`;
+            return { status, message, projectName, serviceName, secret };
+        }
+
+        // If the version does not exist, proceed to add the new credential
         const updateOperation = {
             $push: { credential: { version, value: newValue } },
             $currentDate: { lastAccessAt: true, updatedAt: true }
         } as any;
 
-        const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, updateOperation);
+        const result = await dbClient.db(projectName).collection(serviceName).updateOne({ secretName: secretName }, updateOperation);
 
-        if (result.matchedCount === 1) {
+        if (result.modifiedCount === 1) {
+            // Refetch the secret to get the updated document
+            secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName: secretName });
             status = true;
-            secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>(filter);
             message = `Version '${version}' added to secret '${secretName}' in service '${serviceName}'.`;
         } else {
-            message = `Secret '${secretName}' not found in service '${serviceName}'.`;
+            message = `Failed to add version '${version}' to secret '${secretName}'.`;
         }
     } catch (error) {
         console.error("Error adding/updating secret version:", error);
@@ -65,7 +80,6 @@ export const addSecretVersion = async ({
     }
 
     const credential: Credential = { version, value: newValue };
-
     return { status, message, projectName, serviceName, secret, credential };
 };
 
@@ -105,3 +119,4 @@ export const updateSecretVersion = async ({
 
     return { status, message, projectName, serviceName, secret, credential };
 };
+

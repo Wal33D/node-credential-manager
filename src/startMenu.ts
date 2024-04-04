@@ -3,7 +3,7 @@ require('dotenv').config({ path: './.env' });
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { listAllProjects, createProject } from "./database/database";
 import { listServices } from "./database/collections";
-import { addSecret, findSecretValueByVersion, findSecretByName } from "./database/documents";
+import { addSecret, findSecretByName } from "./database/secrets";
 import { addSecretVersion, updateSecretVersion } from "./database/version";
 import { MongoClient } from "mongodb";
 
@@ -33,19 +33,16 @@ async function startMenuDemo() {
   const envName = "DemoEnvironment";
   const envType = "production";
 
-  await addSecret(dbClient, defaultProjectName, "DemoService", secretName, envName, envType, [{ version: '1.0', value: 'mySecretValue' }]
+  await addSecret(dbClient, defaultProjectName, "DemoService", secretName, envName, envType, [{ version: '1.0.3', value: 'mySecretValue' }]
   );
 
-  console.log(`Updating 'DemoSecret' in 'DemoService'...`);
-  const resut = await findSecretValueByVersion(dbClient, defaultProjectName, "DemoService", "DemoSecret", '1.0');
 
-  console.log(resut)
   const addSecretVersionResponse = await addSecretVersion({
     dbClient: dbClient,
     projectName: "SomnusLabs",
     serviceName: "DemoService",
     secretName: "DemoSecret",
-    version: "1.0.1",
+    version: "1.0.4",
     newValue: "yourNewSecretValue"
   });
 

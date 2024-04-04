@@ -84,16 +84,6 @@ export const findSecretsInService = async (
     };
 };
 
-// Aggregate secrets in a collection
-export const aggregateSecretsInService = async (
-    dbClient: MongoClient, projectName: string, serviceName: string, pipeline: object[]
-): Promise<dbSecretOperationResponse & { secrets: Secret[] }> => {
-    const secrets: Secret[] = await dbClient.db(projectName).collection(serviceName).aggregate(pipeline).toArray() as Secret[];;
-    return {
-        status: true, message: `Aggregated secrets in '${serviceName}'.`, projectName, serviceName, secrets
-    };
-};
-
 // Find a secret by name
 export const findSecretByName = async (
     { dbClient, projectName, serviceName, secretName }: { dbClient: MongoClient; projectName: string; serviceName: string; secretName: string; }
@@ -102,42 +92,6 @@ export const findSecretByName = async (
     return {
         status: !!secret, message: secret ? `Secret with name '${secretName}' found successfully.` : `Secret with name '${secretName}' not found in '${serviceName}'.`, projectName, serviceName, secret
     };
-};
-
-export const findSecretValueByVersion = async (
-    dbClient: MongoClient, 
-    projectName: string, 
-    serviceName: string, 
-    secretName: string, 
-    version: string = "latest"
-): Promise<dbSecretOperationResponse & { secretValue?: {version: string, value: string} }> => {
-    try {
-        const db = dbClient.db(projectName);
-        const secret: Secret | null = await db.collection(serviceName).findOne({ secretName: secretName }) as Secret;
-
-        if (!secret) {
-            return { status: false, message: `Secret with name '${secretName}' not found.`, projectName, serviceName };
-        }
-
-        let secretValue: {version: string, value: string} | undefined;
-
-        if (version === "latest") {
-            // Assumes the latest version is the last in the array
-            secretValue = secret.credential[secret.credential.length - 1];
-        } else {
-            // Find the specific version in the credential array
-            secretValue = secret.credential.find(cred => cred.version === version);
-        }
-
-        if (!secretValue) {
-            return { status: false, message: `Version '${version}' not found for secret '${secretName}'.`, projectName, serviceName };
-        }
-
-        return { status: true, message: `Found version '${version}' for secret '${secretName}'.`, projectName, serviceName, secretValue };
-    } catch (error) {
-        console.error("Error finding secret value by version:", error);
-        return { status: false, message: "An error occurred while finding the secret value.", projectName, serviceName };
-    }
 };
 
 export const addSecret = async (
@@ -150,6 +104,19 @@ export const addSecret = async (
     credentials: { version: string, value: string }[]
 ): Promise<dbSecretOperationResponse> => {
     try {
+        // First, check if a secret with the same name already exists
+        const existingSecret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName: secretName });
+        if (existingSecret) {
+            // If a secret with the same name exists, do not add a new one and return a response
+            return {
+                status: false,
+                message: `A secret with the name '${secretName}' already exists in service '${serviceName}' within project '${projectName}'. No new secret was added.`,
+                projectName,
+                serviceName,
+            };
+        }
+
+        // If no existing secret was found, proceed to add the new secret
         const secretData: Secret = {
             secretName: secretName,
             envName: envName,
@@ -172,6 +139,7 @@ export const addSecret = async (
                 secret: { ...secretData, _id: result.insertedId },
             };
         } else {
+            // This block is theoretically unreachable because insertOne throws an error if it fails
             return {
                 status: false,
                 message: `Failed to add the secret '${secretName}'.`,
