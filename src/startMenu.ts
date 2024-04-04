@@ -1,5 +1,5 @@
 import { CredentialManager } from "./CredentialManager";
-
+import { initializeDbConnection } from "./utils/initializeDbConnection"; 
 async function startMenu() {
   const credentialManager = new CredentialManager();
 
