@@ -1,27 +1,7 @@
-import { MongoClient, Db } from "mongodb";
-
-interface DbConnectionParams {
-    dbUsername?: string;
-    dbPassword?: string;
-    dbCluster?: string;
-}
-
-interface OperationResult {
-    status: boolean;
-    message: string;
-    client?: MongoClient;
-    database?: Db;
-    databases?: string[];
-    collections?: string[];
-    data?: any[];
-}
-
-interface FindDocumentParams {
-    dbClient: MongoClient;
-    dbName: string;
-    collectionName: string;
-    documentName: string;
-}
+import { MongoClient } from "mongodb";
+import { databaseOperation } from "./databaseOperation";
+import { performDbOperation } from "./performDbOperation";
+import { DbConnectionParams, FindDocumentParams, OperationResult } from "./types";
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -39,24 +19,12 @@ async function connectWithRetry(uri: string, attempts = 5): Promise<MongoClient>
     throw new Error("Connection attempts exceeded.");
 }
 
-async function performDbOperation(operation: () => Promise<OperationResult>): Promise<OperationResult> {
-    try {
-        return await operation();
-    } catch (error: any) {
-        return { status: false, message: error.message };
-    }
-}
-
 export async function initializeDbConnection(params: DbConnectionParams): Promise<OperationResult> {
     const uri = `mongodb+srv://${encodeURIComponent(params.dbUsername || process.env.DB_USERNAME as any)}:${encodeURIComponent(params.dbPassword || process.env.DB_PASSWORD as any)}@${params.dbCluster || process.env.DB_CLUSTER}`;
     return performDbOperation(async () => {
         const client = await connectWithRetry(uri);
         return { status: true, message: "Database connection initialized successfully.", client };
     });
-}
-
-export async function databaseOperation(dbClient: MongoClient, dbName: string, action: (db: any) => Promise<OperationResult>): Promise<OperationResult> {
-    return performDbOperation(async () => await action(dbClient.db(dbName)));
 }
 
 export const getDatabaseConnection = (dbClient: MongoClient, dbName: string): OperationResult => ({
@@ -80,12 +48,6 @@ export const createDatabase = async (dbClient: MongoClient, dbName: string, coll
     databaseOperation(dbClient, dbName, async (db) => {
         await db.createCollection(collectionName);
         return { status: true, message: `Database '${dbName}' created successfully with collection '${collectionName}'.` };
-    });
-
-export const listAllCollectionsInDatabase = (dbClient: MongoClient, dbName: string): Promise<OperationResult> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        const collections = await db.listCollections().toArray();
-        return { status: true, message: "Successfully retrieved collections list.", collections: collections.map((c: { name: any; }) => c.name) };
     });
 
 export const getAllDocumentsFromCollection = (dbClient: MongoClient, dbName: string, collectionName: string): Promise<OperationResult> =>
@@ -128,24 +90,6 @@ export const findDocumentByName = async ({ dbClient, dbName, collectionName, doc
     databaseOperation(dbClient, dbName, async (db) => {
         const document = await db.collection(collectionName).findOne({ name: documentName });
         return { status: !!document, message: document ? `Document with name '${documentName}' found successfully.` : `Document with name '${documentName}' not found in '${collectionName}'.`, data: document || null };
-    });
-
-export const addCollection = async ({ dbClient, dbName, collectionName }: { dbClient: MongoClient; dbName: string; collectionName: string; }): Promise<OperationResult> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        await db.createCollection(collectionName);
-        return { status: true, message: `Collection '${collectionName}' added to '${dbName}'.` };
-    });
-
-export const renameCollection = async ({ dbClient, dbName, oldCollectionName, newCollectionName, }: { dbClient: MongoClient; dbName: string; oldCollectionName: string; newCollectionName: string; }): Promise<OperationResult> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        await db.collection(oldCollectionName).rename(newCollectionName);
-        return { status: true, message: `Renamed '${oldCollectionName}' to '${newCollectionName}' in '${dbName}'.` };
-    });
-
-export const removeCollection = async ({ dbClient, dbName, collectionName, }: { dbClient: MongoClient; dbName: string; collectionName: string; }): Promise<OperationResult> =>
-    databaseOperation(dbClient, dbName, async (db) => {
-        await db.dropCollection(collectionName);
-        return { status: true, message: `Removed '${collectionName}' from '${dbName}'.` };
     });
 
 export const dropDatabase = async ({ dbClient, dbName, }: { dbClient: MongoClient; dbName: string; }): Promise<OperationResult> =>
