@@ -64,37 +64,42 @@ export const deleteSecretFromCollection = async (dbClient: MongoClient, dbName: 
     });
 };
 
-export const countSecretsInCollection = async (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<OperationResponse<{ count: number }[]>> => {
+// Count Secrets in a Collection
+export const countSecretsInCollection = async (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<OperationResponse<{ count: number; dbName: string; collectionName: string; filter: object; }>> => {
     return performDatabaseOperation(dbClient, dbName, async (db) => {
         const count = await db.collection(collectionName).countDocuments(filter);
-        return { status: true, message: `Counted ${count} secrets in '${collectionName}'.`, data: [{ count }] };
+        return { status: true, message: `Counted ${count} secrets in '${collectionName}'.`, data: { count, dbName, collectionName, filter } };
     });
 };
 
+// Get All Secrets from a Collection
 export const getAllSecretsFromCollection = async (dbClient: MongoClient, dbName: string, collectionName: string): Promise<OperationResponse<Secret[]>> => {
     return performDatabaseOperation(dbClient, dbName, async (db) => {
         const secrets = await db.collection(collectionName).find({}).toArray() as Secret[];
-        return { status: true, message: "Successfully retrieved all secrets.", data: secrets };
+        return { status: true, message: "Successfully retrieved all secrets.", dbName, collectionName, data: secrets };
     });
 };
 
+// Find Secrets in a Collection
 export const findSecretsInCollection = async (dbClient: MongoClient, dbName: string, collectionName: string, filter: object = {}): Promise<OperationResponse<Secret[]>> => {
     return performDatabaseOperation(dbClient, dbName, async (db) => {
         const secrets = await db.collection(collectionName).find(filter).toArray() as Secret[];
-        return { status: true, message: `Found secrets in '${collectionName}'.`, data: secrets };
+        return { status: true, message: `Found secrets in '${collectionName}'.`, dbName, collectionName, filter, data: secrets };
     });
 };
 
+// Aggregate Secrets in a Collection
 export const aggregateSecretsInCollection = async (dbClient: MongoClient, dbName: string, collectionName: string, pipeline: object[]): Promise<OperationResponse<Secret[]>> => {
     return performDatabaseOperation(dbClient, dbName, async (db) => {
         const secrets = await db.collection(collectionName).aggregate(pipeline).toArray() as Secret[];
-        return { status: true, message: `Aggregated secrets in '${collectionName}'.`, data: secrets };
+        return { status: true, message: `Aggregated secrets in '${collectionName}'.`, dbName, collectionName, data: secrets };
     });
 };
 
+// Find Secret by Name
 export const findSecretByName = async ({ dbClient, dbName, collectionName, secretName }: { dbClient: MongoClient; dbName: string; collectionName: string; secretName: string; }): Promise<OperationResponse<Secret>> => {
     return performDatabaseOperation(dbClient, dbName, async (db) => {
         const secret = await db.collection(collectionName).findOne({ SecretName: secretName }) as Secret | null;
-        return { status: !!secret, message: secret ? `Secret with name '${secretName}' found successfully.` : `Secret with name '${secretName}' not found in '${collectionName}'.`, data: secret };
+        return { status: !!secret, message: secret ? `Secret with name '${secretName}' found successfully.` : `Secret with name '${secretName}' not found in '${collectionName}'.`, dbName, collectionName, data: secret };
     });
 };
