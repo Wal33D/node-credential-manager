@@ -36,12 +36,10 @@ class CredentialManager {
         this.projects.set(dbName, projectManager);
         console.log(`Project '${dbName}' loaded into Credential Manager.`);
         metadataFound = true;
-        // Break out of the loop if metadata is found
         break;
       }
     }
   
-    // If after checking all databases, no _appMetadata is found, create the default project with _appMetadata
     if (!metadataFound) {
       console.log("Creating the default project with _appMetadata...");
       await this.addProject({ projectName: this.defaultProjectName });

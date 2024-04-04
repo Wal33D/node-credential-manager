@@ -4,34 +4,28 @@ import { CredentialManager } from "./CredentialManager";
 import { createReadlineInterface } from './utils/createReadlineInterface';
 
 async function startMenu() {
-  // Initialize CredentialManager and its projects
   const credentialManager = new CredentialManager();
 
-  // Define default project and cabinet names
   const defaultProjectName = process.env.DEFAULT_OFFICE_NAME as string ;
 
   const value = `${Math.floor(Math.random() * 100)}`;
   await delay(1000);
   const projectManager = credentialManager.projects.get(defaultProjectName);
-  await delay(1000); // Added delay
+  await delay(1000); 
 
   if (!projectManager) {
     console.error(`Project '${defaultProjectName}' not found.`);
     return;
   }
-  const credentialName = "bestkey";
-  const envVariableName = "OPEN_AI_API_KEY"; // or any appropriate environment name
-  const envType = "production"; // or any appropriate environment name
 
   const credentialData = {
-    name: credentialName,
-    envType,
-    envVariableName,
-    createdAt: new Date(), // Set the creation date to now
-    value: value, // Assuming 'value' is part of the additional data you want to store
+    name: "bestkey",
+    envType:"production",
+    envVariableName:"OPEN_AI_API_KEY",
+    createdAt: new Date(), 
+    value: "sampleKey123",
   };
   
-  // Call the addCredentialToCabinet method to insert the new service with the random value
   await projectManager.addCredentialToCabinet('OpenAI', credentialData);
   console.log(`Credential 'OpenAI' with random value ${value} added to cabinet 'OpenAI' in project '${defaultProjectName}'.`);
 
@@ -45,7 +39,6 @@ async function startMenu() {
 
     const readLineInterface = readlineInterfaceResult.interfaceInstance as any;
 
-    // Await the user's action choice
     const menuResult = await promptMenu({ readLineInterface });
     if (!menuResult.status) {
       console.error(`Error in menu selection: ${menuResult.message}`);
@@ -63,7 +56,7 @@ async function startMenu() {
 }
 
 
-startMenu(); // Removed empty object passed as an argument
+startMenu(); 
 function delay(milliseconds:any) {
   return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
