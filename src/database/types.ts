@@ -48,7 +48,7 @@ export interface VersionOperationResponse {
 }
 
 export interface Secret {
-    _id: ObjectId;
+    _id?: ObjectId;
     secretName: string;
     envName: string;
     envType: EnvType;

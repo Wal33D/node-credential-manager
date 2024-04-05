@@ -41,7 +41,7 @@ export const getAllSecretsFromService = async (
 ): Promise<dbSecretOperationResponse> => {
     try {
         const secrets = await dbClient.db(projectName).collection(serviceName).find({}).toArray() as Secret[];
-        return { status: true, message: "Successfully retrieved all secrets.", projectName, serviceName, secrets  };
+        return { status: true, message: "Successfully retrieved all secrets.", projectName, serviceName, secrets };
     } catch (error) {
         console.error("Error retrieving all secrets:", error);
         return createErrorResponse("An error occurred while retrieving secrets.", projectName, serviceName);
@@ -77,7 +77,7 @@ export const findSecretByName = async (
 
 // Add a new secret
 export const addSecret = async ({
-    dbClient, projectName, serviceName, secretName, envName, envType, versions
+    dbClient, projectName, serviceName, secretName, envName, envType, version
 }: {
     dbClient: MongoClient,
     projectName: string,
@@ -85,7 +85,7 @@ export const addSecret = async ({
     secretName: string,
     envName: string,
     envType: 'production' | 'test' | 'development',
-    versions: Version[]
+    version: Version,
 }): Promise<dbSecretOperationResponse> => {
     try {
         const existingSecret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName });
@@ -93,7 +93,7 @@ export const addSecret = async ({
             return createErrorResponse(`A secret with the name '${secretName}' already exists in service '${serviceName}' within project '${projectName}'. No new secret was added.`, projectName, serviceName);
         }
 
-        const secretData: Secret = { secretName, envName, envType, versions, updatedAt: new Date(), createdAt: new Date(), lastAccessAt: new Date(), _id: new ObjectId() };
+        const secretData: Secret = { secretName, envName, envType, versions: [version], updatedAt: new Date(), createdAt: new Date(), lastAccessAt: new Date(), _id: new ObjectId() };
         const result = await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
 
         return { status: true, message: `Secret '${secretName}' added successfully to service '${serviceName}' in project '${projectName}'.`, projectName, serviceName, secret: secretData };
