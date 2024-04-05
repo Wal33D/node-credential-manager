@@ -1,6 +1,5 @@
-import { Db, MongoClient } from "mongodb";
+import { Db } from "mongodb";
 import { Project, ProjectOperationParams, ProjectOperationResponse } from "./types";
-
 
 const projects = {
     getProjectConnection: (params: ProjectOperationParams): Db => {
@@ -38,7 +37,8 @@ const projects = {
     createProject: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, serviceName } = params;
         try {
-            await dbClient.db(projectName).createCollection(serviceName!);
+            const project = await dbClient.db(projectName) as Db;
+            await project.createCollection(serviceName!);
             const appMetadataCollection = dbClient.db(projectName).collection('_app_metadata');
             await appMetadataCollection.updateOne(
                 { projectName: projectName },
@@ -48,11 +48,12 @@ const projects = {
                 },
                 { upsert: true }
             );
-    
+                console.log(project.databaseName)
+
             return {
                 status: true,
                 message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata collection updated.`,
-                project: { name: projectName } as Project,
+                project: project as unknown as Project,
             };
         } catch (error: any) {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
