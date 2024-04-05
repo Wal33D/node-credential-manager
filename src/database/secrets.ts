@@ -84,14 +84,14 @@ export const addSecret = async ({
     secretName,
     envName,
     envType,
-    credentials }: {
+    version }: {
         dbClient: MongoClient,
         projectName: string,
         serviceName: string,
         secretName: string,
         envName: string,
         envType: 'production' | 'test' | 'development',
-        credentials: { version: string, value: string }[]
+        version: { version: string, value: string }
     }
 ): Promise<dbSecretOperationResponse> => {
     try {
@@ -112,7 +112,7 @@ export const addSecret = async ({
             secretName: secretName,
             envName: envName,
             envType: envType,
-            version: credentials as any,
+            versions: [version] ,
             updatedAt: new Date(),
             createdAt: new Date(),
             lastAccessAt: new Date(),

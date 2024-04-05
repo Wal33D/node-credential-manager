@@ -60,7 +60,7 @@ async function testFindLatestSecretVersion(latestFunction: any, dbClient: any, p
   });
 }
 async function testAddSecret(dbClient: any, projectName: any, serviceName: any, secretName: any, envName: any, envType: any, testResults: any) {
-  const response = await addSecret({ dbClient, projectName, serviceName, secretName, envName, envType, credentials: [{ version: '1.0', value: 'initialValue' }] });
+  const response = await addSecret({ dbClient, projectName, serviceName, secretName, envName, envType, version: { version: '1.0', value: 'initialValue' } });
   testResults.push({ test: "Add Secret", passed: response.status, message: response.message, response });
 }
 

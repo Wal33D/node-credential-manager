@@ -54,7 +54,7 @@ export interface Secret {
     secretName: string;
     envName: string;
     envType: EnvType;
-    version: Version[];
+    versions: Version[];
     updatedAt: Date;
     createdAt: Date;
     lastAccessAt: Date;
