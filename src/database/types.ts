@@ -28,10 +28,7 @@ export interface VersionOperationParams {
     versionName: string;
     value: string;
 }
-export interface Version {
-    versionName: string;
-    value: string;
-}
+
 export interface AddVersionParams extends VersionOperationParams { }
 export interface ListVersionParams extends VersionOperationParams { }
 export interface UpdateVersionParams extends VersionOperationParams { }
@@ -46,6 +43,23 @@ export interface VersionOperationResponse {
     version?: Version;
     versions?: Version[];
 }
+export interface Version {
+    versionName: string;
+    value: string;
+}
+
+export interface VersionOperationResponse {
+    status: boolean;
+    message: string;
+    secret?: Secret | null;
+    version?: Version;
+    versions?: Version[];
+}
+
+export interface Version {
+    versionName: string;
+    value: string;
+}
 
 export interface Secret {
     _id?: ObjectId;
@@ -56,4 +70,22 @@ export interface Secret {
     updatedAt: Date;
     createdAt: Date;
     lastAccessAt: Date;
+}
+
+export interface SecretOperationParams {
+    dbClient: MongoClient;
+    projectName: string;
+    serviceName: string;
+    filter?: object;
+    secretName?: string;
+    envName?: string;
+    envType?: EnvType;
+    versions?: Version[];
+}
+
+export interface SecretOperationResponse {
+    status: boolean;
+    message: string;
+    secret?: Secret | null;
+    secrets?: Secret[];
 }
