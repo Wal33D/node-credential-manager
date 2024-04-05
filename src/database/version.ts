@@ -29,8 +29,6 @@ const version = {
             return { status: false, message: error.message };
         }
     },
-
-    // Adds a version to a secret, automatically assigning a versionName if none is provided.
     add: async (params: AddVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName: providedVersionName, value } = params;
         try {
@@ -59,7 +57,12 @@ const version = {
             await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
                 {
-                    $push: { versions: { versionName, value } },
+                    $push: {
+                        versions: {
+                            $each: [{ versionName, value }],
+                            $position: 0 // This will insert the new version at the start of the array
+                        }
+                    },
                     $currentDate: { lastAccessAt: true, updatedAt: true }
                 } as any
             );
@@ -151,12 +154,12 @@ const version = {
                 return { status: false, message: "Failed to delete the specified version." };
             }
 
-            const updatedSecret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+            const updatedSecret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName }) as Secret;
 
             return {
                 status: true,
                 message: `Version '${versionName}' deleted successfully.`,
-                versions: secret.versions
+                versions: updatedSecret.versions
             };
         } catch (error: any) {
             console.error("Error deleting version:", error);
@@ -173,23 +176,25 @@ const version = {
                 return { status: false, message: `No versions found for secret '${secretName}'.` };
             }
 
-            const latestVersion = secret.versions.pop();
+            // Assuming the last item in the versions array is the most recent
+            const latestVersion = secret.versions.shift(); // Removes and returns the last item
 
             await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
-                { $set: { versions: secret.versions } }
+                { $set: { versions: secret.versions } } // Updates the document with the version removed
             );
 
             if (latestVersion) {
-                return { status: true, message: `Rolled back successfully, Latest version '${secret.versions[0].versionName}' retrieved successfully.`, version: secret.versions[0] };
+                return { status: true, message: `Rolled back successfully, removing version '${latestVersion.versionName}'.`, versions: secret.versions };
             } else {
-                return { status: false, message: `Failed to roll back.`, versions: secret.versions };
+                return { status: false, message: `Failed to roll back.`, versions: secret.versions || [] };
             }
         } catch (error: any) {
-            console.error("Error rolling back version:", error);
+            console.error("Error rolling back secret version:", error);
             return { status: false, message: error.message };
         }
     }
+
 }
 
 
