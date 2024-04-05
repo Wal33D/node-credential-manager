@@ -27,7 +27,8 @@ const projects = {
         const { dbClient } = params;
         try {
             const projectsList = await dbClient.db().admin().listDatabases();
-            const projects = projectsList.databases.map(project => ({ name: project.name }));
+            const projects = projectsList.databases.map(project => ({ name: project.name })) as Project[];
+            console.log(projects)
             return { status: true, message: "Successfully retrieved project list.", projects };
         } catch (error: any) {
             return { status: false, message: error.message };
@@ -37,22 +38,21 @@ const projects = {
     createProject: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, serviceName } = params;
         try {
-            // Create the main service collection
             await dbClient.db(projectName).createCollection(serviceName!);
-    
             const appMetadataCollection = dbClient.db(projectName).collection('_app_metadata');
-            await appMetadataCollection.insertOne({
-                createdAt: new Date(),
-                createdBy: "system",
-                projectName: projectName,
-               stuff:  dbClient.db(projectName)
-            });
-    
+            await appMetadataCollection.updateOne(
+                { projectName: projectName },
+                {
+                    $setOnInsert: { createdAt: new Date(), createdBy: "system" },
+                    $set: { updatedAt: new Date(), projectName: projectName }
+                },
+                { upsert: true }
+            );
     
             return {
                 status: true,
-                message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata collection added.`,
-                project: { name: projectName  } as Project,
+                message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata collection updated.`,
+                project: { name: projectName } as Project,
             };
         } catch (error: any) {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
@@ -66,7 +66,7 @@ const projects = {
             return {
                 status: true,
                 message: `Project '${projectName}' dropped successfully.`,
-                project: { name: projectName as string },
+                project: { name: projectName as string, services:[]} as Project,
             };
         } catch (error: any) {
             return { status: false, message: error.message };
