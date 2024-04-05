@@ -19,29 +19,30 @@ export async function projectTests() {
 
     // Testing project creation
     const createResult = await projects.createProject({ dbClient, projectName: testProjectName, serviceName: testServiceName });
-    testResults.push({ test: "Create Project", passed: createResult.status, message: createResult.message });
+    testResults.push({ test: "Create Project", passed: createResult.status, createResult });
 
     // Testing project existence
     const existsResult = await projects.projectExists({ dbClient, projectName: testProjectName });
-    testResults.push({ test: "Project Exists", passed: existsResult.status, message: existsResult.message });
+    testResults.push({ test: "Project Exists", passed: existsResult.status,existsResult });
 
     // Testing listing all projects
     const listResult = await projects.listAllProjects({ dbClient });
-    testResults.push({ test: "List All Projects", passed: listResult.status, message: listResult.message });
+    testResults.push({ test: "List All Projects", passed: listResult.status,listResult });
 
     // Testing copying a project
     const copyResult = await projects.copyProject({ dbClient, projectName: testProjectName, targetProjectName: copyProjectName });
-    testResults.push({ test: "Copy Project", passed: copyResult.status, message: copyResult.message, copyResult });
+    testResults.push({ test: "Copy Project", passed: copyResult.status, copyResult });
 
     // Testing project deletion
     const deleteResult = await projects.deleteProject({ dbClient, projectName: testProjectName });
-    testResults.push({ test: "Delete Project", passed: deleteResult.status, message: deleteResult.message });
+    testResults.push({ test: "Delete Project", passed: deleteResult.status, copyResult });
 
     const deleteCopyResult = await projects.deleteProject({ dbClient, projectName: copyProjectName });
-    testResults.push({ test: "Delete Copy Project", passed: deleteCopyResult.status, message: deleteCopyResult.message });
+    testResults.push({ test: "Delete Copy Project", passed: deleteCopyResult.status, deleteCopyResult });
  // Testing project creation
  const dd = await projects.createProject({ dbClient, projectName: testProjectName, serviceName: testServiceName });
- testResults.push({ test: "Create Project", passed: dd.status, message: dd.message });
+ testResults.push({ test: "Create Project", passed: dd.status, message: dd.message, dd });
+ console.log(dd)
 
     dbClient.close();
     return testResults;

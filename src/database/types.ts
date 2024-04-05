@@ -93,11 +93,6 @@ export interface SecretOperationResponse {
 export interface Project {
     name: string;
     services?: string[];
-    metadata?: {
-        sizeOnDisk?: number;
-        empty?: boolean;
-        collectionsCount?: number;
-    };
 }
 
 export interface ProjectOperationParams {
