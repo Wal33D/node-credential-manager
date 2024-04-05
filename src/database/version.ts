@@ -35,6 +35,7 @@ const version = {
         const { dbClient, projectName, serviceName, secretName, versionName, value } = params;
         try {
             let secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+            
             if (!secret || secret.versions.some(version => version.versionName === versionName)) {
                 return {
                     status: !secret,
@@ -44,7 +45,7 @@ const version = {
             }
 
             await dbClient.db(projectName).collection(serviceName).updateOne({ secretName }, {
-                $push: { credential: { version, value } },
+                $push: { version: { versionName, value } },
                 $currentDate: { lastAccessAt: true, updatedAt: true }
             } as any);
 
@@ -101,9 +102,9 @@ const version = {
 
     // Deletes a version by version number.
     delete: async (params: DeleteVersionParams): Promise<VersionOperationResponse> => {
-        const { dbClient, projectName, serviceName, secretName, version } = params;
+        const { dbClient, projectName, serviceName, secretName, versionName } = params;
         try {
-            if (!version) {
+            if (!versionName) {
                 return { status: false, message: "Version is required for delete operation." };
             }
 
@@ -112,15 +113,15 @@ const version = {
                 return { status: false, message: `Secret '${secretName}' not found.` };
             }
 
-            const versionExists = secret.credential.some(cred => cred.version === version);
+            const versionExists = secret.versions.some(version => version.versionName === versionName);
             if (!versionExists) {
                 return { status: false, message: `Version '${version}' not found in secret '${secretName}'.` };
             }
 
-            const updatedVersions = secret.credential.filter(cred => cred.version !== version);
+            const updatedVersions = secret.versions.filter(version => version.versionName !== versionName);
             const updateResult = await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
-                { $set: { credential: updatedVersions } }
+                { $set: { version: updatedVersions } }
             );
 
             if (updateResult.modifiedCount === 0) {
@@ -145,16 +146,16 @@ const version = {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
-            if (!secret || secret.credential.length === 0) {
+            if (!secret || secret.versions.length === 0) {
                 return { status: false, message: `No versions found for secret '${secretName}'.` };
             }
 
-            secret.credential.sort((a: { version: any; }, b: { version: string; }) => b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' }));
-            const latestVersion = secret.credential.shift() as Version;
+            secret.versions.sort((a: { versionName: any; }, b: { versionName: string; }) => b.versionName.localeCompare(a.versionName, undefined, { numeric: true, sensitivity: 'base' }));
+            const latestVersion = secret.versions.shift() as Version;
 
-            await dbClient.db(projectName).collection(serviceName).updateOne({ secretName }, { $set: { credential: secret.credential } });
+            await dbClient.db(projectName).collection(serviceName).updateOne({ secretName }, { $set: { credential: secret.versions } });
 
-            return { status: true, message: `Rolled back successfully, removing version '${latestVersion.version}'.`, secret };
+            return { status: true, message: `Rolled back successfully, removing version '${latestVersion.versionName}'.`, secret };
         } catch (error: any) {
             console.error("Error rolling back secret version:", error);
             return { status: false, message: error.message };
