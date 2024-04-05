@@ -37,6 +37,7 @@ const projects = {
     createProject: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, serviceName } = params;
         try {
+            // Create the main service collection
             await dbClient.db(projectName).createCollection(serviceName!);
     
             const appMetadataCollection = dbClient.db(projectName).collection('_app_metadata');
@@ -44,18 +45,19 @@ const projects = {
                 createdAt: new Date(),
                 createdBy: "system",
                 projectName: projectName,
-                initialService: serviceName,
+               stuff:  dbClient.db(projectName)
             });
-                return {
+    
+    
+            return {
                 status: true,
                 message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata collection added.`,
-                project: { name: projectName as string, services: [serviceName as string] },
+                project: { name: projectName  } as Project,
             };
         } catch (error: any) {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
         }
     },
-    
 
     deleteProject: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
