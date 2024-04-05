@@ -1,4 +1,4 @@
-import { Secret, SecretOperationParams, SecretOperationResponse } from "./types";
+import { Secret, SecretOperationParams, SecretOperationResponse } from "./databaseTypes";
 
 const secrets = {
     delete: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {

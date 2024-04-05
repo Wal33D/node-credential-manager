@@ -26,10 +26,10 @@ export async function versionTests() {
   await testVersionOperation(version.update, dbClient, testProjectName, serviceName, "TestSecret", "1.2", "updatedValue", testResults, "Update Version 1.2");
   await testFindLatestSecretVersion(version.latest, dbClient, testProjectName, serviceName, "TestSecret", "1.2", testResults);
   await testVersionOperation(version.list, dbClient, testProjectName, serviceName, "TestSecret", "", "", testResults, "List All Versions");
-  //await testVersionOperation(version.rollback, dbClient, testProjectName, serviceName, "TestSecret", "", "", testResults, "Rollback Latest Version");
-  //await testVersionOperation(version.delete, dbClient, testProjectName, serviceName, "TestSecret", "1.1", "", testResults, "Delete Version 1.1");
+  await testVersionOperation(version.rollback, dbClient, testProjectName, serviceName, "TestSecret", "", "", testResults, "Rollback Latest Version");
+  await testVersionOperation(version.delete, dbClient, testProjectName, serviceName, "TestSecret", "1.1", "", testResults, "Delete Version 1.1");
 
-//  await projects.delete({dbClient, projectName:testProjectName, serviceName});
+  await projects.delete({dbClient, projectName:testProjectName, serviceName});
 
   dbClient.close();
   return testResults;

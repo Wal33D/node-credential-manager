@@ -125,6 +125,6 @@ export interface ServiceOperationResponse {
     status: boolean;
     message: string;
     services?: string[];
-    service?: Service; // Add this to include the service object in responses
+    service?: Service;
     exists?: boolean;
 }

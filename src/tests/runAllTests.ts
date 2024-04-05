@@ -8,7 +8,7 @@ interface TestResult {
     message: string;
 }
 
-export async function runAllTests(simplified: boolean = true): Promise<void> {
+export async function runAllTests(simplified: boolean = false): Promise<void> {
     console.log("Starting all tests...");
 
     try {
@@ -20,15 +20,15 @@ export async function runAllTests(simplified: boolean = true): Promise<void> {
         const secretResults: TestResult[] = await secretTests();
         checkTestResults(secretResults, "Secret Tests", simplified);
 
-        console.log("\n=== Service Tests ===");
-        const serviceResults: TestResult[] = await serviceTests();
-        checkTestResults(serviceResults, "Service Tests", simplified);
-        
+
         console.log("\n=== Project Tests ===");
         const projectResults: TestResult[] = await projectTests();
         checkTestResults(projectResults, "Project Tests", simplified);
 
-   
+        console.log("\n=== Service Tests ===");
+        const serviceResults: TestResult[] = await serviceTests();
+        checkTestResults(serviceResults, "Service Tests", simplified);
+        
     } catch (error:any) {
         console.error("An error occurred while running tests:", error);
         throw new Error(`Test Failure: ${error.message}`);

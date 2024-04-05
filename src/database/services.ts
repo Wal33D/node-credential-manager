@@ -1,13 +1,16 @@
-import { Secret, ServiceOperationParams, ServiceOperationResponse,Service  } from "./types";
+import { Secret, ServiceOperationParams, ServiceOperationResponse,Service  } from "./databaseTypes";
 
 const services = {
     list: async ({ dbClient, projectName }: ServiceOperationParams): Promise<ServiceOperationResponse> => {
         try {
-            const services = await dbClient.db(projectName).listCollections().toArray();
-            return { status: true, message: "Services listed successfully.", services: services.map(s => s.name) };
+            const allCollections = await dbClient.db(projectName).listCollections().toArray();
+            // Filter out the _app_metadata collection from the list
+            const filteredCollections = allCollections.filter(collection => collection.name !== '_app_metadata');
+            const services = filteredCollections.map(collection => collection.name);
+            return { status: true, message: "Services listed successfully.", services };
         } catch (error: any) {
             return { status: false, message: error.message };
-        } 
+        }
     },
 
     add: async ({ dbClient, projectName, serviceName }: ServiceOperationParams): Promise<ServiceOperationResponse> => {
@@ -43,6 +46,9 @@ const services = {
     exists: async ({ dbClient, projectName, serviceName }: ServiceOperationParams): Promise<ServiceOperationResponse> => {
         if (!serviceName) throw new Error("Service name is required.");
         try {
+            if (serviceName === '_app_metadata') {
+                return { status: false, message: "Checking for _app_metadata is not allowed.", exists: false };
+            }
             const services = await dbClient.db(projectName).listCollections({ name: serviceName }, { nameOnly: true }).toArray();
             const exists = services.length > 0;
             return { status: true, message: exists ? `Service '${serviceName}' exists.` : `Service '${serviceName}' does not exist.`, exists };
@@ -55,6 +61,9 @@ const services = {
         if (!serviceName) {
             return { status: false, message: "Service name is required." };
         }
+        if (serviceName === '_app_metadata') {
+            return { status: false, message: "Accessing _app_metadata directly is not allowed." };
+        }
         try {
             const serviceCollection = dbClient.db(projectName).collection(serviceName);
             const secrets = await serviceCollection.find({}).toArray() as Secret[];
@@ -62,7 +71,6 @@ const services = {
                 serviceName,
                 secrets
             };
-            console.log(service)
             return { status: true, message: `Service '${serviceName}' retrieved successfully.`, service };
         } catch (error: any) {
             return { status: false, message: error.message };
