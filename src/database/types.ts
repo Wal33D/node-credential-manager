@@ -116,11 +116,15 @@ export interface ServiceOperationParams {
     newServiceName?: string;
 }
 
+export interface Service {
+    serviceName: string;
+    secrets: Secret[];
+}
+
 export interface ServiceOperationResponse {
     status: boolean;
     message: string;
-    projectName: string;
-    serviceName?: string;
     services?: string[];
+    service?: Service; // Add this to include the service object in responses
     exists?: boolean;
 }

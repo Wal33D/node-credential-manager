@@ -1,12 +1,12 @@
-import { ServiceOperationParams, ServiceOperationResponse } from "./types";
+import { Secret, ServiceOperationParams, ServiceOperationResponse,Service  } from "./types";
 
 const services = {
     list: async ({ dbClient, projectName }: ServiceOperationParams): Promise<ServiceOperationResponse> => {
         try {
             const services = await dbClient.db(projectName).listCollections().toArray();
-            return { status: true, message: "Services listed successfully.", projectName, services: services.map(s => s.name) };
+            return { status: true, message: "Services listed successfully.", services: services.map(s => s.name) };
         } catch (error: any) {
-            return { status: false, message: error.message, projectName };
+            return { status: false, message: error.message };
         } 
     },
 
@@ -14,9 +14,9 @@ const services = {
         if (!serviceName) throw new Error("Service name is required.");
         try {
             await dbClient.db(projectName).createCollection(serviceName);
-            return { status: true, message: `Service '${serviceName}' added.`, projectName, serviceName };
+            return { status: true, message: `Service '${serviceName}' added.`};
         } catch (error: any) {
-            return { status: false, message: error.message, projectName, serviceName };
+            return { status: false, message: error.message };
         }
     },
 
@@ -24,9 +24,9 @@ const services = {
         if (!serviceName || !newServiceName) throw new Error("Both old and new service names are required.");
         try {
             await dbClient.db(projectName).collection(serviceName).rename(newServiceName);
-            return { status: true, message: `Service renamed from '${serviceName}' to '${newServiceName}'.`, projectName, serviceName: newServiceName };
+            return { status: true, message: `Service renamed from '${serviceName}' to '${newServiceName}'.`};
         } catch (error: any) {
-            return { status: false, message: error.message, projectName, serviceName: serviceName };
+            return { status: false, message: error.message };
         }
     },
 
@@ -34,9 +34,9 @@ const services = {
         if (!serviceName) throw new Error("Service name is required.");
         try {
             await dbClient.db(projectName).dropCollection(serviceName);
-            return { status: true, message: `Service '${serviceName}' removed.`, projectName, serviceName };
+            return { status: true, message: `Service '${serviceName}' removed.` };
         } catch (error: any) {
-            return { status: false, message: error.message, projectName, serviceName };
+            return { status: false, message: error.message };
         }
     },
 
@@ -45,9 +45,27 @@ const services = {
         try {
             const services = await dbClient.db(projectName).listCollections({ name: serviceName }, { nameOnly: true }).toArray();
             const exists = services.length > 0;
-            return { status: true, message: exists ? `Service '${serviceName}' exists.` : `Service '${serviceName}' does not exist.`, projectName, serviceName, exists };
+            return { status: true, message: exists ? `Service '${serviceName}' exists.` : `Service '${serviceName}' does not exist.`, exists };
         } catch (error: any) {
-            return { status: false, message: "An error occurred while checking if the service exists.", projectName, serviceName, exists: false };
+            return { status: false, message: "An error occurred while checking if the service exists.", exists: false };
+        }
+    },
+
+    getService: async ({ dbClient, projectName, serviceName }: ServiceOperationParams): Promise<ServiceOperationResponse> => {
+        if (!serviceName) {
+            return { status: false, message: "Service name is required." };
+        }
+        try {
+            const serviceCollection = dbClient.db(projectName).collection(serviceName);
+            const secrets = await serviceCollection.find({}).toArray() as Secret[];
+            const service: Service = {
+                serviceName,
+                secrets
+            };
+            console.log(service)
+            return { status: true, message: `Service '${serviceName}' retrieved successfully.`, service };
+        } catch (error: any) {
+            return { status: false, message: error.message };
         }
     }
 };
