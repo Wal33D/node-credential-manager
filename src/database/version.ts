@@ -101,3 +101,34 @@ export const updateSecretVersion = async (params: AddSecretVersionParams): Promi
         return { status: false, message: error.message, projectName, serviceName };
     }
 };
+
+export const findLatestSecretVersion = async (
+    dbClient: MongoClient,
+    projectName: string,
+    serviceName: string,
+    secretName: string
+): Promise<{ status: boolean, message: string, credential?: Credential }> => {
+    try {
+        const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+        
+        if (!secret || !secret.credential || secret.credential.length === 0) {
+            return { status: false, message: `No credentials found for secret '${secretName}'.` };
+        }
+        
+        // Sort credentials by version in descending order
+        const sortedCredentials = secret.credential.sort((a, b) => {
+            // Assuming semantic versioning, this will need to be adjusted if a different versioning scheme is used
+            return b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' });
+        });
+
+        // Return the latest version
+        return {
+            status: true,
+            message: `Latest credential version retrieved successfully.`,
+            credential: sortedCredentials[0] // The first credential after sorting will be the latest
+        };
+    } catch (error: any) {
+        console.error("Error finding latest secret version:", error);
+        return { status: false, message: error.message };
+    }
+};

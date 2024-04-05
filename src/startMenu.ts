@@ -1,6 +1,6 @@
 import { addSecret } from "./database/secrets";
 import { MongoClient } from "mongodb";
-import { addSecretVersion, updateSecretVersion } from "./database/version";
+import { addSecretVersion, updateSecretVersion, findLatestSecretVersion } from "./database/version";
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { createProject, deleteProject } from "./database/database";
 
@@ -41,6 +41,8 @@ async function secretTests() {
 
   // Attempt to add a duplicate version (1.1) to the secret. This test is designed to fail, ensuring that the system prevents adding duplicate versions.
   await testAddSecretVersion(dbClient, testProjectName, "TestService", "TestSecret", "1.1", "duplicateAttempt", testResults);
+  // Inside your secretTests function, after updating a version and before logging final results
+  await testFindLatestSecretVersion(dbClient, testProjectName, "TestService", "TestSecret", "1.2", testResults);
 
   // After all tests
   const deleteResult = await deleteProject(dbClient, testProjectName);
@@ -68,6 +70,16 @@ async function testAddSecretVersion(dbClient: any, projectName: any, serviceName
 async function testUpdateSecretVersion(dbClient: any, projectName: any, serviceName: any, secretName: any, version: any, value: any, testResults: any) {
   const response = await updateSecretVersion({ dbClient, projectName, serviceName, secretName, version, value });
   testResults.push({ test: `Update Secret Version ${version}`, passed: response.status, message: response.message });
+}
+
+async function testFindLatestSecretVersion(dbClient: any, projectName: any, serviceName: any, secretName: any, expectedVersion: any, testResults: any) {
+  const response = await findLatestSecretVersion(dbClient, projectName, serviceName, secretName);
+  const passed = response.status && response.credential && response.credential.version === expectedVersion;
+  testResults.push({
+    test: `Find Latest Secret Version for '${secretName}'`,
+    passed,
+    message: passed ? `Found latest version '${expectedVersion}' as expected.` : `Failed to find the expected latest version '${expectedVersion}'. Found '${response.credential ? response.credential.version : "none"}' instead.`
+  });
 }
 
 function logFinalResults(testResults: any) {
