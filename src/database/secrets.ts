@@ -1,4 +1,5 @@
 import { MongoClient, ObjectId } from "mongodb";
+import { Secret } from "./types";
 
 export interface dbSecretOperationResponse {
     status: boolean;
@@ -11,33 +12,15 @@ export interface dbSecretOperationResponse {
     version?: any;
 
 }
-export interface UpdateResult {
-    matchedCount?: number;
-    modifiedCount?: number;
-    upsertedCount?: number;
-    newValue?: any;
-}
 
 export interface DeleteResult {
     deletedCount: number;
 }
 
-export interface Secret {
-    _id: ObjectId;
-    secretName: string;
-    envName: string;
-    envType: 'production' | 'test' | 'development';
-    credential: [{ version: string, value: string }];
-    updatedAt: Date;
-    createdAt: Date;
-    lastAccessAt: Date;
-}
-
-
 // Delete secrets from a collection
 export const deleteSecretsFromService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object
-): Promise<dbSecretOperationResponse & DeleteResult> => {
+): Promise<any> => {
     const result: DeleteResult = await dbClient.db(projectName).collection(serviceName).deleteMany(filter);
     return {
         status: true, message: `Deleted ${result.deletedCount} secrets from '${serviceName}'.`, projectName, serviceName, filter, ...result
@@ -47,7 +30,7 @@ export const deleteSecretsFromService = async (
 // Delete an individual secret from a collection
 export const deleteSecretFromService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object
-): Promise<dbSecretOperationResponse & DeleteResult> => {
+): Promise<any > => {
     const result: DeleteResult = await dbClient.db(projectName).collection(serviceName).deleteOne(filter);
     return {
         status: result.deletedCount === 1, message: result.deletedCount === 1 ? `Deleted a secret from '${serviceName}'.` : `No secrets matched the filter to delete.`, projectName, serviceName, filter, ...result
@@ -57,7 +40,7 @@ export const deleteSecretFromService = async (
 // Count secrets in a collection
 export const countSecretsInService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object = {}
-): Promise<dbSecretOperationResponse & { count: number }> => {
+): Promise<any> => {
     const count = await dbClient.db(projectName).collection(serviceName).countDocuments(filter);
     return {
         status: true, message: `Counted ${count} secrets in '${serviceName}'.`, projectName, serviceName, filter, count
@@ -67,7 +50,7 @@ export const countSecretsInService = async (
 // Get all secrets from a collection
 export const getAllSecretsFromService = async (
     dbClient: MongoClient, projectName: string, serviceName: string
-): Promise<dbSecretOperationResponse & { secrets: Secret[] }> => {
+): Promise<any> => {
     const secrets = await dbClient.db(projectName).collection(serviceName).find({}).toArray() as Secret[];
     return {
         status: true, message: "Successfully retrieved all secrets.", projectName, serviceName, secrets
@@ -77,7 +60,7 @@ export const getAllSecretsFromService = async (
 // Find secrets in a collection
 export const findSecretsInService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object = {}
-): Promise<dbSecretOperationResponse & { secrets: Secret[] }> => {
+): Promise<any> => {
     const secrets: Secret[] = await dbClient.db(projectName).collection(serviceName).find(filter).toArray() as Secret[];
     return {
         status: true, message: `Found secrets in '${serviceName}'.`, projectName, serviceName, filter, secrets
@@ -87,7 +70,7 @@ export const findSecretsInService = async (
 // Find a secret by name
 export const findSecretByName = async (
     { dbClient, projectName, serviceName, secretName }: { dbClient: MongoClient; projectName: string; serviceName: string; secretName: string; }
-): Promise<dbSecretOperationResponse & { secret?: Secret }> => {
+): Promise<any> => {
     const secret: Secret | null = await dbClient.db(projectName).collection(serviceName).findOne({ SecretName: secretName }) as Secret;
     return {
         status: !!secret, message: secret ? `Secret with name '${secretName}' found successfully.` : `Secret with name '${secretName}' not found in '${serviceName}'.`, projectName, serviceName, secret

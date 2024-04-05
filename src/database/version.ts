@@ -1,49 +1,8 @@
-import { MongoClient, ObjectId } from "mongodb";
-
-type EnvType = 'production' | 'test' | 'development';
-
-interface Credential {
-    version: string;
-    value: string;
-}
-
-export interface SecretVersionResponse {
-    status: boolean;
-    message: string;
-    secret?: Secret | null;
-    credential?: Credential;
-}
-
-interface VersionOperationParams {
-    dbClient: MongoClient;
-    projectName: string;
-    serviceName: string;
-    secretName: string;
-    version: string;
-    value: string;
-}
-
-
-interface AddVersionParams extends VersionOperationParams { }
-
-interface UpdateVersionParams extends VersionOperationParams { }
-
-interface LatestVersionParams extends VersionOperationParams { }
-
-interface Secret {
-    _id: ObjectId;
-    secretName: string;
-    envName: string;
-    envType: EnvType;
-    credential: Credential[];
-    updatedAt: Date;
-    createdAt: Date;
-    lastAccessAt: Date;
-}
+import { Secret, VersionOperationResponse, AddVersionParams, UpdateVersionParams, LatestVersionParams } from "./types";
 
 const version = {
     // Adds a version to a secret if it doesn't already exist.
-    add: async (params: AddVersionParams): Promise<SecretVersionResponse> => {
+    add: async (params: AddVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, version, value } = params;
         try {
             let secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
@@ -61,12 +20,7 @@ const version = {
             } as any);
 
             secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
-            return {
-                status: true,
-                message: `Version '${version}' added.`,
-                secret,
-                credential: { version, value }
-            };
+            return { status: true, message: `Version '${version}' added.`, secret, credential: { version, value } };
         } catch (error: any) {
             console.error("Error adding/updating secret version:", error);
             return { status: false, message: error.message };
@@ -74,7 +28,7 @@ const version = {
     },
 
     // Updates an existing version of a secret.
-    update: async (params: UpdateVersionParams): Promise<SecretVersionResponse> => {
+    update: async (params: UpdateVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, version, value } = params;
         try {
             const result = await dbClient.db(projectName).collection(serviceName).updateOne(
@@ -87,12 +41,7 @@ const version = {
             }
 
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
-            return {
-                status: true,
-                message: `Version '${version}' updated.`,
-                secret,
-                credential: { version, value }
-            };
+            return { status: true, message: `Version '${version}' updated.`, secret, credential: { version, value } };
         } catch (error: any) {
             console.error("Error updating secret version:", error);
             return { status: false, message: error.message };
@@ -100,7 +49,7 @@ const version = {
     },
 
     // Finds and returns the latest credential entry of a secret.
-    latest: async (params: LatestVersionParams): Promise<SecretVersionResponse> => {
+    latest: async (params: LatestVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
@@ -115,16 +64,56 @@ const version = {
                 b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' })
             );
 
-            return {
-                status: true,
-                message: `Latest credential version '${sortedCredentials[0].version}' retrieved successfully.`,
-                secret,
-                credential: sortedCredentials[0]
-            };
+            return { status: true, message: `Latest credential version '${sortedCredentials[0].version}' retrieved successfully.`, secret, credential: sortedCredentials[0] };
         } catch (error: any) {
+            return { status: false, message: error.message };
+        }
+    },
+    // Deletes a specific version of a secret
+    delete: async (params: VersionOperationParams): Promise<VersionOperationResponse> => {
+        const { dbClient, projectName, serviceName, secretName, version } = params;
+        try {
+            if (!version) {
+                return { status: false, message: "Version is required for delete operation." };
+            }
+
+            const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+            if (!secret) {
+                return { status: false, message: `Secret '${secretName}' not found.` };
+            }
+
+            const updatedCredentials = secret.credential.filter((cred: { version: any; }) => cred.version !== version);
+
+            await dbClient.db(projectName).collection(serviceName).updateOne({ secretName }, { $set: { credential: updatedCredentials } });
+
+            return { status: true, message: `Version '${version}' deleted successfully.`, secret };
+        } catch (error:any) {
+            console.error("Error deleting secret version:", error);
+            return { status: false, message: error.message };
+        }
+    },
+
+    // Deletes the most recent version of a secret
+    rollback: async (params: VersionOperationParams): Promise<VersionOperationResponse> => {
+        const { dbClient, projectName, serviceName, secretName } = params;
+        try {
+            const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+            if (!secret || secret.credential.length === 0) {
+                return { status: false, message: `No versions found for secret '${secretName}'.` };
+            }
+
+            secret.credential.sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' }));
+            const latestVersion = secret.credential.shift();
+
+            await dbClient.db(projectName).collection(serviceName).updateOne({ secretName }, { $set: { credential: secret.credential } });
+
+            return { status: true, message: `Rolled back successfully, removing version '${latestVersion.version}'.`, secret };
+        } catch (error:any) {
+            console.error("Error rolling back secret version:", error);
             return { status: false, message: error.message };
         }
     }
 };
+
 
 export { version };
