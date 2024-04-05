@@ -30,6 +30,7 @@ export interface VersionOperationParams {
 }
 
 export interface AddVersionParams extends VersionOperationParams { }
+export interface ListVersionParams extends VersionOperationParams { }
 export interface UpdateVersionParams extends VersionOperationParams { }
 export interface LatestVersionParams extends VersionOperationParams { }
 export interface DeleteVersionParams extends VersionOperationParams { }
@@ -39,10 +40,11 @@ export interface VersionOperationResponse {
     status: boolean;
     message: string;
     secret?: Secret | null;
-    credential?: Credential;
+    version?: Version;
+    versions?: Version[];
 }
 
-export interface Credential {
+export interface Version {
     version: string;
     value: string;
 }
@@ -52,7 +54,7 @@ export interface Secret {
     secretName: string;
     envName: string;
     envType: EnvType;
-    credential: Credential[];
+    version: Version[];
     updatedAt: Date;
     createdAt: Date;
     lastAccessAt: Date;

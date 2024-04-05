@@ -28,7 +28,10 @@ async function secretTests() {
   await testVersionOperation(version.add, dbClient, testProjectName, serviceName, "TestSecret", "1.2", "initialValue", testResults, "Add Secret Version 1.2"); // should be false
   await testVersionOperation(version.update, dbClient, testProjectName, serviceName, "TestSecret", "1.2", "updatedValue", testResults, "Update Secret Version 1.2");
   await testFindLatestSecretVersion(version.latest, dbClient, testProjectName, serviceName, "TestSecret", "1.2", testResults);
+  await testVersionOperation(version.list, dbClient, testProjectName, serviceName, "TestSecret", "1.1", "updatedValue", testResults, "List All Versions");
+
   await testVersionOperation(version.rollback, dbClient, testProjectName, serviceName, "TestSecret", "1.2", "updatedValue", testResults, "rollback Secret Version 1.2");
+  await testVersionOperation(version.delete, dbClient, testProjectName, serviceName, "TestSecret", "1.1", "updatedValue", testResults, "delete Secret Version 1.2");
 
   // Assuming deleteProject is defined elsewhere and remains unchanged
   await deleteProject(dbClient, testProjectName);

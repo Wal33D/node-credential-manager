@@ -112,7 +112,7 @@ export const addSecret = async ({
             secretName: secretName,
             envName: envName,
             envType: envType,
-            credential: credentials as any,
+            version: credentials as any,
             updatedAt: new Date(),
             createdAt: new Date(),
             lastAccessAt: new Date(),
@@ -122,29 +122,13 @@ export const addSecret = async ({
         const result = await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
 
         if (result.insertedId) {
-            return {
-                status: true,
-                message: `Secret '${secretName}' added successfully to service '${serviceName}' in project '${projectName}'. New secret ID: ${result.insertedId}.`,
-                projectName,
-                serviceName,
-                secret: { ...secretData, _id: result.insertedId },
-            };
+            return { status: true, message: `Secret '${secretName}' added successfully to service '${serviceName}' in project '${projectName}'. New secret ID: ${result.insertedId}.`, projectName, serviceName, secret: { ...secretData, _id: result.insertedId }, };
         } else {
             // This block is theoretically unreachable because insertOne throws an error if it fails
-            return {
-                status: false,
-                message: `Failed to add the secret '${secretName}'.`,
-                projectName,
-                serviceName,
-            };
+            return { status: false, message: `Failed to add the secret '${secretName}'.`, projectName, serviceName, };
         }
     } catch (error) {
         console.error("Error adding secret:", error);
-        return {
-            status: false,
-            message: "An error occurred while adding the secret.",
-            projectName,
-            serviceName,
-        };
+        return { status: false, message: "An error occurred while adding the secret.", projectName, serviceName, };
     }
 };
