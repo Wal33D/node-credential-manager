@@ -62,7 +62,33 @@ const secrets = {
             console.error("Error adding secret:", error);
             return { status: false, message: "Failed to add secret." };
         }
+    },
+
+    rename: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
+        const { dbClient, projectName, serviceName, secretName, newSecretName } = params;
+        try {
+            const secret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName: secretName });
+            if (!secret) {
+                return { status: false, message: `Secret '${secretName}' not found in '${serviceName}'.` };
+            }
+
+            const updateResult = await dbClient.db(projectName).collection(serviceName).updateOne(
+                { secretName: secretName },
+                { $set: { secretName: newSecretName } }
+            );
+
+            if (updateResult.modifiedCount === 0) {
+                return { status: false, message: `Failed to rename secret '${secretName}' to '${newSecretName}'.` };
+            }
+
+            const updatedSecret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName: newSecretName }) as Secret;
+            return { status: true, message: `Secret '${secretName}' successfully renamed to '${newSecretName}'.`, secret: updatedSecret };
+        } catch (error) {
+            console.error("Error renaming secret:", error);
+            return { status: false, message: "Failed to rename secret due to an error." };
+        }
     }
-};
+}
+
 
 export { secrets };

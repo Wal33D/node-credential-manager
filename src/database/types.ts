@@ -78,6 +78,7 @@ export interface SecretOperationParams {
     serviceName: string;
     filter?: object;
     secretName?: string;
+    newSecretName?: string;
     envName?: string;
     envType?: EnvType;
     versions?: Version[];
