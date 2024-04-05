@@ -91,7 +91,7 @@ export const addSecret = async ({
         secretName: string,
         envName: string,
         envType: 'production' | 'test' | 'development',
-        version: { version: string, value: string }
+        version: { versionName: string, value: string }
     }
 ): Promise<dbSecretOperationResponse> => {
     try {

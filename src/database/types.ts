@@ -25,10 +25,13 @@ export interface VersionOperationParams {
     projectName: string;
     serviceName: string;
     secretName: string;
-    version: string;
+    versionName: string;
     value: string;
 }
-
+export interface Version {
+    versionName: string;
+    value: string;
+}
 export interface AddVersionParams extends VersionOperationParams { }
 export interface ListVersionParams extends VersionOperationParams { }
 export interface UpdateVersionParams extends VersionOperationParams { }
@@ -44,10 +47,7 @@ export interface VersionOperationResponse {
     versions?: Version[];
 }
 
-export interface Version {
-    version: string;
-    value: string;
-}
+
 
 export interface Secret {
     _id: ObjectId;
