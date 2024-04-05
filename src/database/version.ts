@@ -1,4 +1,4 @@
-import { Secret, VersionOperationResponse, AddVersionParams, UpdateVersionParams, LatestVersionParams } from "./types";
+import { Secret, VersionOperationResponse, AddVersionParams, Credential,UpdateVersionParams, LatestVersionParams, DeleteVersionParams, RollBackVersionParams } from "./types";
 
 const version = {
     // Adds a version to a secret if it doesn't already exist.
@@ -69,8 +69,9 @@ const version = {
             return { status: false, message: error.message };
         }
     },
+    
     // Deletes a specific version of a secret
-    delete: async (params: VersionOperationParams): Promise<VersionOperationResponse> => {
+    delete: async (params: DeleteVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, version } = params;
         try {
             if (!version) {
@@ -94,7 +95,7 @@ const version = {
     },
 
     // Deletes the most recent version of a secret
-    rollback: async (params: VersionOperationParams): Promise<VersionOperationResponse> => {
+    rollback: async (params: RollBackVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
@@ -102,8 +103,8 @@ const version = {
                 return { status: false, message: `No versions found for secret '${secretName}'.` };
             }
 
-            secret.credential.sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' }));
-            const latestVersion = secret.credential.shift();
+            secret.credential.sort((a: { version: any; }, b: { version: string; }) => b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' }));
+            const latestVersion = secret.credential.shift() as Credential;
 
             await dbClient.db(projectName).collection(serviceName).updateOne({ secretName }, { $set: { credential: secret.credential } });
 

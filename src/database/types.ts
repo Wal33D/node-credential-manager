@@ -32,8 +32,8 @@ export interface VersionOperationParams {
 export interface AddVersionParams extends VersionOperationParams { }
 export interface UpdateVersionParams extends VersionOperationParams { }
 export interface LatestVersionParams extends VersionOperationParams { }
-export interface LatestVersionParams extends VersionOperationParams { }
-export interface LatestVersionParams extends VersionOperationParams { }
+export interface DeleteVersionParams extends VersionOperationParams { }
+export interface RollBackVersionParams extends VersionOperationParams { }
 
 export interface VersionOperationResponse {
     status: boolean;
