@@ -90,3 +90,26 @@ export interface SecretOperationResponse {
     secret?: Secret | null;
     secrets?: Secret[];
 }
+export interface Project {
+    name: string;
+    services?: string[];
+    metadata?: {
+        sizeOnDisk?: number;
+        empty?: boolean;
+        collectionsCount?: number;
+    };
+}
+
+export interface ProjectOperationParams {
+    dbClient: MongoClient;
+    projectName?: string;
+    serviceName?: string;
+    targetProjectName?: string; 
+}
+
+export interface ProjectOperationResponse {
+    status: boolean;
+    message: string;
+    project?: Project;
+    projects?: Project[];
+}
