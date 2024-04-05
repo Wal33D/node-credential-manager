@@ -101,12 +101,12 @@ const version = {
         }
     },
 
-    // Deletes a version by version number.
+    // Deletes a version by version name.
     delete: async (params: DeleteVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName } = params;
         try {
             if (!versionName) {
-                return { status: false, message: "Version is required for delete operation." };
+                return { status: false, message: "Version name is required for delete operation." };
             }
 
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
@@ -116,13 +116,13 @@ const version = {
 
             const versionExists = secret.versions.some(version => version.versionName === versionName);
             if (!versionExists) {
-                return { status: false, message: `Version '${version}' not found in secret '${secretName}'.` };
+                return { status: false, message: `Version '${versionName}' not found in secret '${secretName}'.` };
             }
 
             const updatedVersions = secret.versions.filter(version => version.versionName !== versionName);
             const updateResult = await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
-                { $set: { version: updatedVersions } }
+                { $set: { versions: updatedVersions } } // Corrected from 'version' to 'versions'
             );
 
             if (updateResult.modifiedCount === 0) {
@@ -133,7 +133,7 @@ const version = {
 
             return {
                 status: true,
-                message: `Version '${version}' deleted successfully.`,
+                message: `Version '${versionName}' deleted successfully.`, // Correct usage of versionName
                 secret: updatedSecret
             };
         } catch (error: any) {

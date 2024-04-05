@@ -36,15 +36,6 @@ export const deleteSecretFromService = async (
     };
 };
 
-// Count secrets in a collection
-export const countSecretsInService = async (
-    dbClient: MongoClient, projectName: string, serviceName: string, filter: object = {}
-): Promise<any> => {
-    const count = await dbClient.db(projectName).collection(serviceName).countDocuments(filter);
-    return {
-        status: true, message: `Counted ${count} secrets in '${serviceName}'.`, projectName, serviceName, filter, count
-    };
-};
 
 // Get all secrets from a collection
 export const getAllSecretsFromService = async (
