@@ -29,23 +29,24 @@ const version = {
             return { status: false, message: error.message };
         }
     },
-    
+
     // Adds a version to a secret if it doesn't already exist.
     add: async (params: AddVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName, value } = params;
         try {
             let secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
-            
+
             if (!secret || secret.versions.some(version => version.versionName === versionName)) {
                 return {
                     status: !secret,
-                    message: !secret ? `Secret '${secretName}' not found.` : `Version '${version}' already exists.`,
+                    message: !secret ? `Secret '${secretName}' not found.` : `Version '${versionName}' already exists.`,
                     secret,
+                    version: { versionName, value }
                 };
             }
 
             await dbClient.db(projectName).collection(serviceName).updateOne({ secretName }, {
-                $push: { version: { versionName, value } },
+                $push: { versions: { versionName, value } },
                 $currentDate: { lastAccessAt: true, updatedAt: true }
             } as any);
 
@@ -161,7 +162,7 @@ const version = {
             return { status: false, message: error.message };
         }
     }
-    
+
 };
 
 

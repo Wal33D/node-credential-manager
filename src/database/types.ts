@@ -47,8 +47,6 @@ export interface VersionOperationResponse {
     versions?: Version[];
 }
 
-
-
 export interface Secret {
     _id: ObjectId;
     secretName: string;

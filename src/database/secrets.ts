@@ -10,7 +10,6 @@ export interface dbSecretOperationResponse {
     filter?: object;
     secret?: Secret;
     version?: any;
-
 }
 
 export interface DeleteResult {

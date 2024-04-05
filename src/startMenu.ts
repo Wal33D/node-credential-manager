@@ -51,7 +51,7 @@ async function testVersionOperation(operationFunction: any, dbClient: any, proje
 async function testFindLatestSecretVersion(latestFunction: any, dbClient: any, projectName: any, serviceName: any, secretName: any, expectedVersion: any, testResults: any) {
   const params = { dbClient, projectName, serviceName, secretName };
   const response = await latestFunction(params);
-  const passed = response.status && response.versions && response.versions.versionName === expectedVersion;
+  const passed = response.status && response.version && response.version.versionName === expectedVersion;
   testResults.push({
     test: `Find Latest Secret Version for '${secretName}'`,
     passed,
