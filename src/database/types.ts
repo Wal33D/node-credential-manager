@@ -18,7 +18,7 @@ export interface dbServiceOperationResponse {
     exists?: boolean;
 } 
 
-type EnvType = 'production' | 'test' | 'development';
+export type EnvType = 'production' | 'test' | 'development';
 
 export interface VersionOperationParams {
     dbClient: MongoClient;
