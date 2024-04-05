@@ -11,7 +11,6 @@ export async function versionTests() {
   if (!connectionResult.status) {
     console.error("Failed to initialize database connection:", connectionResult.message);
     testResults.push({ test: "Database Connection", passed: false, message: connectionResult.message });
-    logFinalResults(testResults);
     return;
   }
   const dbClient: MongoClient = connectionResult.client;
@@ -32,7 +31,6 @@ export async function versionTests() {
 
   await projects.deleteProject({dbClient, projectName:testProjectName, serviceName});
 
-  logFinalResults(testResults);
   dbClient.close();
   return testResults;
 }
@@ -58,14 +56,3 @@ async function testAddSecret(dbClient: any, projectName: any, serviceName: any, 
   const response = await secrets.add({ dbClient, projectName, serviceName, secretName, envName, envType, versions: [{ versionName: '1.0', value: 'initialValue' }] });
   testResults.push({ test: "Add Secret", passed: response.status, message: response.message });
 }
-
-function logFinalResults(testResults: any) {
-  let passCount = testResults.filter((result: any) => result.passed).length;
-  let failCount = testResults.filter((result: any) => !result.passed).length;
-  console.log("\nTest Summary:");
-  testResults.forEach((result: any) => {
-    console.log(`${result.test}: ${result.passed ? "PASS" : "FAIL"} - ${result.message}`);
-  });
-  console.log(`\nTotal: ${testResults.length}, Passed: ${passCount}, Failed: ${failCount}`);
-}
-

@@ -81,18 +81,27 @@ const projects = {
             const services = await sourceProject.listCollections().toArray();
             for (let service of services) {
                 const docs = await sourceProject.collection(service.name).find({}).toArray();
-                const operationResult = await targetProject.collection(service.name).insertMany(docs);
-                operationResults.push(operationResult); // Store each operation's result
+                // Check if there are documents to copy
+                if (docs.length > 0) {
+                    const operationResult = await targetProject.collection(service.name).insertMany(docs);
+                    operationResults.push(operationResult); // Store each operation's result
+                } else {
+                    // Optionally handle the case where the collection is empty
+                    console.log(`No documents to copy for collection: ${service.name}`);
+                }
             }
             return {
                 status: true,
                 message: `Project '${projectName}' copied to '${targetProjectName}'.`,
                 project: { name: targetProjectName! },
+                // Optionally include operationResults in the response
+                // operationResults: operationResults,
             };
         } catch (error: any) {
             return { status: false, message: error.message };
         }
     },
+    
 };
 
 export { projects };
