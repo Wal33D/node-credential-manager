@@ -1,7 +1,7 @@
 import { Secret, SecretOperationParams, SecretOperationResponse, Version } from "./types";
 
 const secrets = {
-    deleteSecretsFromService: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
+    delete: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
         const { dbClient, projectName, serviceName, filter = {} } = params;
         try {
             const result = await dbClient.db(projectName).collection(serviceName).deleteMany(filter);
@@ -12,7 +12,7 @@ const secrets = {
         }
     },
 
-    getAllSecretsFromService: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
+    list: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
         const { dbClient, projectName, serviceName } = params;
         try {
             const secrets = await dbClient.db(projectName).collection(serviceName).find({}).toArray() as Secret[];
@@ -45,7 +45,7 @@ const secrets = {
         }
     },
 
-    addSecret: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
+    add: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, envName, envType, versions } = params;
         try {
             const existingSecret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName });

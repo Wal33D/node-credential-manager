@@ -5,7 +5,7 @@ import { createProject, deleteProject } from "./database/database";
 
 export async function secretTests() {
   let testResults = [] as any;
-
+  
   console.log("Initializing database connection...");
   const connectionResult = await initializeDbConnection({});
   if (!connectionResult.status) {
@@ -33,32 +33,27 @@ export async function secretTests() {
 
 async function testAddSecret(dbClient: any, projectName: any, serviceName: any, secretName: any, envName: any, envType: any, testResults: any) {
   const response = await secrets.add({ dbClient, projectName, serviceName, secretName, envName, envType, versions: [{ versionName: '1.0', value: 'initialValue' }] });
-  testResults.push({ test: "Adding Secret: " + secretName, passed: response.status, message: response.message });
+  testResults.push({ test: "Add Secret", passed: response.status, message: response.message,response });
 }
 
 async function testFindSecretByName(dbClient: any, projectName: any, serviceName: any, secretName: any, testResults: any) {
   const response = await secrets.findByName({ dbClient, projectName, serviceName, secretName });
-  testResults.push({ test: "Finding Secret By Name: " + secretName, passed: response.status, message: response.message });
+  testResults.push({ test: "Find Secret By Name", passed: response.status,response });
 }
 
 async function testListAllSecrets(dbClient: any, projectName: any, serviceName: any, testResults: any) {
   const response = await secrets.list({ dbClient, projectName, serviceName });
-  testResults.push({ test: "Listing All Secrets", passed: response.status, message: response.message });
+  testResults.push({ test: "List All Secrets", passed: response.status,response });
 }
 
 async function testDeleteSecrets(dbClient: any, projectName: any, serviceName: any, filter: any, testResults: any) {
   const response = await secrets.delete({ dbClient, projectName, serviceName, filter });
-  testResults.push({ test: "Deleting Secret: " + JSON.stringify(filter), passed: response.status, message: response.message });
+  testResults.push({ test: "Delete Secrets", passed: response.status,response });
 }
 
 function logFinalResults(testResults: any) {
-  let passCount = testResults.filter((result: any) => result.passed).length;
-  let failCount = testResults.filter((result: any) => !result.passed).length;
   console.log("\nTest Summary:");
-  testResults.forEach((result: any) => {
-    console.log(`${result.test}: ${result.passed ? "PASS" : "FAIL"} - ${result.message}`);
-  });
-  console.log(`\nTotal: ${testResults.length}, Passed: ${passCount}, Failed: ${failCount}`);
+  console.log(JSON.stringify(testResults, null, 2));
 }
 
 secretTests();
