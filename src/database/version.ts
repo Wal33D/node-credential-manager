@@ -1,7 +1,6 @@
 import { Secret, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, LatestVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./types";
 
 const version = {
-
     list: async (params: ListVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
@@ -60,7 +59,7 @@ const version = {
                     $push: {
                         versions: {
                             $each: [{ versionName, value }],
-                            $position: 0 // This will insert the new version at the start of the array
+                            $position: 0
                         }
                     },
                     $currentDate: { lastAccessAt: true, updatedAt: true }
@@ -79,15 +78,12 @@ const version = {
             return { status: false, message: error.message };
         }
     },
-
-    // Updates an existing version of a secret.
     update: async (params: UpdateVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName, value } = params;
         try {
-            // Correcting the filter to match an element within the "versions" array.
             const filter = { secretName, "versions.versionName": versionName };
             const update = {
-                $set: { "versions.$.value": value } // Correctly target the nested document in the "versions" array.
+                $set: { "versions.$.value": value } 
             };
 
             const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update);
@@ -103,8 +99,6 @@ const version = {
             return { status: false, message: error.message };
         }
     },
-
-    // Finds and returns the latest credential entry of a secret.
     latest: async (params: LatestVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
@@ -125,8 +119,6 @@ const version = {
             return { status: false, message: error.message };
         }
     },
-
-    // Deletes a version by version number.
     delete: async (params: DeleteVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName } = params;
         try {
@@ -166,8 +158,6 @@ const version = {
             return { status: false, message: error.message };
         }
     },
-
-    // Deletes the most recent version of a secret
     rollback: async (params: RollBackVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
@@ -176,12 +166,11 @@ const version = {
                 return { status: false, message: `No versions found for secret '${secretName}'.` };
             }
 
-            // Assuming the last item in the versions array is the most recent
-            const latestVersion = secret.versions.shift(); // Removes and returns the last item
+            const latestVersion = secret.versions.shift(); 
 
             await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
-                { $set: { versions: secret.versions } } // Updates the document with the version removed
+                { $set: { versions: secret.versions } }
             );
 
             if (latestVersion) {
