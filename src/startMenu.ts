@@ -1,5 +1,6 @@
 import { versionTests } from './versionTests';
 import { secretTests } from './secretTests';
+import { projectTests } from './projectTests';
 
 interface TestResult {
     test: string;
@@ -18,6 +19,12 @@ async function runAllTests(): Promise<void> {
         console.log("\n=== Secret Tests ===");
         const secretResults: TestResult[] = await secretTests();
         logTestResults(secretResults);
+
+
+        console.log("\n=== Secret Tests ===");
+        const projectTests: TestResult[] = await projectTests();
+        logTestResults(projectTests);
+        
     } catch (error) {
         console.error("An error occurred while running tests:", error);
     }

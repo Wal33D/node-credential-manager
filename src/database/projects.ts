@@ -25,7 +25,7 @@ const projects = {
             return {
                 status: true,
                 message: exists ? `Project '${projectName}' exists.` : `Project '${projectName}' does not exist.`,
-                project: exists ? { name: projectName } : undefined
+                project: exists ? { name: projectName } as any : null,
             };
         } catch (error: any) {
             return { status: false, message: error.message };
@@ -47,11 +47,11 @@ const projects = {
         const { dbClient, projectName, serviceName } = params;
         try {
             const operationResult = await dbClient.db(projectName).createCollection(serviceName!);
-            const metadata = await getProjectMetadata(dbClient, projectName);
+            const metadata = await getProjectMetadata(dbClient, projectName as string);
             return {
                 status: true,
                 message: `Service '${serviceName}' created in project '${projectName}'.`,
-                project: { name: projectName, services: [serviceName!], metadata },
+                project: { name: projectName as string, services: [serviceName!], metadata },
             };
         } catch (error: any) {
             return { status: false, message: error.message };
@@ -65,7 +65,7 @@ const projects = {
             return {
                 status: true,
                 message: `Project '${projectName}' dropped successfully.`,
-                project: { name: projectName },
+                project: { name: projectName as string },
             };
         } catch (error: any) {
             return { status: false, message: error.message };
