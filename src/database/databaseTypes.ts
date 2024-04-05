@@ -25,8 +25,8 @@ export interface VersionOperationParams {
     projectName: string;
     serviceName: string;
     secretName: string;
-    versionName: string;
-    value: string;
+    versionName?: string;
+    value?: string;
 }
 
 export interface AddVersionParams extends VersionOperationParams { }
