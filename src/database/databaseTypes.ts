@@ -44,6 +44,7 @@ export interface VersionOperationResponse {
     versions?: Version[];
 }
 export interface Version {
+    iv?: any;
     versionName: string;
     value: string;
 }
@@ -54,11 +55,6 @@ export interface VersionOperationResponse {
     secret?: Secret | null;
     version?: Version;
     versions?: Version[];
-}
-
-export interface Version {
-    versionName: string;
-    value: string;
 }
 
 export interface Secret {
