@@ -53,11 +53,6 @@ const secrets = {
                 return { status: false, message: `Secret '${secretName}' already exists. No new secret added.` };
             }
 
-            const existingSecretAsServiceName = await dbClient.db(projectName).collection('services').findOne({ serviceName: secretName }) as Secret;
-            if (existingSecretAsServiceName) {
-                return { status: false, message: `A service with the name '${secretName}' already exists. Cannot add secret with the same name.`, secret: existingSecretAsServiceName };
-            }
-
             const secretData: Secret = { secretName, envName, envType, versions, updatedAt: new Date(), createdAt: new Date(), lastAccessAt: new Date() } as Secret;
             await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
 

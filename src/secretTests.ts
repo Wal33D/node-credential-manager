@@ -27,11 +27,13 @@ export async function secretTests() {
     await testListAllSecrets(dbClient, testProjectName, serviceName, testResults);
     await testDuplicateSecretNames(dbClient, testProjectName, serviceName, testResults); 
     await testDeleteSecrets(dbClient, testProjectName, serviceName, { secretName: "TestSecret" }, testResults);
+    await testDeleteSecrets(dbClient, testProjectName, serviceName, { secretName: "RenamedSecret" }, testResults);
 
     await deleteProject(dbClient, testProjectName);
 
     logFinalResults(testResults);
     dbClient.close();
+    return testResults
 }
 
 async function testAddSecret(dbClient: any, projectName: any, serviceName: any, secretName: any, envName: any, envType: any, testResults: any) {
