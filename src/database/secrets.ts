@@ -1,4 +1,4 @@
-import { Secret, SecretOperationParams, SecretOperationResponse, Version } from "./types";
+import { Secret, SecretOperationParams, SecretOperationResponse } from "./types";
 
 const secrets = {
     delete: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
@@ -48,9 +48,14 @@ const secrets = {
     add: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, envName, envType, versions } = params;
         try {
-            const existingSecret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName });
-            if (existingSecret) {
-                return { status: false, message: `Secret '${secretName}' exists. No new secret added.` };
+            const existingSecretByName = await dbClient.db(projectName).collection(serviceName).findOne({ secretName });
+            if (existingSecretByName) {
+                return { status: false, message: `Secret '${secretName}' already exists. No new secret added.` };
+            }
+
+            const existingSecretAsServiceName = await dbClient.db(projectName).collection('services').findOne({ serviceName: secretName }) as Secret;
+            if (existingSecretAsServiceName) {
+                return { status: false, message: `A service with the name '${secretName}' already exists. Cannot add secret with the same name.`, secret: existingSecretAsServiceName };
             }
 
             const secretData: Secret = { secretName, envName, envType, versions, updatedAt: new Date(), createdAt: new Date(), lastAccessAt: new Date() } as Secret;
@@ -60,13 +65,18 @@ const secrets = {
             return { status: true, message: `Secret '${secretName}' successfully added.`, secret: newSecret };
         } catch (error) {
             console.error("Error adding secret:", error);
-            return { status: false, message: "Failed to add secret." };
+            return { status: false, message: "Failed to add secret due to an error." };
         }
     },
 
     rename: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, newSecretName } = params;
         try {
+            const existingSecretWithNewName = await dbClient.db(projectName).collection(serviceName).findOne({ secretName: newSecretName });
+            if (existingSecretWithNewName) {
+                return { status: false, message: `Another secret with the name '${newSecretName}' already exists in '${serviceName}'. Rename operation aborted.` };
+            }
+
             const secret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName: secretName });
             if (!secret) {
                 return { status: false, message: `Secret '${secretName}' not found in '${serviceName}'.` };
@@ -89,6 +99,5 @@ const secrets = {
         }
     }
 }
-
 
 export { secrets };

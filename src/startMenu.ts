@@ -69,5 +69,5 @@ function logFinalResults(testResults: any) {
   console.log(`\nTotal: ${testResults.length}, Passed: ${passCount}, Failed: ${failCount}`);
 }
 
-versionTests();
-//secretTests();
+//versionTests();
+secretTests();
