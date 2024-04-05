@@ -1,5 +1,5 @@
 import { MongoClient, ObjectId } from "mongodb";
-import { Secret } from "./types";
+import { Secret, Version } from "./types";
 
 export interface dbSecretOperationResponse {
     status: boolean;
@@ -9,116 +9,96 @@ export interface dbSecretOperationResponse {
     secretName?: string;
     filter?: object;
     secret?: Secret;
+    secrets?: Secret[];
     version?: any;
 }
 
-export interface DeleteResult {
-    deletedCount: number;
-}
+// Utility function for creating a standard error response
+const createErrorResponse = (message: string, projectName: string, serviceName: string): dbSecretOperationResponse => ({
+    status: false,
+    message,
+    projectName,
+    serviceName,
+});
 
 // Delete secrets from a collection
 export const deleteSecretsFromService = async (
-    dbClient: MongoClient, projectName: string, serviceName: string, filter: object
-): Promise<any> => {
-    const result: DeleteResult = await dbClient.db(projectName).collection(serviceName).deleteMany(filter);
-    return {
-        status: true, message: `Deleted ${result.deletedCount} secrets from '${serviceName}'.`, projectName, serviceName, filter, ...result
-    };
+    dbClient: MongoClient, projectName: string, serviceName: string, filter: object = {}
+): Promise<dbSecretOperationResponse> => {
+    try {
+        const result = await dbClient.db(projectName).collection(serviceName).deleteMany(filter);
+        const message = `Deleted ${result.deletedCount} secrets from '${serviceName}'.`;
+        return { status: true, message, projectName, serviceName, filter };
+    } catch (error) {
+        console.error("Error deleting secrets:", error);
+        return createErrorResponse("An error occurred while deleting secrets.", projectName, serviceName);
+    }
 };
-
-// Delete an individual secret from a collection
-export const deleteSecretFromService = async (
-    dbClient: MongoClient, projectName: string, serviceName: string, filter: object
-): Promise<any > => {
-    const result: DeleteResult = await dbClient.db(projectName).collection(serviceName).deleteOne(filter);
-    return {
-        status: result.deletedCount === 1, message: result.deletedCount === 1 ? `Deleted a secret from '${serviceName}'.` : `No secrets matched the filter to delete.`, projectName, serviceName, filter, ...result
-    };
-};
-
 
 // Get all secrets from a collection
 export const getAllSecretsFromService = async (
     dbClient: MongoClient, projectName: string, serviceName: string
-): Promise<any> => {
-    const secrets = await dbClient.db(projectName).collection(serviceName).find({}).toArray() as Secret[];
-    return {
-        status: true, message: "Successfully retrieved all secrets.", projectName, serviceName, secrets
-    };
+): Promise<dbSecretOperationResponse> => {
+    try {
+        const secrets = await dbClient.db(projectName).collection(serviceName).find({}).toArray() as Secret[];
+        return { status: true, message: "Successfully retrieved all secrets.", projectName, serviceName, secrets  };
+    } catch (error) {
+        console.error("Error retrieving all secrets:", error);
+        return createErrorResponse("An error occurred while retrieving secrets.", projectName, serviceName);
+    }
 };
 
 // Find secrets in a collection
 export const findSecretsInService = async (
     dbClient: MongoClient, projectName: string, serviceName: string, filter: object = {}
-): Promise<any> => {
-    const secrets: Secret[] = await dbClient.db(projectName).collection(serviceName).find(filter).toArray() as Secret[];
-    return {
-        status: true, message: `Found secrets in '${serviceName}'.`, projectName, serviceName, filter, secrets
-    };
+): Promise<dbSecretOperationResponse> => {
+    try {
+        const secrets = await dbClient.db(projectName).collection(serviceName).find(filter).toArray() as Secret[];
+        return { status: true, message: `Found secrets in '${serviceName}'.`, projectName, serviceName, filter, secrets };
+    } catch (error) {
+        console.error("Error finding secrets:", error);
+        return createErrorResponse("An error occurred while finding secrets.", projectName, serviceName);
+    }
 };
 
 // Find a secret by name
 export const findSecretByName = async (
-    { dbClient, projectName, serviceName, secretName }: { dbClient: MongoClient; projectName: string; serviceName: string; secretName: string; }
-): Promise<any> => {
-    const secret: Secret | null = await dbClient.db(projectName).collection(serviceName).findOne({ SecretName: secretName }) as Secret;
-    return {
-        status: !!secret, message: secret ? `Secret with name '${secretName}' found successfully.` : `Secret with name '${secretName}' not found in '${serviceName}'.`, projectName, serviceName, secret
-    };
-};
-
-export const addSecret = async ({
-    dbClient,
-    projectName,
-    serviceName,
-    secretName,
-    envName,
-    envType,
-    version }: {
-        dbClient: MongoClient,
-        projectName: string,
-        serviceName: string,
-        secretName: string,
-        envName: string,
-        envType: 'production' | 'test' | 'development',
-        version: { versionName: string, value: string }
-    }
+    dbClient: MongoClient, projectName: string, serviceName: string, secretName: string
 ): Promise<dbSecretOperationResponse> => {
     try {
-        // First, check if a secret with the same name already exists
-        const existingSecret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName: secretName });
+        const secret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName }) as Secret;
+        const message = secret ? `Secret with name '${secretName}' found successfully.` : `Secret with name '${secretName}' not found in '${serviceName}'.`;
+        return { status: !!secret, message, projectName, serviceName, secretName, secret };
+    } catch (error) {
+        console.error("Error finding secret by name:", error);
+        return createErrorResponse(`An error occurred while finding the secret '${secretName}'.`, projectName, serviceName);
+    }
+};
+
+// Add a new secret
+export const addSecret = async ({
+    dbClient, projectName, serviceName, secretName, envName, envType, versions
+}: {
+    dbClient: MongoClient,
+    projectName: string,
+    serviceName: string,
+    secretName: string,
+    envName: string,
+    envType: 'production' | 'test' | 'development',
+    versions: Version[]
+}): Promise<dbSecretOperationResponse> => {
+    try {
+        const existingSecret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName });
         if (existingSecret) {
-            // If a secret with the same name exists, do not add a new one and return a response
-            return {
-                status: false,
-                message: `A secret with the name '${secretName}' already exists in service '${serviceName}' within project '${projectName}'. No new secret was added.`,
-                projectName,
-                serviceName,
-            };
+            return createErrorResponse(`A secret with the name '${secretName}' already exists in service '${serviceName}' within project '${projectName}'. No new secret was added.`, projectName, serviceName);
         }
 
-        // If no existing secret was found, proceed to add the new secret
-        const secretData: Secret = {
-            secretName: secretName,
-            envName: envName,
-            envType: envType,
-            versions: [version] ,
-            updatedAt: new Date(),
-            createdAt: new Date(),
-            lastAccessAt: new Date(),
-            _id: new ObjectId()
-        };
-
+        const secretData: Secret = { secretName, envName, envType, versions, updatedAt: new Date(), createdAt: new Date(), lastAccessAt: new Date(), _id: new ObjectId() };
         const result = await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
 
-        if (result.insertedId) {
-            return { status: true, message: `Secret '${secretName}' added successfully to service '${serviceName}' in project '${projectName}'. New secret ID: ${result.insertedId}.`, projectName, serviceName, secret: { ...secretData, _id: result.insertedId }, };
-        } else {
-            // This block is theoretically unreachable because insertOne throws an error if it fails
-            return { status: false, message: `Failed to add the secret '${secretName}'.`, projectName, serviceName, };
-        }
+        return { status: true, message: `Secret '${secretName}' added successfully to service '${serviceName}' in project '${projectName}'.`, projectName, serviceName, secret: secretData };
     } catch (error) {
         console.error("Error adding secret:", error);
-        return { status: false, message: "An error occurred while adding the secret.", projectName, serviceName, };
+        return createErrorResponse("An error occurred while adding the secret.", projectName, serviceName);
     }
 };
