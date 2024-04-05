@@ -4,7 +4,6 @@ const services = {
     list: async ({ dbClient, projectName }: ServiceOperationParams): Promise<ServiceOperationResponse> => {
         try {
             const allCollections = await dbClient.db(projectName).listCollections().toArray();
-            // Filter out the _app_metadata collection from the list
             const filteredCollections = allCollections.filter(collection => collection.name !== '_app_metadata');
             const services = filteredCollections.map(collection => collection.name);
             return { status: true, message: "Services listed successfully.", services };
