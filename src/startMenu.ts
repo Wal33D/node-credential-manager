@@ -32,6 +32,7 @@ async function secretTests() {
 
   await testVersionOperation(version.rollback, dbClient, testProjectName, serviceName, "TestSecret", "1.2", "updatedValue", testResults, "rollback Secret Version 1.2");
   await testVersionOperation(version.delete, dbClient, testProjectName, serviceName, "TestSecret", "1.1", "updatedValue", testResults, "delete Secret Version 1.1");
+  await testFindLatestSecretVersion(version.latest, dbClient, testProjectName, serviceName, "TestSecret", "1.1", testResults);
 
   // Assuming deleteProject is defined elsewhere and remains unchanged
   await deleteProject(dbClient, testProjectName);
@@ -44,7 +45,7 @@ async function testVersionOperation(operationFunction: any, dbClient: any, proje
   const params = { dbClient, projectName, serviceName, secretName, versionName, value };
   const response = await operationFunction(params);
   const passed = response.status;
-  testResults.push({ test: testDescription, passed, message: response.message, response });
+  testResults.push({ test: testDescription, passed,  response });
 }
 
 // Adjusted to directly use version.latest
@@ -55,13 +56,12 @@ async function testFindLatestSecretVersion(latestFunction: any, dbClient: any, p
   testResults.push({
     test: `Find Latest Secret Version for '${secretName}'`,
     passed,
-    message: passed ? `Found latest version '${expectedVersion}' as expected.` : `Failed to find the expected latest version '${expectedVersion}'. Found '${response.version ? response.version.versionName : "none"}' instead.`,
     response
   });
 }
 async function testAddSecret(dbClient: any, projectName: any, serviceName: any, secretName: any, envName: any, envType: any, testResults: any) {
   const response = await addSecret({ dbClient, projectName, serviceName, secretName, envName, envType, version: { versionName: '1.0', value: 'initialValue' } });
-  testResults.push({ test: "Add Secret", passed: response.status, message: response.message, response });
+  testResults.push({ test: "Add Secret", passed: response.status, response});
 }
 
 
