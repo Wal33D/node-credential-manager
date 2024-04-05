@@ -1,8 +1,8 @@
-import { secrets } from "./database/secrets";
+import { secrets } from "../database/secrets";
 import { MongoClient } from "mongodb";
-import { version } from "./database/version";
-import { initializeDbConnection } from "./database/initializeDbConnection";
-import { projects } from "./database/projects";
+import { version } from "../database/version";
+import { initializeDbConnection } from "../database/initializeDbConnection";
+import { projects } from "../database/projects";
 
 export async function versionTests() {
   let testResults = [] as any;
@@ -17,7 +17,7 @@ export async function versionTests() {
   const testProjectName = "TestProject";
   const serviceName = "TestService";
 
-  await projects.createProject({dbClient, projectName:testProjectName, serviceName});
+  await projects.create({dbClient, projectName:testProjectName, serviceName});
 
   // Adjusted to use version.add, version.update, version.latest, version.list, version.rollback, version.delete
   await testAddSecret(dbClient, testProjectName, serviceName, "TestSecret", "TEST_ENV", "test", testResults);
@@ -29,7 +29,7 @@ export async function versionTests() {
   await testVersionOperation(version.rollback, dbClient, testProjectName, serviceName, "TestSecret", "", "", testResults, "Rollback Latest Version");
   await testVersionOperation(version.delete, dbClient, testProjectName, serviceName, "TestSecret", "1.1", "", testResults, "Delete Version 1.1");
 
-  await projects.deleteProject({dbClient, projectName:testProjectName, serviceName});
+  await projects.delete({dbClient, projectName:testProjectName, serviceName});
 
   dbClient.close();
   return testResults;

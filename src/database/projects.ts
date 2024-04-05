@@ -2,12 +2,12 @@ import { Db } from "mongodb";
 import { Project, ProjectOperationParams, ProjectOperationResponse } from "./types";
 
 const projects = {
-    getProjectConnection: (params: ProjectOperationParams): Db => {
+    getConnection: (params: ProjectOperationParams): Db => {
         const { dbClient, projectName } = params;
         return dbClient.db(projectName);
     },
 
-    projectExists: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
+    exists: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
         try {
             const projectsList = await dbClient.db().admin().listDatabases();
@@ -22,19 +22,18 @@ const projects = {
         }
     },
 
-    listAllProjects: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
+    list: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient } = params;
         try {
             const projectsList = await dbClient.db().admin().listDatabases();
             const projects = projectsList.databases.map(project => ({ name: project.name })) as Project[];
-            console.log(projects)
             return { status: true, message: "Successfully retrieved project list.", projects };
         } catch (error: any) {
             return { status: false, message: error.message };
         }
     },
 
-    createProject: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
+    create: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, serviceName } = params;
         try {
             const project = await dbClient.db(projectName) as Db;
@@ -48,7 +47,6 @@ const projects = {
                 },
                 { upsert: true }
             );
-                console.log(project.databaseName)
 
             return {
                 status: true,
@@ -60,7 +58,7 @@ const projects = {
         }
     },
 
-    deleteProject: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
+    delete: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
         try {
             const operationResult = await dbClient.db(projectName).dropDatabase();
@@ -74,7 +72,7 @@ const projects = {
         }
     },
 
-    copyProject: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
+    copy: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, targetProjectName } = params;
         try {
             const operationResults = [];

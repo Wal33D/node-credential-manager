@@ -1,7 +1,7 @@
-import { secrets } from "./database/secrets";
+import { secrets } from "../database/secrets";
 import { MongoClient } from "mongodb";
-import { initializeDbConnection } from "./database/initializeDbConnection";
-import { projects } from "./database/projects";
+import { initializeDbConnection } from "../database/initializeDbConnection";
+import { projects } from "../database/projects";
 
 export async function secretTests() {
     let testResults = [] as any;
@@ -17,7 +17,7 @@ export async function secretTests() {
     const testProjectName = "TestProject";
     const serviceName = "TestService";
 
-    await projects.createProject({dbClient, projectName:testProjectName, serviceName});
+    await projects.create({dbClient, projectName:testProjectName, serviceName});
 
     await testAddSecret(dbClient, testProjectName, serviceName, "TestSecret", "TEST_ENV", "test", testResults);
     await testFindSecretByName(dbClient, testProjectName, serviceName, "TestSecret", testResults);
@@ -28,7 +28,7 @@ export async function secretTests() {
     await testDeleteSecrets(dbClient, testProjectName, serviceName, { secretName: "TestSecret" }, testResults);
     await testDeleteSecrets(dbClient, testProjectName, serviceName, { secretName: "RenamedSecret" }, testResults);
 
-    await projects.deleteProject({dbClient, projectName:testProjectName});
+    await projects.delete({dbClient, projectName:testProjectName});
 
     dbClient.close();
     return testResults
