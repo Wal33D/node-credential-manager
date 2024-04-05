@@ -108,3 +108,19 @@ export interface ProjectOperationResponse {
     project?: Project;
     projects?: Project[];
 }
+export interface ServiceOperationParams {
+    dbClient: MongoClient;
+    projectName: string;
+    serviceName?: string;
+    oldServiceName?: string;
+    newServiceName?: string;
+}
+
+export interface ServiceOperationResponse {
+    status: boolean;
+    message: string;
+    projectName: string;
+    serviceName?: string;
+    services?: string[];
+    exists?: boolean;
+}
