@@ -1,4 +1,4 @@
-import { decrypt, encrypt } from "../encryptionInit";
+import { decrypt, encrypt } from "../utils/encryptionInit";
 import { Secret, SecretOperationParams, SecretOperationResponse, Version } from "./databaseTypes";
 
 const secrets = {

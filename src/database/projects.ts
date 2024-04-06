@@ -24,34 +24,43 @@ const projects = {
         const { dbClient } = params;
         try {
             const projectsList = await dbClient.db().admin().listDatabases();
-            const projects = projectsList.databases as Project[];
-            return { status: true, message: "Successfully retrieved project list.", projects:projects };
+            const filteredProjects = projectsList.databases.filter(project => project.name !== 'admin' && project.name !== 'local') as Project[];
+            return { status: true, message: "Successfully retrieved project list.", projects: filteredProjects };
         } catch (error: any) {
             return { status: false, message: error.message };
         }
     },
     create: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
-        const { dbClient, projectName, serviceName } = params as any;
-    
+        const { dbClient, projectName, serviceName } = params;
         try {
-            const projectDb = dbClient.db(projectName);
-    
-            // Check if the collection already exists
-            const collections = await projectDb.listCollections({}, { nameOnly: true }).toArray();
-            const collectionExists = collections.some((collection: { name: any; }) => collection.name === serviceName);
-    
-            if (collectionExists) {
-                // If the collection exists, return with a status of false
-                return { 
-                    status: false, 
-                    message: `Service '${serviceName}' already exists in project '${projectName}'. No action performed.` 
+
+            if (!projectName) {
+                return {
+                    status: false,
+                    message: `Creating projects with the name '${projectName}' is not allowed.`
                 };
             }
-    
-            // If the collection does not exist, proceed to create it
-            await projectDb.createCollection(serviceName);
-    
-            const appMetadataCollection = projectDb.collection('_app_metadata');
+            // Check if the projectName is 'admin' or 'local', and return early if true
+            if (projectName.toLowerCase() === 'admin' || projectName.toLowerCase() === 'local') {
+                return {
+                    status: false,
+                    message: `Creating projects with the name '${projectName}' is not allowed.`
+                };
+            }
+            const databasesList = await dbClient.db().admin().listDatabases();
+            const databaseExists = databasesList.databases.some(db => db.name === projectName);
+
+            // If the database exists, return early with a status of false
+            if (databaseExists) {
+                return {
+                    status: false,
+                    message: `Project '${projectName}' already exists. No action taken.`
+                };
+            }
+
+            const project = await dbClient.db(projectName) as Db;
+            await project.createCollection(serviceName!);
+            const appMetadataCollection = dbClient.db(projectName).collection('_app_metadata');
             await appMetadataCollection.updateOne(
                 { projectName: projectName },
                 {
@@ -60,17 +69,17 @@ const projects = {
                 },
                 { upsert: true }
             );
-    
+
             return {
                 status: true,
-                message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata collection updated.`,
-                project: projectDb as unknown as Project,
+                message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata created.`,
+                project: { name: projectName } as Project,
             };
         } catch (error: any) {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
         }
     },
-    
+
     delete: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
         try {
@@ -78,7 +87,7 @@ const projects = {
             return {
                 status: true,
                 message: `Project '${projectName}' dropped successfully.`,
-                project: { name: projectName as string, services:[]} as Project,
+                project: { name: projectName as string, services: [] } as Project,
             };
         } catch (error: any) {
             return { status: false, message: error.message };
@@ -87,9 +96,19 @@ const projects = {
     copy: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, targetProjectName } = params;
         try {
+            const databasesList = await dbClient.db().admin().listDatabases();
+            const targetDatabaseExists = databasesList.databases.some(db => db.name === targetProjectName);
+    
+            if (targetDatabaseExists) {
+                return {
+                    status: false,
+                    message: `Target project '${targetProjectName}' already exists. Copy operation aborted.`
+                };
+            }
+    
             const operationResults = [];
             const sourceProject = dbClient.db(projectName);
-            const targetProject = dbClient.db(targetProjectName!);
+            const targetProject = dbClient.db(targetProjectName);
             const services = await sourceProject.listCollections().toArray();
             for (let service of services) {
                 const docs = await sourceProject.collection(service.name).find({}).toArray();
@@ -103,12 +122,13 @@ const projects = {
             return {
                 status: true,
                 message: `Project '${projectName}' copied to '${targetProjectName}'.`,
-                project: { name: targetProjectName! },
+                project: { name: targetProjectName } as Project,
             };
         } catch (error: any) {
             return { status: false, message: error.message };
         }
     },
+    
 };
 
 export { projects };

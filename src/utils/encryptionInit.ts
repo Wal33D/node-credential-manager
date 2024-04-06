@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { EncryptionResult, KeyData } from './types';
+import { EncryptionResult, KeyData } from '../types';
 
 const keyFilePath: string = path.join(__dirname, 'credentialManagerKey.json');
 const algorithm: string = 'aes-256-ctr';

@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import readline from "readline";
 import { databaseManager } from "./DatabaseManager";
 import { initializeDbConnection } from "./database/initializeDbConnection";
-import { checkAndGenerateEncryptionKey } from "./encryptionInit";
+import { checkAndGenerateEncryptionKey } from "./utils/encryptionInit";
 import { projects } from "./database/projects";
 // Initialize readline interface
 const rl = readline.createInterface({
