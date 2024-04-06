@@ -1,5 +1,5 @@
 // startMenu.ts
-import inquirer from 'inquirer';
+const inquirerPromise = import('inquirer');
 import { MongoClient } from 'mongodb';
 import { initializeDbConnection } from './database/initializeDbConnection';
 import { checkAndGenerateEncryptionKey } from './encryptionInit';
@@ -12,8 +12,6 @@ type SecretMenuOptions = 'List Secrets' | 'Add Secret' | 'Rename Secret' | 'Remo
 type ProjectMenuOptions = 'List Projects' | 'Create Project' | 'Delete Project' | 'Copy Project' | 'Back';
 
 const startMenu = async () => {
-    const inquirer = await import('inquirer');
-
     console.log("Credential Manager");
     console.log("Initializing database connection...");
     await checkAndGenerateEncryptionKey();
@@ -26,9 +24,10 @@ const startMenu = async () => {
 
     const dbClient: MongoClient = connectionResult.client;
     const databaseManager = await createDatabaseManager(dbClient);
+    const inquirer = await inquirerPromise;
 
     const mainMenu:any = async () => {
-        const answer = await inquirer({
+        const answer = await inquirer.prompt({
             name: 'mainMenuChoice',
             type: 'list',
             message: 'Welcome to Credential Manager. Select an option:',
