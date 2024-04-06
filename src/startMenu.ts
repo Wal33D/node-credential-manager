@@ -33,15 +33,15 @@ const mainMenu = async (dbClient: any) => {
             break;
         case '2':
             console.log('Running all tests...');
-            await runAllTests();
-            console.log('Tests completed.');
+            result = await runAllTests();
+            console.log('Tests completed.', result);
             await mainMenu(dbClient);
             break;
         case '3':
             console.log('Checking and generating encryption key...');
-            await checkAndGenerateEncryptionKey();
-            console.log('Operation completed.');
-            resut await mainMenu(dbClient);
+            result =  await checkAndGenerateEncryptionKey();
+            console.log('Operation completed.', result);
+            await mainMenu(dbClient);
             break;
         case '4':
             console.log('Exiting application...');
@@ -56,6 +56,4 @@ const mainMenu = async (dbClient: any) => {
     }
 };
 
-
 startApplication();
-

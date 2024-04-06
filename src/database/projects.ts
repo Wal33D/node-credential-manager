@@ -42,7 +42,6 @@ const projects = {
                     message: `Creating projects with the name '${projectName}' is not allowed.`
                 };
             }
-            // Check if the projectName is 'admin' or 'local', and return early if true
             if (projectName.toLowerCase() === 'admin' || projectName.toLowerCase() === 'local') {
                 return {
                     status: false,
@@ -52,7 +51,6 @@ const projects = {
             const databasesList = await dbClient.db().admin().listDatabases();
             const databaseExists = databasesList.databases.some(db => db.name === projectName);
     
-            // If the database exists, return early with a status of false
             if (databaseExists) {
                 return {
                     status: false,
@@ -124,7 +122,7 @@ const projects = {
                     const operationResult = await targetProject.collection(service.name).insertMany(docs);
                     operationResults.push(operationResult);
                 } else {
-                    console.log(`No documents to copy for collection: ${service.name}`);
+                   // console.log(`No documents to copy for collection: ${service.name}`);
                 }
             }
             return {

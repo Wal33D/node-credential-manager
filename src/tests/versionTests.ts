@@ -6,7 +6,7 @@ import { projects } from "../database/projects";
 
 export async function versionTests() {
   let testResults = [] as any;
-  console.log("Initializing database connection...");
+//  console.log("Initializing database connection...");
   const connectionResult = await initializeDbConnection({});
   if (!connectionResult.status) {
     console.error("Failed to initialize database connection:", connectionResult.message);
@@ -30,7 +30,7 @@ export async function versionTests() {
   await testVersionOperation(versions.rollback, dbClient, testProjectName, serviceName, "TestSecret", "", "", testResults, "Rollback Latest Version");
   await testVersionOperation(versions.delete, dbClient, testProjectName, serviceName, "TestSecret", "1.1", "", testResults, "Delete Version 1.1");
   await projects.delete({ dbClient, projectName: testProjectName, serviceName });
-console.log(latestVersion)
+//console.log(latestVersion)
   dbClient.close();
   return testResults;
 }
