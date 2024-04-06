@@ -45,11 +45,12 @@ Choose an action:
         rl.question("Enter option number: ", async (option) => {
             switch (option) {
                 case '1':
-                    const response = await await databaseManager.projects.services.secrets.versions.latest({
+                    const response = await await databaseManager.projects.services.secrets.list({
                         dbClient,
                         projectName,
                         serviceName,
-                        secretName
+                        secretName,
+                        decrypted:false,
                         
                     });
                     console.log("Secrets List:", JSON.stringify(response, null, 2));

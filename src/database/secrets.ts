@@ -77,70 +77,78 @@ const secrets = {
             return { status: false, message: "Failed to rename secret due to an error.", projectName, serviceName };
         }
     },
-    list: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
-        const { dbClient, projectName, serviceName } = params;
+
+    list: async (params: SecretOperationParams & { decrypted?: boolean }): Promise<SecretOperationResponse> => {
+        const { dbClient, projectName, serviceName, decrypted = false } = params;
         try {
             const secretsArray = await dbClient.db(projectName).collection(serviceName).find({}).toArray() as Secret[];
-            const decryptedSecrets = secretsArray.map(secret => ({
+            const processedSecrets = secretsArray.map(secret => ({
                 ...secret,
                 versions: secret.versions.map(({ iv, ...version }) => {
-                    if (iv) {
-                        return { ...version, value: decrypt({ hash: { iv, content: version.value } }) };
+                    if (decrypted && iv) {
+                        const decryptedValue = decrypt({ hash: { iv, content: version.value } });
+                        return { ...version, value: decryptedValue, iv: undefined }; 
                     }
-                    return version;
-                })
+                    return { ...version, iv: iv || undefined }; 
+                }).filter(v => v !== undefined) 
             })) as Secret[];
-
-            return { status: true, message: "All secrets retrieved successfully.", secrets: decryptedSecrets, projectName, serviceName };
+    
+            return { status: true, message: "All secrets retrieved successfully.", secrets: processedSecrets, projectName, serviceName };
         } catch (error) {
             console.error("Error retrieving all secrets:", error);
             return { status: false, message: "Failed to retrieve secrets.", projectName, serviceName };
         }
     },
-    find: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
-        const { dbClient, projectName, serviceName, filter = {} } = params;
+    
+    find: async (params: SecretOperationParams & { decrypted?: boolean }): Promise<SecretOperationResponse> => {
+        const { dbClient, projectName, serviceName, filter = {}, decrypted = false } = params;
         try {
             const secretsArray = await dbClient.db(projectName).collection(serviceName).find(filter).toArray() as Secret[];
-            const decryptedSecrets = secretsArray.map(secret => ({
+            const processedSecrets = secretsArray.map(secret => ({
                 ...secret,
                 versions: secret.versions.map(({ iv, ...version }) => {
-                    if (iv) {
-                        return { ...version, value: decrypt({ hash: { iv, content: version.value } }) };
+                    if (decrypted && iv) {
+                        const decryptedValue = decrypt({ hash: { iv, content: version.value } });
+                        return { ...version, value: decryptedValue, iv: undefined };
                     }
-                    return version;
-                })
+                    return { ...version, iv: iv || undefined };
+                }).filter(v => v !== undefined)
             })) as Secret[];
-
-            return { status: true, message: `Secrets found in '${serviceName}'.`, secrets: decryptedSecrets, projectName, serviceName };
+    
+            return { status: true, message: `Secrets found in '${serviceName}'.`, secrets: processedSecrets, projectName, serviceName };
         } catch (error) {
             console.error("Error finding secrets:", error);
             return { status: false, message: "Failed to find secrets.", projectName, serviceName };
         }
     },
-    findByName: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
-        const { dbClient, projectName, serviceName, secretName } = params;
+    
+    findByName: async (params: SecretOperationParams & { decrypted?: boolean }): Promise<SecretOperationResponse> => {
+        const { dbClient, projectName, serviceName, secretName, decrypted = false } = params;
         try {
             let secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
             if (!secret) {
                 return { status: false, message: `Secret '${secretName}' not found in '${serviceName}'.`, projectName, serviceName };
             }
-
+    
             if (secret.versions && secret.versions.length > 0) {
-                const decryptedVersions = secret.versions.map(({ iv, ...version }) => {
-                    if (iv) {
-                        return { ...version, value: decrypt({ hash: { iv, content: version.value } }) };
+                const processedVersions = secret.versions.map(({ iv, ...version }) => {
+                    if (decrypted && iv) {
+                        const decryptedValue = decrypt({ hash: { iv, content: version.value } });
+                        return { ...version, value: decryptedValue, iv: undefined }; 
                     }
-                    return version;
-                });
-                secret = { ...secret, versions: decryptedVersions } as Secret;
+                    return { ...version, iv: iv || undefined };
+                }).filter(v => v !== undefined);
+    
+                secret = { ...secret, versions: processedVersions } as Secret;
             }
-
+    
             return { status: true, message: `Secret '${secretName}' found.`, projectName, serviceName, secret };
         } catch (error) {
             console.error("Error finding secret by name:", error);
             return { status: false, message: `Failed to find secret '${secretName}'.`, projectName, serviceName };
         }
     }
+    
 }
 
 export { secrets };
