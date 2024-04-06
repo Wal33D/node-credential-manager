@@ -36,7 +36,6 @@ const projects = {
     create: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, serviceName } = params;
         try {
-
             if (!projectName) {
                 return {
                     status: false,
@@ -52,7 +51,7 @@ const projects = {
             }
             const databasesList = await dbClient.db().admin().listDatabases();
             const databaseExists = databasesList.databases.some(db => db.name === projectName);
-
+    
             // If the database exists, return early with a status of false
             if (databaseExists) {
                 return {
@@ -60,8 +59,8 @@ const projects = {
                     message: `Project '${projectName}' already exists. No action taken.`
                 };
             }
-
-            const project = await dbClient.db(projectName) as Db;
+    
+            const project = await dbClient.db(projectName);
             await project.createCollection(serviceName!);
             const appMetadataCollection = dbClient.db(projectName).collection('_app_metadata');
             await appMetadataCollection.updateOne(
@@ -72,21 +71,22 @@ const projects = {
                 },
                 { upsert: true }
             );
-const collections = await dbClient.db(projectName).listCollections().toArray();
-const serviceNames = collections
-  .filter((collection: { name: string; }) => collection.name !== '_app_metadata')
-  .map((collection: { name: string; }) => collection.name);
-
-return {
-  status: true,
-  message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata created.`,
-  project: { name: projectName, services: serviceNames as Service[] },
-};
-
+            const collections = await dbClient.db(projectName).listCollections().toArray();
+            const services = collections
+                .filter((collection: { name: string; }) => collection.name !== '_app_metadata')
+                .map((collection: { name: string; }) => ({ name: collection.name }));
+    
+            return {
+                status: true,
+                message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata created.`,
+                project: { name: projectName, services },
+            };
+    
         } catch (error: any) {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
         }
     },
+    
 
     delete: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
