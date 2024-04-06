@@ -1,5 +1,5 @@
 import { Db } from "mongodb";
-import { Project, ProjectOperationParams, Service, ProjectOperationResponse } from "./databaseTypes";
+import { Project, ProjectOperationParams, ProjectOperationResponse } from "./databaseTypes";
 
 const projects = {
     getConnection: (params: ProjectOperationParams): Db => {

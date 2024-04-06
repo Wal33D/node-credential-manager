@@ -1,6 +1,5 @@
 import { MongoClient } from "mongodb";
 import readline from "readline";
-import { databaseManager } from "./DatabaseManager";
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { checkAndGenerateEncryptionKey } from "./utils/encryptionInit";
 import { projects } from "./database/projects";
@@ -21,7 +20,6 @@ const startApplication = async () => {
     }
 
     const dbClient = connectionResult.client;
-
 
     const mainMenu = async () => {
         console.log('\nProject Management Menu:');
@@ -62,66 +60,64 @@ const startApplication = async () => {
 
     };
 
-    const listProjects = async (dbClient:any) => {
+    const listProjects = async (dbClient: any) => {
         // Assuming databaseManager is available in this scope
-        const response = await projects.list({dbClient});
+        const response = await projects.list({ dbClient });
         console.log('Projects List:', JSON.stringify(response, null, 2));
         mainMenu();
     };
-    
-    const createProject = async (dbClient:any) => {
-        rl.question('Enter project name: ', async (projectName) => {
-            rl.question('Enter the first service\'s name: ', async (serviceName) => {
-                const response = await projects.create({
-                    dbClient,
-                    projectName,
-                    serviceName 
-                });
-                console.log('Create Project Response:', JSON.stringify(response, null, 2));
-                mainMenu(); 
+
+    const createProject = async (dbClient: any) => {
+        const projectName = await askQuestion('Enter project name: ');
+        const serviceName = await askQuestion('Enter the first service\'s name: ');
+        const response = await projects.create({
+            dbClient,
+            projectName,
+            serviceName
+        } as any);
+        console.log('Create Project Response:', JSON.stringify(response, null, 2));
+        mainMenu();
+    };
+
+    const deleteProject = async (dbClient: any) => {
+        const projectName = await askQuestion('Enter project name to delete: ');
+        const response = await projects.delete({
+            dbClient,
+            projectName
+        } as any);
+        console.log('Delete Project Response:', JSON.stringify(response, null, 2));
+        mainMenu();
+    };
+
+    const copyProject = async (dbClient: any) => {
+        const sourceProjectName = await askQuestion('Enter source project name: ');
+        const targetProjectName = await askQuestion('Enter target project name: ');
+        const response = await projects.copy({
+            dbClient,
+            projectName: sourceProjectName,
+            targetProjectName
+        } as any);
+        console.log('Copy Project Response:', JSON.stringify(response, null, 2));
+        mainMenu();
+    };
+
+    const checkProjectExists = async (dbClient: any) => {
+        const projectName = await askQuestion('Enter project name to check: ');
+        const response = await projects.exists({
+            dbClient,
+            projectName
+        } as any);
+        console.log('Check Project Exists Response:', JSON.stringify(response, null, 2));
+        mainMenu();
+    };
+    const askQuestion = (query: any) => {
+        return new Promise((resolve) => {
+            rl.question(query, (answer) => {
+                resolve(answer);
             });
         });
     };
-    
-    const deleteProject = async (dbClient:any) => {
-        rl.question('Enter project name to delete: ', async (projectName) => {
-            const response = await projects.delete({
-                dbClient,
-                projectName
-            });
-            console.log('Delete Project Response:', JSON.stringify(response, null, 2));
-            mainMenu();
-        });
-    };
-
-    const copyProject = async (dbClient:any) => {
-        rl.question('Enter source project name: ', (sourceProjectName) => {
-            rl.question('Enter target project name: ', async (targetProjectName) => {
-                const response = await projects.copy({
-                    dbClient,
-                    projectName: sourceProjectName,
-                    targetProjectName
-                });
-                console.log('Copy Project Response:', JSON.stringify(response, null, 2));
-                mainMenu();
-            });
-        });
-    };
-
-    const checkProjectExists = async (dbClient:any) => {
-        rl.question('Enter project name to check: ', async (projectName) => {
-            const response = await projects.exists({
-                dbClient,
-                projectName
-            });
-            console.log('Check Project Exists Response:', JSON.stringify(response, null, 2));
-            mainMenu();
-        });
-    };
-
-    mainMenu(); // Start the main menu
-
-};
-
-// Invoke the startApplication function to run the app
+}
 startApplication();
+
+
