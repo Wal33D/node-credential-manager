@@ -31,7 +31,7 @@ export async function secretTests() {
     //await projects.delete({ dbClient, projectName: testProjectName });
 
     dbClient.close();
-    console.log(JSON.stringify(testResults, null, 2));
+//    console.log(JSON.stringify(testResults, null, 2));
     return testResults
 }
 
