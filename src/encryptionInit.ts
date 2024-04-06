@@ -1,59 +1,60 @@
-import fs from 'fs';
+import fs from 'fs/promises'; // Use the promise-based version of the fs module
 import path from 'path';
 import crypto from 'crypto';
+import { EncryptionResult, KeyData } from './types';
 
-interface KeyData {
-    encryptionKey?: string;
-}
-
-interface EncryptionResult {
-    iv: string;
-    content: string;
-}
-
-const keyFilePath: string = path.join(__dirname, 'encryptionKey.json');
+const keyFilePath: string = path.join(__dirname, 'credentialManagerKey.json');
 const algorithm: string = 'aes-256-ctr';
 
 const generateEncryptionKey = (): string => crypto.randomBytes(32).toString('hex');
 
-export const checkAndGenerateEncryptionKey = (): void => {
-    let keyData: KeyData = {};
+export const checkAndGenerateEncryptionKey = async (): Promise<void> => {
+    try {
+        let keyData: KeyData = {};
+        let data: string;
 
-    if (fs.existsSync(keyFilePath)) {
-        const data: string = fs.readFileSync(keyFilePath, 'utf8');
-        keyData = JSON.parse(data);
-    }
+        try {
+            data = await fs.readFile(keyFilePath, 'utf8');
+            keyData = JSON.parse(data);
+        } catch (error:any) {
+            if (error.code !== 'ENOENT') throw error; 
+        }
 
-    if (!keyData.encryptionKey) {
-        keyData.encryptionKey = generateEncryptionKey();
-        fs.writeFileSync(keyFilePath, JSON.stringify(keyData, null, 2));
-        console.log('Generated a new encryption key and saved it.');
-    } else {
-        console.log('Encryption key already exists.');
+        if (!keyData.encryptionKey) {
+            keyData.encryptionKey = generateEncryptionKey();
+            await fs.writeFile(keyFilePath, JSON.stringify(keyData, null, 2));
+            console.info('Generated a new encryption key and saved it.');
+        } else {
+            console.info('Encryption key already exists.');
+        }
+    } catch (error) {
+        console.error('Failed to check or generate encryption key:', error);
+        throw new Error('Failed to initialize encryption key.');
     }
 };
 
-const getEncryptionKey = (): string => {
-    if (!fs.existsSync(keyFilePath)) {
-        throw new Error('Encryption key file does not exist. Run checkAndGenerateEncryptionKey first.');
+const getEncryptionKey = async (): Promise<string> => {
+    try {
+        const data = await fs.readFile(keyFilePath, 'utf8');
+        const keyData: KeyData = JSON.parse(data);
+
+        if (!keyData.encryptionKey) {
+            throw new Error('Encryption key is not set in the file.');
+        }
+
+        return keyData.encryptionKey;
+    } catch (error) {
+        console.error('Error retrieving the encryption key:', error);
+        throw new Error('Failed to retrieve the encryption key. Make sure the key has been initialized.');
     }
-
-    const data: string = fs.readFileSync(keyFilePath, 'utf8');
-    const keyData: KeyData = JSON.parse(data);
-
-    if (!keyData.encryptionKey) {
-        throw new Error('Encryption key is not set in the file.');
-    }
-
-    return keyData.encryptionKey;
 };
 
-export const encrypt = ({ value }: { value: string }): EncryptionResult => {
+export const encrypt = async ({ value }: { value: string }): Promise<EncryptionResult> => {
     const iv = crypto.randomBytes(16);
-    const secretKey = getEncryptionKey();
+    const secretKey = await getEncryptionKey();
 
     const cipher = crypto.createCipheriv(algorithm, Buffer.from(secretKey, 'hex'), iv);
-    const encrypted = Buffer.concat([cipher.update(value), cipher.final()]);
+    const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
 
     return {
         iv: iv.toString('hex'),
@@ -61,8 +62,8 @@ export const encrypt = ({ value }: { value: string }): EncryptionResult => {
     };
 };
 
-export const decrypt = ({ hash }: { hash: EncryptionResult }): string => {
-    const secretKey = getEncryptionKey();
+export const decrypt = async ({ hash }: { hash: EncryptionResult }): Promise<string> => {
+    const secretKey = await getEncryptionKey();
 
     const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey, 'hex'), Buffer.from(hash.iv, 'hex'));
     const decrypted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);

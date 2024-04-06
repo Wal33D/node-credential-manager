@@ -4,5 +4,13 @@ export interface AppMetadata {
     createdAt: Date;
     updatedAt: Date;
     lastAccessed: Date;
-  }
-  
+}
+
+export interface KeyData {
+    encryptionKey?: string;
+}
+
+export interface EncryptionResult {
+    iv: string;
+    content: string;
+}

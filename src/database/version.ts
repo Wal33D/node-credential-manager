@@ -1,6 +1,6 @@
-import { Secret, EncryptionResult, LatestVersionParams, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./databaseTypes";
+import { EncryptionResult } from "../types";
 import { encrypt, decrypt } from "../encryptionInit";
-
+import { Secret, LatestVersionParams, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./databaseTypes";
 
 const version = {
     list: async (params: ListVersionParams): Promise<VersionOperationResponse> => {
