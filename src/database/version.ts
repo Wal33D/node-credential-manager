@@ -1,6 +1,19 @@
 import { Secret, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, LatestVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./databaseTypes";
 import { encrypt, decrypt } from "../encryptionInit";
 
+interface EncryptionInput {
+    value: string;
+}
+
+interface DecryptionInput {
+    hash: EncryptionResult;
+}
+
+interface EncryptionResult {
+    iv: string;
+    content: string;
+}
+
 const version = {
 
     list: async (params: ListVersionParams): Promise<VersionOperationResponse> => {
@@ -16,7 +29,7 @@ const version = {
 
             const decryptedVersions = secret.versions.map(version => ({
                 ...version,
-                value: decrypt({ hash: { iv: version.iv, content: version.value }})
+                value: decrypt({ hash: { iv: version.iv, content: version.value } as any})
             }));
 
             return { status: true, message: `Found ${decryptedVersions.length} version(s) for secret '${secretName}'.`, versions: decryptedVersions };
@@ -27,29 +40,36 @@ const version = {
     },
     add: async (params: AddVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName: providedVersionName, value } = params;
+
+        if (typeof value !== 'string') {
+            return { status: false, message: 'Value must be a string.' };
+        }
+
         try {
-            let secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+            let secret: Secret | null = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
 
             let versionName = providedVersionName;
             if (!versionName) {
                 versionName = secret && secret.versions && secret.versions.length > 0
-                    ? `v${Math.max(...secret.versions.map(v => parseFloat(v.versionName.replace('v', '')))) + 0.1}`
+                    ? `v${(Math.max(...secret.versions.map(v => parseFloat(v.versionName.replace('v', '')))) + 0.1).toFixed(1)}`
                     : 'v1.0';
             }
 
-            const existingVersion = secret?.versions.find(version => version.versionName === versionName);
+            const existingVersion = secret?.versions.find(v => v.versionName === versionName);
             if (existingVersion) {
                 return { status: false, message: `Version '${versionName}' already exists.`, versions: secret?.versions };
             }
 
-            const encryptedValue = encrypt({ value });
+            const encryptedValue: EncryptionResult = encrypt({ value });
 
             await dbClient.db(projectName).collection(serviceName).updateOne({ secretName }, {
-                $push: { versions: { $each: [{ versionName, ...encryptedValue }], $position: 0 }},
-                $currentDate: { lastAccessAt: true, updatedAt: true }
+                $push: { versions: { $each: [{ versionName, iv: encryptedValue.iv, value: encryptedValue.content }] as Version[], $position: 0 }},
+                $currentDate: { lastAccessAt: true, updatedAt: true } 
             } as any);
 
-            return { status: true, message: `Version '${versionName}' added.`, versions: secret.versions };
+            secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+
+            return { status: true, message: `Version '${versionName}' added.`, versions: secret?.versions };
         } catch (error: any) {
             console.error('Error adding version:', error);
             return { status: false, message: error.message };
@@ -58,6 +78,11 @@ const version = {
 
     update: async (params: UpdateVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName, value } = params;
+        
+        if (typeof value !== 'string') {
+            return { status: false, message: 'Value must be a string.' };
+        }
+
         try {
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
             if (!secret || !secret.versions || secret.versions.length === 0) {
@@ -69,7 +94,7 @@ const version = {
                 return { status: false, message: `Version '${versionName}' does not exist.` };
             }
 
-            const encryptedValue = encrypt(value);
+            const encryptedValue: EncryptionResult = encrypt({ value });
 
             const updateResult = await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName, "versions.versionName": versionName },
@@ -111,7 +136,7 @@ const version = {
                 b.versionName.localeCompare(a.versionName, undefined, { numeric: true, sensitivity: 'base' })
             );
             const latestVersion = sortedVersions[0];
-            const decryptedValue = decrypt({ iv: latestVersion.iv, content: latestVersion.value });
+            const decryptedValue = decrypt({ iv: latestVersion.iv, content: latestVersion.value } as any);
             const decryptedLatestVersion = {
                 ...latestVersion,
                 value: decryptedValue

@@ -1,3 +1,4 @@
+import { encrypt } from "../encryptionInit";
 import { Secret, SecretOperationParams, SecretOperationResponse } from "./databaseTypes";
 
 const secrets = {
@@ -46,16 +47,34 @@ const secrets = {
     },
 
     add: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
-        const { dbClient, projectName, serviceName, secretName, envName, envType, versions } = params;
+        const { dbClient, projectName, serviceName, secretName, envName, envType, versions = [] } = params;
         try {
             const existingSecretByName = await dbClient.db(projectName).collection(serviceName).findOne({ secretName });
             if (existingSecretByName) {
                 return { status: false, message: `Secret '${secretName}' already exists. No new secret added.` };
             }
-
-            const secretData: Secret = { secretName, envName, envType, versions, updatedAt: new Date(), createdAt: new Date(), lastAccessAt: new Date() } as Secret;
+    
+            // Encrypt each version's value
+            const encryptedVersions = versions.map(version => {
+                if (typeof version.value !== 'string') {
+                    throw new Error(`Version value must be a string. Found: ${typeof version.value}`);
+                }
+                const { iv, content } = encrypt({ value: version.value });
+                return { ...version, value: content, iv: iv };
+            });
+    
+            const secretData: Secret = {
+                secretName,
+                envName,
+                envType,
+                versions: encryptedVersions,
+                updatedAt: new Date(),
+                createdAt: new Date(),
+                lastAccessAt: new Date()
+            } as Secret;
+    
             await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
-
+    
             const newSecret = await dbClient.db(projectName).collection(serviceName).findOne({ secretName }) as Secret;
             return { status: true, message: `Secret '${secretName}' successfully added.`, secret: newSecret };
         } catch (error) {
