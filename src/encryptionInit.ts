@@ -2,60 +2,70 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
-const envFilePath = path.resolve(__dirname, '.env');
-const encryptionKeyEnvVar = 'CREDENTIAL_MANAGER_ENCRYPTION_KEY';
-const algorithm = 'aes-256-ctr';
-
-function generateEncryptionKey() {
-  return crypto.randomBytes(32).toString('hex');
+interface KeyData {
+  encryptionKey?: string;
 }
 
-function checkAndGenerateEncryptionKey() {
-  let envVars = '';
+interface EncryptionResult {
+  iv: string;
+  content: string;
+}
 
-  if (fs.existsSync(envFilePath)) {
-    envVars = fs.readFileSync(envFilePath, 'utf-8');
+const keyFilePath: string = path.join(__dirname, 'encryptionKey.json');
+const algorithm: string = 'aes-256-ctr';
+
+const generateEncryptionKey = (): string => crypto.randomBytes(32).toString('hex');
+
+export const checkAndGenerateEncryptionKey = (): void => {
+  let keyData: KeyData = {};
+
+  if (fs.existsSync(keyFilePath)) {
+    const data: string = fs.readFileSync(keyFilePath, 'utf8');
+    keyData = JSON.parse(data);
   }
 
-  const keyRegExp = new RegExp(`^${encryptionKeyEnvVar}=`, 'm');
-  if (!keyRegExp.test(envVars)) {
-    const newKey = generateEncryptionKey();
-    const envVarString = `${encryptionKeyEnvVar}=${newKey}\n`;
-    fs.appendFileSync(envFilePath, envVarString);
-    console.log('Generated a new encryption key and saved it to the .env file.');
-    console.log('IMPORTANT: Make sure to set this environment variable in your production environment securely.');
+  if (!keyData.encryptionKey) {
+    keyData.encryptionKey = generateEncryptionKey();
+    fs.writeFileSync(keyFilePath, JSON.stringify(keyData, null, 2));
+    console.log('Generated a new encryption key and saved it.');
   } else {
-    console.log('Encryption key already exists in .env file.');
+    console.log('Encryption key already exists.');
   }
-}
-
-const encrypt = (text:any) => {
-    const iv = crypto.randomBytes(16);
-    const secretKey = process.env.CREDENTIAL_MANAGER_ENCRYPTION_KEY;
-    if (!secretKey) {
-      throw new Error('The encryption key is not available.');
-    }
-
-    const cipher = crypto.createCipheriv(algorithm, Buffer.from(secretKey, 'hex'), iv);
-    const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
-
-    return {
-        iv: iv.toString('hex'),
-        content: encrypted.toString('hex')
-    };
 };
 
-const decrypt = (hash:any) => {
-    const secretKey = process.env.CREDENTIAL_MANAGER_ENCRYPTION_KEY; 
-    if (!secretKey) {
-      throw new Error('The encryption key is not available.');
-    }
+const getEncryptionKey = (): string => {
+  if (!fs.existsSync(keyFilePath)) {
+    throw new Error('Encryption key file does not exist. Run checkAndGenerateEncryptionKey first.');
+  }
 
-    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey, 'hex'), Buffer.from(hash.iv, 'hex'));
-    const decrypted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+  const data: string = fs.readFileSync(keyFilePath, 'utf8');
+  const keyData: KeyData = JSON.parse(data);
 
-    return decrypted.toString();
+  if (!keyData.encryptionKey) {
+    throw new Error('Encryption key is not set in the file.');
+  }
+
+  return keyData.encryptionKey;
 };
 
+export const encrypt = ({value}:{value: string}): EncryptionResult => {
+  const iv = crypto.randomBytes(16);
+  const secretKey = getEncryptionKey();
 
-export { encrypt, decrypt, checkAndGenerateEncryptionKey };
+  const cipher = crypto.createCipheriv(algorithm, Buffer.from(secretKey, 'hex'), iv);
+  const encrypted = Buffer.concat([cipher.update(value), cipher.final()]);
+
+  return {
+    iv: iv.toString('hex'),
+    content: encrypted.toString('hex'),
+  };
+};
+
+export const decrypt = (hash: EncryptionResult): string => {
+  const secretKey = getEncryptionKey();
+
+  const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey, 'hex'), Buffer.from(hash.iv, 'hex'));
+  const decrypted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+
+  return decrypted.toString();
+};

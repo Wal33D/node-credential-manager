@@ -21,7 +21,7 @@ const version = {
 
             const decryptedVersions = secret.versions.map(version => ({
                 ...version,
-                value: decrypt({ iv: version.iv, content: version.value })
+                value: decrypt({ iv: version.iv as string, content: version.value })
             }));
 
             return {
@@ -59,7 +59,8 @@ const version = {
                 };
             }
 
-            const encryptedValue = encrypt(value);
+            const newValue: string = value as string;
+            const encryptedValue = encrypt({ value: newValue });
 
             await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
@@ -99,8 +100,8 @@ const version = {
             if (!versionExists) {
                 return { status: false, message: `Version '${versionName}' does not exist.` };
             }
-
-            const encryptedValue = encrypt(value);
+            const newValue: string = value as string;
+            const encryptedValue = encrypt({ value: newValue });
 
             const updateResult = await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName, "versions.versionName": versionName },
