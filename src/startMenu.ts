@@ -29,7 +29,7 @@ const mainMenu = async (dbClient: any) => {
 
     switch (choice) {
         case '1':
-            await projectManagementMenu(dbClient);
+            await projectManagementMenu(dbClient, mainMenu);
             break;
         case '2':
             console.log('Running all tests...');
@@ -40,7 +40,7 @@ const mainMenu = async (dbClient: any) => {
         case '3':
             console.log('Checking and generating encryption key...');
             result =  await checkAndGenerateEncryptionKey();
-            console.log('Operation completed.', result);
+            console.log('Operation completed.', result.filePath);
             await mainMenu(dbClient);
             break;
         case '4':

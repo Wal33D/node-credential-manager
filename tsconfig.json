@@ -8,12 +8,13 @@
     "strict": true,
     "skipLibCheck": true,
     "declaration": true
-    
   },
   "include": [
     "src/**/*",
-    "global.d.ts"
-, "menu/projectManagementMenu.ts", "utils/ReadlineManager.ts"  ],
+    "global.d.ts",
+    "menu/projectManagementMenu.ts",
+    "utils/*"
+  ],
   "exclude": [
     "node_modules"
   ]

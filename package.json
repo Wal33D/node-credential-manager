@@ -39,7 +39,9 @@
   },
   "nodemonConfig": {
     "watch": [
-      "src/**/*"
+      "src/**/*",
+      "menu/*",
+      "utils/*"
     ],
     "exec": "ts-node ./src/startMenu.ts",
     "ext": "ts"

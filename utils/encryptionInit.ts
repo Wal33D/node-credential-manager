@@ -3,7 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { EncryptionResult, KeyData } from '../src/types';
 
-const keyFilePath: string = 'credentialManagerKey.json';
+const keyFilePath: string = path.join(__dirname, '../credentialManagerKey.json');
 const algorithm: string = 'aes-256-ctr';
 
 const generateEncryptionKey = (): string => crypto.randomBytes(32).toString('hex');
