@@ -2,7 +2,7 @@ import { EncryptionResult } from "../types";
 import { encrypt, decrypt } from "../encryptionInit";
 import { Secret, LatestVersionParams, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./databaseTypes";
 
-const version = {
+const versions = {
     list: async (params: ListVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
@@ -165,7 +165,7 @@ const version = {
 
             const versionExists = secret.versions.some(version => version.versionName === versionName);
             if (!versionExists) {
-                return { status: false, message: `Version '${version}' not found in secret '${secretName}'.` };
+                return { status: false, message: `Version '${versionName}' not found in secret '${secretName}'.` };
             }
 
             const updatedVersions = secret.versions.filter(version => version.versionName !== versionName);
@@ -219,4 +219,4 @@ const version = {
 }
 
 
-export { version };
+export { versions };

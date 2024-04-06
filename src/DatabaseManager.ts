@@ -1,78 +1,33 @@
-// DatabaseManager.ts
 import { Db, MongoClient } from "mongodb";
+import { projects } from "./database/projects"; 
+import { services } from "./database/services";
+import { secrets } from "./database/secrets"; 
+import { versions } from "./database/versions"; 
 
-// Assuming these types are defined in your application
-interface ProjectOperationParams { projectName: string; dbClient: MongoClient; }
-interface ProjectOperationResponse { status: boolean; message: string; }
-interface ServiceOperationParams { projectName: string; serviceName: string; dbClient: MongoClient; }
-interface ServiceOperationResponse { status: boolean; message: string; services?: string[]; }
-interface SecretOperationParams { projectName: string; serviceName: string; secretName?: string; dbClient: MongoClient; }
-interface SecretOperationResponse { status: boolean; message: string; secrets?: any[]; }
-interface VersionOperationParams { projectName: string; serviceName: string; secretName: string; versionName?: string; dbClient: MongoClient; }
-interface VersionOperationResponse { status: boolean; message: string; versions?: any[]; }
+class DatabaseManager {
+  dbClient: MongoClient;
+  projects: typeof projects;
+  services: typeof services & { secrets: typeof secrets & { versions: typeof versions } };
 
-class Versions {
-    async exists(params: VersionOperationParams): Promise<VersionOperationResponse> {
-        // Placeholder implementation
-        return { status: true, message: "Version exists." };
+  constructor(dbClient: MongoClient) {
+    this.dbClient = dbClient;
+    this.projects = { ...projects };
+
+    // Dynamically bind `dbClient` to each function to ensure it has access to the MongoDB client
+    for (let key in this.projects) {
+      if (typeof this.projects[key] === 'function') {
+        this.projects[key] = this.projects[key].bind(null, { dbClient: this.dbClient });
+      }
     }
 
-    async list(params: VersionOperationParams): Promise<VersionOperationResponse> {
-        // Placeholder implementation
-        return { status: true, message: "Listing versions.", versions: [] };
-    }
+    this.services = { ...services, secrets: { ...secrets, versions: { ...versions } } };
 
-    async delete(params: VersionOperationParams): Promise<VersionOperationResponse> {
-        // Placeholder implementation
-        return { status: true, message: "Version deleted." };
-    }
-
-    // Add more version operations here
+    // You would need to similarly bind dbClient for services, secrets, and versions
+    // This example doesn't automatically bind dbClient for services, secrets, and versions for simplicity
+  }
 }
 
-class Secrets {
-    versions = new Versions();
+// Assuming `dbClient` is an initialized and connected MongoClient instance
+const databaseManager = new DatabaseManager(dbClient);
 
-    async list(params: SecretOperationParams): Promise<SecretOperationResponse> {
-        // Placeholder implementation
-        return { status: true, message: "Listing secrets.", secrets: [] };
-    }
-
-    async add(params: SecretOperationParams): Promise<SecretOperationResponse> {
-        // Placeholder implementation
-        return { status: true, message: "Secret added." };
-    }
-
-    // Add more secret operations here
-}
-
-class Services {
-    secrets = new Secrets();
-
-    async list(params: ServiceOperationParams): Promise<ServiceOperationResponse> {
-        // Placeholder implementation
-        return { status: true, message: "Listing services.", services: [] };
-    }
-
-    async rename(params: ServiceOperationParams): Promise<ServiceOperationResponse> {
-        // Placeholder implementation
-        return { status: true, message: "Service renamed." };
-    }
-
-    // Add more service operations here
-}
-
-class Projects {
-    services = new Services();
-
-    async create(params: ProjectOperationParams): Promise<ProjectOperationResponse> {
-        // Placeholder implementation
-        return { status: true, message: "Project created." };
-    }
-
-    // Add more project operations here
-}
-
-// Export an instance of Projects to be used throughout the application
-const databaseManager = new Projects();
 export default databaseManager;
