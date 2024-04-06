@@ -1,18 +1,5 @@
-import readline from "readline";
+import ReadlineManager from "./utils/ReadlineManager"; 
 import { projects } from "./database/projects";
-
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
-
-const askQuestion = (query:any) => {
-    return new Promise((resolve) => {
-        rl.question(query, (answer) => {
-            resolve(answer);
-        });
-    });
-};
 
 const listProjects = async (dbClient:any) => {
     const response = await projects.list({ dbClient });
@@ -21,8 +8,8 @@ const listProjects = async (dbClient:any) => {
 };
 
 const createProject = async (dbClient:any) => {
-    const projectName = await askQuestion('Enter project name: ') as string;
-    const serviceName = await askQuestion('Enter the first service\'s name: ') as string;
+    const projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
+    const serviceName = await ReadlineManager.askQuestion('Enter the first service\'s name: ') as string;
     const response = await projects.create({
         dbClient,
         projectName,
@@ -33,7 +20,7 @@ const createProject = async (dbClient:any) => {
 };
 
 const deleteProject = async (dbClient:any) => {
-    const projectName = await askQuestion('Enter project name to delete: ') as string;
+    const projectName = await ReadlineManager.askQuestion('Enter project name to delete: ') as string;
     const response = await projects.delete({
         dbClient,
         projectName
@@ -43,8 +30,8 @@ const deleteProject = async (dbClient:any) => {
 };
 
 const copyProject = async (dbClient:any) => {
-    const sourceProjectName = await askQuestion('Enter source project name: ') as string;
-    const targetProjectName = await askQuestion('Enter target project name: ') as string;
+    const sourceProjectName = await ReadlineManager.askQuestion('Enter source project name: ') as string;
+    const targetProjectName = await ReadlineManager.askQuestion('Enter target project name: ') as string;
     const response = await projects.copy({
         dbClient,
         projectName: sourceProjectName,
@@ -55,7 +42,7 @@ const copyProject = async (dbClient:any) => {
 };
 
 const checkProjectExists = async (dbClient:any) => {
-    const projectName = await askQuestion('Enter project name to check: ') as string;
+    const projectName = await ReadlineManager.askQuestion('Enter project name to check: ') as string;
     const response = await projects.exists({
         dbClient,
         projectName
@@ -73,7 +60,7 @@ export const projectManagementMenu = async (dbClient:any) => {
     console.log('5. Check if Project Exists');
     console.log('6. Return to Main Menu');
 
-    const choice = await askQuestion('Enter your choice: ');
+    const choice = await ReadlineManager.askQuestion('Enter your choice: ');
 
     switch (choice) {
         case '1':
@@ -92,7 +79,7 @@ export const projectManagementMenu = async (dbClient:any) => {
             await checkProjectExists(dbClient);
             break;
         case '6':
-            // Return to the main menu needs to be handled outside this module
+                // Return to the main menu needs to be handled outside this module
             break;
         default:
             console.log('Invalid choice. Please select a valid option.');
