@@ -1,33 +1,46 @@
 import { Db, MongoClient } from "mongodb";
-import { projects } from "./database/projects"; 
+import { projects } from "./database/projects";
 import { services } from "./database/services";
-import { secrets } from "./database/secrets"; 
-import { versions } from "./database/versions"; 
+import { secrets } from "./database/secrets";
+import { versions } from "./database/versions";
 
-class DatabaseManager {
+export class DatabaseManager {
   dbClient: MongoClient;
   projects: typeof projects;
   services: typeof services & { secrets: typeof secrets & { versions: typeof versions } };
 
   constructor(dbClient: MongoClient) {
     this.dbClient = dbClient;
-    this.projects = { ...projects };
 
-    // Dynamically bind `dbClient` to each function to ensure it has access to the MongoDB client
-    for (let key in this.projects) {
-      if (typeof this.projects[key] === 'function') {
-        this.projects[key] = this.projects[key].bind(null, { dbClient: this.dbClient });
+    // Bind dbClient for projects
+    this.projects = this.bindDbClient(projects);
+
+    // Recursively bind dbClient for services, including nested secrets and versions
+    this.services = this.bindDbClient({
+      ...services,
+      secrets: this.bindDbClient({
+        ...secrets,
+        versions: this.bindDbClient(versions)
+      })
+    });
+  }
+
+  bindDbClient(module: any): any {
+    const boundModule: any = {};
+
+    for (let key in module) {
+      if (typeof module[key] === 'function') {
+        // For functions, bind dbClient as the first argument
+        boundModule[key] = module[key].bind(null, { dbClient: this.dbClient });
+      } else if (typeof module[key] === 'object') {
+        // For nested objects, recurse
+        boundModule[key] = this.bindDbClient(module[key]);
+      } else {
+        // For non-function properties, simply copy them
+        boundModule[key] = module[key];
       }
     }
 
-    this.services = { ...services, secrets: { ...secrets, versions: { ...versions } } };
-
-    // You would need to similarly bind dbClient for services, secrets, and versions
-    // This example doesn't automatically bind dbClient for services, secrets, and versions for simplicity
+    return boundModule;
   }
 }
-
-// Assuming `dbClient` is an initialized and connected MongoClient instance
-const databaseManager = new DatabaseManager(dbClient);
-
-export default databaseManager;
