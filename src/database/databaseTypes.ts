@@ -1,5 +1,5 @@
 
-import { MongoClient, ObjectId } from "mongodb";
+import { CollectionInfo, MongoClient, ObjectId } from "mongodb";
 
 export interface dbProjectOperationResponse {
     status: boolean;
@@ -119,8 +119,13 @@ export interface ServiceOperationParams {
 }
 
 export interface Service {
-    serviceName: string;
-    secrets: Secret[];
+    serviceName?: string;
+    secrets?: Secret[];
+    name?: string;
+    type?: string;
+    options?: object;
+    info?: CollectionInfo;
+    idIndex?: IDBIndex;
 }
 
 export interface ServiceOperationResponse {

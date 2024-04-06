@@ -9,8 +9,11 @@ const projects = {
     exists: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
         try {
+
             const projectsList = await dbClient.db().admin().listDatabases();
-            const exists = projectsList.databases.some(project => project.name === projectName);
+            const filteredProjects = projectsList.databases.filter(project => project.name !== 'admin' && project.name !== 'local') as Project[];
+
+            const exists = filteredProjects.some(project => project.name === projectName);
             return {
                 status: true,
                 message: exists ? `Project '${projectName}' exists.` : `Project '${projectName}' does not exist.`,
@@ -69,8 +72,8 @@ const projects = {
                 },
                 { upsert: true }
             );
-            const collections:Service[] = await dbClient.db(projectName).listCollections().toArray() as any;
-            const services: Service[] = collections.filter(collection => collection.serviceName !== '_app_metadata');
+            const collections= await dbClient.db(projectName).listCollections().toArray() as any;
+            const services: Service[] = collections.filter((collection: { name: string; }) => collection.name !== '_app_metadata') as any;
                         
             return {
                 status: true,
