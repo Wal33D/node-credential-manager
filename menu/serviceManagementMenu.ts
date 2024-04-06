@@ -4,11 +4,10 @@ import { services } from "../src/database/services";
 const listServices = async (dbClient: any, projectName: string, mainMenuCallback: (dbClient: any) => Promise<void>) => {
     const response = await services.list({ dbClient, projectName });
     console.log('Services List:', JSON.stringify(response, null, 2));
-    serviceManagementMenu(dbClient, projectName, mainMenuCallback);
+    serviceManagementMenu(dbClient, mainMenuCallback);
 };
 
-
-export const serviceManagementMenu = async (dbClient: any, projectName: string, mainMenuCallback: (dbClient: any) => Promise<void>) => {
+export const serviceManagementMenu = async (dbClient: any, mainMenuCallback: (dbClient: any) => Promise<void>) => {
     console.log('\nService Management Menu:');
     console.log('1. List Services');
     console.log('2. Add Service');
@@ -18,10 +17,11 @@ export const serviceManagementMenu = async (dbClient: any, projectName: string, 
     console.log('6. Get Service');
     console.log('7. Return to Main Menu');
 
-    const choice = await ReadlineManager.askQuestion('Enter your choice: ');
+    const choice = await ReadlineManager.askQuestion('Enter your choice: ') as string;
 
     switch (choice) {
         case '1':
+            const projectName = await ReadlineManager.askQuestion('Enter the project name for service management: ') as string;
             await listServices(dbClient, projectName, mainMenuCallback);
             break;
         case '7':
@@ -29,6 +29,6 @@ export const serviceManagementMenu = async (dbClient: any, projectName: string, 
             break;
         default:
             console.log('Invalid choice. Please select a valid option.');
-            await serviceManagementMenu(dbClient, projectName, mainMenuCallback);
+            await serviceManagementMenu(dbClient, mainMenuCallback);
     }
 };
