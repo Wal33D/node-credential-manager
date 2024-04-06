@@ -8,7 +8,7 @@ const listServices = async (dbClient: any, projectName: string, mainMenuCallback
 };
 const performServiceAction = async (dbClient: any, projectName: string, action: string, mainMenuCallback: (dbClient: any) => Promise<void>) => {
     let serviceName = '', newServiceName = '';
-    if (action !== 'list') {
+    if (action) {
         serviceName = await ReadlineManager.askQuestion('Enter service name: ') as string;
         if (action === 'rename') {
             newServiceName = await ReadlineManager.askQuestion('Enter new service name: ') as string;
@@ -18,6 +18,9 @@ const performServiceAction = async (dbClient: any, projectName: string, action: 
     try {
         let response;
         switch (action) {
+            case 'list':
+                response = await services.list({ dbClient, projectName} );
+                break;
             case 'add':
                 response = await services.add({ dbClient, projectName, serviceName });
                 break;
@@ -57,7 +60,6 @@ export const serviceManagementMenu = async (dbClient: any, mainMenuCallback: (db
     let projectName='';
     switch (choice) {
         case '1':
-            projectName = await ReadlineManager.askQuestion('Enter the project name for service management: ') as string;
             await listServices(dbClient, projectName, mainMenuCallback);
             break;
         case '2':
