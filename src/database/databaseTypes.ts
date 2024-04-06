@@ -44,7 +44,7 @@ export interface VersionOperationResponse {
     versions?: Version[];
 }
 export interface Version {
-    iv?: any;
+    iv?: string;
     versionName: string;
     value: string;
 }

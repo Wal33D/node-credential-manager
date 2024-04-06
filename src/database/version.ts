@@ -17,11 +17,16 @@ const version = {
                     message: `No versions found for secret '${secretName}'.`,
                 };
             }
+
+            const decryptedVersions = secret.versions.map(version => ({
+                ...version,
+                value: decrypt({ iv: version.iv, content: version.value })
+            }));
+
             return {
                 status: true,
-                message: `Found ${secret.versions.length} version(s) for secret '${secretName}'.`,
-
-                versions: secret.versions as Version[],
+                message: `Found ${decryptedVersions.length} version(s) for secret '${secretName}'.`,
+                versions: decryptedVersions,
             };
         } catch (error: any) {
             console.error("Error listing secret versions:", error);
@@ -53,12 +58,14 @@ const version = {
                 };
             }
 
+            const encryptedValue = encrypt(value);
+
             await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
                 {
                     $push: {
                         versions: {
-                            $each: [{ versionName, value }],
+                            $each: [{ versionName, value: encryptedValue.content, iv: encryptedValue.iv }],
                             $position: 0
                         }
                     },
@@ -78,27 +85,47 @@ const version = {
             return { status: false, message: error.message };
         }
     },
+
     update: async (params: UpdateVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName, value } = params;
         try {
-            const filter = { secretName, "versions.versionName": versionName };
-            const update = {
-                $set: { "versions.$.value": value } 
-            };
+            const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+            if (!secret || !secret.versions || secret.versions.length === 0) {
+                return { status: false, message: `Secret '${secretName}' not found or has no versions.` };
+            }
 
-            const result = await dbClient.db(projectName).collection(serviceName).updateOne(filter, update);
+            const versionExists = secret.versions.find(v => v.versionName === versionName);
+            if (!versionExists) {
+                return { status: false, message: `Version '${versionName}' does not exist.` };
+            }
 
-            if (result.modifiedCount === 0) {
+            const encryptedValue = encrypt(value);
+
+            const updateResult = await dbClient.db(projectName).collection(serviceName).updateOne(
+                { secretName, "versions.versionName": versionName },
+                {
+                    $set: {
+                        "versions.$.value": encryptedValue.content,
+                        "versions.$.iv": encryptedValue.iv
+                    }
+                }
+            );
+
+            if (updateResult.modifiedCount === 0) {
                 return { status: false, message: `No matching version '${versionName}' found or no changes needed.` };
             }
 
-            const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName }) as Secret;
-            return { status: true, message: `Version '${versionName}' updated successfully.`, versions: secret.versions };
+            return {
+                status: true,
+                message: `Version '${versionName}' updated successfully.`,
+                versions: secret.versions
+            };
         } catch (error: any) {
             console.error("Error updating secret version:", error);
             return { status: false, message: error.message };
         }
     },
+
     latest: async (params: LatestVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
@@ -113,12 +140,23 @@ const version = {
             const sortedVersions = secret.versions.sort((a, b) =>
                 b.versionName.localeCompare(a.versionName, undefined, { numeric: true, sensitivity: 'base' })
             );
+            const latestVersion = sortedVersions[0];
+            const decryptedValue = decrypt({ iv: latestVersion.iv, content: latestVersion.value });
+            const decryptedLatestVersion = {
+                ...latestVersion,
+                value: decryptedValue
+            };
 
-            return { status: true, message: `Latest version '${sortedVersions[0].versionName}' retrieved successfully.`, version: sortedVersions[0] };
+            return {
+                status: true,
+                message: `Latest version '${decryptedLatestVersion.versionName}' retrieved successfully.`,
+                version: decryptedLatestVersion
+            };
         } catch (error: any) {
             return { status: false, message: error.message };
         }
     },
+
     delete: async (params: DeleteVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName } = params;
         try {
@@ -166,7 +204,7 @@ const version = {
                 return { status: false, message: `No versions found for secret '${secretName}'.` };
             }
 
-            const latestVersion = secret.versions.shift(); 
+            const latestVersion = secret.versions.shift();
 
             await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
@@ -186,5 +224,26 @@ const version = {
 
 }
 
+const crypto = require('crypto');
 
+const algorithm = 'aes-256-ctr';
+const secretKey = process.env.ENCRYPTION_KEY;
+const iv = crypto.randomBytes(16);
+
+const encrypt = (text: any) => {
+    const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+    const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
+
+    return {
+        iv: iv.toString('hex'),
+        content: encrypted.toString('hex')
+    };
+};
+
+const decrypt = (hash: any) => {
+    const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
+    const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+
+    return decrpyted.toString();
+};
 export { version };
