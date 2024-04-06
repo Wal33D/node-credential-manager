@@ -23,7 +23,7 @@ function bindDbClient(module: any, dbClient: MongoClient) {
     return boundModule;
 }
 
-export function createDatabaseManager(dbClient: MongoClient) {
+export function databaseManager(dbClient: MongoClient) {
     const servicesWithNestedAccess = bindDbClient({
         ...originalServices,
         secrets: bindDbClient({

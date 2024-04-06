@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 import readline from "readline";
-import { createDatabaseManager } from "./DatabaseManager";
+import { databaseManager } from "./DatabaseManager";
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { checkAndGenerateEncryptionKey } from "./encryptionInit";
 import { projects } from "./database/projects";
@@ -21,9 +21,7 @@ const startApplication = async () => {
     }
 
     const dbClient = connectionResult.client;
-    const databaseManager = await createDatabaseManager(dbClient); // Create the database manager with dbClient
 
-    // Define menu functions here, ensuring they have access to `dbClient` either by closure or by passing it explicitly if needed
 
     const mainMenu = async () => {
         console.log('\nProject Management Menu:');
@@ -37,19 +35,19 @@ const startApplication = async () => {
         rl.question('Enter your choice: ', async (choice) => {
             switch (choice) {
                 case '1':
-                    await listProjects(databaseManager);
+                    await listProjects(dbClient);
                     break;
                 case '2':
                     await createProject(dbClient);
                     break;
                 case '3':
-                    await deleteProject(databaseManager);
+                    await deleteProject(dbClient);
                     break;
                 case '4':
-                    await copyProject(databaseManager);
+                    await copyProject(dbClient);
                     break;
                 case '5':
-                    await checkProjectExists(databaseManager);
+                    await checkProjectExists(dbClient);
                     break;
                 case '6':
                     console.log('Exiting Project Management...');
@@ -64,16 +62,17 @@ const startApplication = async () => {
 
     };
 
-    const listProjects = async (databaseManager:any) => {
+    const listProjects = async (dbClient:any) => {
         // Assuming databaseManager is available in this scope
-        const response = await databaseManager.projects.list({});
+        const response = await projects.list({dbClient});
         console.log('Projects List:', JSON.stringify(response, null, 2));
         mainMenu();
     };
 
     const createProject = async (dbClient:any) => {
         rl.question('Enter project name: ', async (projectName) => {
-            const response = await projects.create({dbClient,
+            const response = await projects.create({ 
+                dbClient,
                 projectName,
                 serviceName: 'TestService'  
             });
@@ -82,24 +81,24 @@ const startApplication = async () => {
         });
     };
 
-    const deleteProject = async (databaseManager:any) => {
+    const deleteProject = async (dbClient:any) => {
         rl.question('Enter project name to delete: ', async (projectName) => {
-            const response = await databaseManager.projects.delete({
+            const response = await projects.delete({
+                dbClient,
                 projectName
-                // Other necessary params here
             });
             console.log('Delete Project Response:', JSON.stringify(response, null, 2));
             mainMenu();
         });
     };
 
-    const copyProject = async (databaseManager:any) => {
+    const copyProject = async (dbClient:any) => {
         rl.question('Enter source project name: ', (sourceProjectName) => {
             rl.question('Enter target project name: ', async (targetProjectName) => {
-                const response = await databaseManager.projects.copy({
+                const response = await projects.copy({
+                    dbClient,
                     projectName: sourceProjectName,
                     targetProjectName
-                    // Other necessary params here
                 });
                 console.log('Copy Project Response:', JSON.stringify(response, null, 2));
                 mainMenu();
@@ -107,11 +106,11 @@ const startApplication = async () => {
         });
     };
 
-    const checkProjectExists = async (databaseManager:any) => {
+    const checkProjectExists = async (dbClient:any) => {
         rl.question('Enter project name to check: ', async (projectName) => {
-            const response = await databaseManager.projects.exists({
+            const response = await projects.exists({
+                dbClient,
                 projectName
-                // Other necessary params here
             });
             console.log('Check Project Exists Response:', JSON.stringify(response, null, 2));
             mainMenu();
