@@ -74,9 +74,9 @@ const startApplication = async () => {
             const response = await projects.create({ 
                 dbClient,
                 projectName,
-                serviceName: 'TestService'  
+                serviceName: 'TestService'
             });
-            console.log('Create Project Response:', JSON.stringify(response, null, 2));
+            console.log('Create Project Response:', response);
             mainMenu();
         });
     };

@@ -92,6 +92,8 @@ export interface SecretOperationResponse {
 
 export interface Project {
     name: string;
+    sizeOnDisk?: number;
+    empty?: boolean;
     services?: string[];
 }
 
