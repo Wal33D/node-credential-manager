@@ -64,7 +64,7 @@ const checkProjectExists = async (dbClient:any) => {
     projectManagementMenu(dbClient);
 };
 
-const projectManagementMenu = async (dbClient:any) => {
+export const projectManagementMenu = async (dbClient:any) => {
     console.log('\nProject Management Menu:');
     console.log('1. List Projects');
     console.log('2. Create Project');
@@ -100,4 +100,3 @@ const projectManagementMenu = async (dbClient:any) => {
     }
 };
 
-export { projectManagementMenu };
