@@ -34,7 +34,7 @@ const mainMenu = async (dbClient: any) => {
         case '2':
             console.log('Running all tests...');
             result = await runAllTests();
-            console.log('Tests completed.', result);
+            console.log('Tests completed.', result.completeResult);
             await mainMenu(dbClient);
             break;
         case '3':

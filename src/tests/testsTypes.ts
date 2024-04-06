@@ -15,6 +15,6 @@ export interface AllTestResults {
     projectTests: TestSuiteResults;
     serviceTests: TestSuiteResults;
     secretTests: TestSuiteResults;
-    completeResult: string;
+    completeResult: any;
     error: string | null;
 }
