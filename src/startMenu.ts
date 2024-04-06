@@ -1,87 +1,85 @@
-// Import necessary modules and functions
-import { runAllTests } from "./tests/runAllTests";
-import { MongoClient } from "mongodb";
-import { createDatabaseManager } from "./DatabaseManager";
-import { initializeDbConnection } from "./database/initializeDbConnection";
-import { checkAndGenerateEncryptionKey } from "./encryptionInit";
-import readline from "readline";
+// startMenu.ts
+import inquirer from 'inquirer';
+import { MongoClient } from 'mongodb';
+import { initializeDbConnection } from './database/initializeDbConnection';
+import { checkAndGenerateEncryptionKey } from './encryptionInit';
+import { runAllTests } from './tests/runAllTests';
+import { createDatabaseManager } from './DatabaseManager';
 
-// Create a Readline Interface for CLI interaction
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-});
+type MainMenuOptions = 'Services' | 'Secrets' | 'Projects' | 'Run Tests' | 'Exit';
+type ServiceMenuOptions = 'List Services' | 'Add Service' | 'Rename Service' | 'Remove Service' | 'Back';
+type SecretMenuOptions = 'List Secrets' | 'Add Secret' | 'Rename Secret' | 'Remove Secret' | 'Back';
+type ProjectMenuOptions = 'List Projects' | 'Create Project' | 'Delete Project' | 'Copy Project' | 'Back';
 
-// Main function to start the menu
-export async function startMenu() {
+const startMenu = async () => {
+    const inquirer = await import('inquirer');
+
     console.log("Credential Manager");
     console.log("Initializing database connection...");
+    await checkAndGenerateEncryptionKey();
 
-    // Initialize Database Connection
     const connectionResult = await initializeDbConnection({});
     if (!connectionResult.status) {
         console.error("Failed to initialize database connection:", connectionResult.message);
-        rl.close();
         return;
     }
 
-    // If connection is successful
     const dbClient: MongoClient = connectionResult.client;
-    const projectName = "TestProject"; 
-    const serviceName = "TestService"; 
-    const secretName = "RenamedSecret";
     const databaseManager = await createDatabaseManager(dbClient);
 
-    // Main menu function
-    function mainMenu() {
-        console.log(`
-Choose an action:
-1. List Secrets
-2. Add Secret
-3. Run All Tests
-4. Exit
-        `);
-//databaseManager.projects.services.secrets.versions
-        rl.question("Enter option number: ", async (option) => {
-            switch (option) {
-                case '1':
-                    const response = await await databaseManager.projects.services.secrets.list({
-                        dbClient,
-                        projectName,
-                        serviceName,
-                        secretName,
-                        decrypted:false,
-                        
-                    });
-                    console.log("Secrets List:", JSON.stringify(response, null, 2));
-                    mainMenu();
-                    break;
-                case '2':
-                    // Placeholder for add secret functionality
-                    console.log("Add Secret functionality not implemented.");
-                    mainMenu();
-                    break;
-                case '3':
-                    await runAllTests();
-                    mainMenu();
-                    break;
-                case '4':
-                    console.log("Exiting Credential Manager...");
-                    rl.close();
-                    break;
-                default:
-                    console.log("Invalid option, please choose again.");
-                    mainMenu();
-            }
+    const mainMenu:any = async () => {
+        const answer = await inquirer({
+            name: 'mainMenuChoice',
+            type: 'list',
+            message: 'Welcome to Credential Manager. Select an option:',
+            choices: ['Services', 'Secrets', 'Projects', 'Run Tests', 'Exit'],
         });
-    }
 
-    mainMenu(); // Invoke the main menu
-}
+        switch (answer.mainMenuChoice) {
+            case 'Services':
+                return servicesMenu();
+            case 'Secrets':
+                return secretsMenu();
+            case 'Projects':
+                return projectsMenu();
+            case 'Run Tests':
+                await runAllTests();
+                return mainMenu();
+            case 'Exit':
+                console.log('Exiting Credential Manager.');
+                dbClient.close();
+                process.exit();
+        }
+    };
 
-// Run the start menu
+    const servicesMenu = async () => {
+        const answer = await inquirer.prompt({
+            name: 'serviceMenuChoice',
+            type: 'list',
+            message: 'Services Menu:',
+            choices: ['List Services', 'Add Service', 'Rename Service', 'Remove Service', 'Back'],
+        });
+
+        // Placeholder for actual implementation
+        console.log(`You selected: ${answer.serviceMenuChoice}`);
+        // Add implementation logic here
+        
+        if (answer.serviceMenuChoice === 'Back') {
+            return mainMenu();
+        }
+    };
+
+    const secretsMenu = async () => {
+        // Similar structure to servicesMenu
+        // Add implementation logic here
+    };
+
+    const projectsMenu = async () => {
+        // Similar structure to servicesMenu
+        // Add implementation logic here
+    };
+
+    await mainMenu();
+};
+
 startMenu();
-
-// Check and generate encryption key
-checkAndGenerateEncryptionKey();
-3
