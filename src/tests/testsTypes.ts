@@ -4,10 +4,17 @@ export interface TestResult {
     message: string;
 }
 
+export interface TestSuiteResults {
+    detailedResults: TestResult[];
+    simplifiedResults: string;
+    numericResults: { passed: number; failed: number; };
+}
+
 export interface AllTestResults {
-    versionTests: TestResult[];
-    projectTests: TestResult[];
-    serviceTests: TestResult[];
-    secretTests: TestResult[];
-    error: string | null; 
+    versionTests: TestSuiteResults;
+    projectTests: TestSuiteResults;
+    serviceTests: TestSuiteResults;
+    secretTests: TestSuiteResults;
+    completeResult: string;
+    error: string | null;
 }

@@ -2,58 +2,49 @@ import { versionTests } from './versionTests';
 import { secretTests } from './secretTests';
 import { projectTests } from './projectTests';
 import { serviceTests } from './serviceTests';
-import { TestResult, AllTestResults } from './testsTypes';
+import { TestResult, AllTestResults, TestSuiteResults } from './testsTypes';
 
-export async function runAllTests(simplified: boolean = false): Promise<AllTestResults> {
-    let allTestResults: AllTestResults = {
-        versionTests: [],
-        projectTests: [],
-        serviceTests: [],
-        secretTests: [],
-        error: null,
-    } as any;
-
+export async function runAllTests(): Promise<AllTestResults> {
+    let finalResults: Partial<AllTestResults> = {};
+    let errorMessage: string | null = null; 
+let completeResult;
     try {
-        //    console.log("\n=== Version Tests ===");
-        const versionResults: TestResult[] = await versionTests();
-        allTestResults.versionTests = versionResults;
-        checkTestResults(versionResults, "Version Tests", simplified);
-
-        //      console.log("\n=== Project Tests ===");
-        const projectResults: TestResult[] = await projectTests();
-        allTestResults.projectTests = projectResults;
-        checkTestResults(projectResults, "Project Tests", simplified);
-
-        //   console.log("\n=== Service Tests ===");
-        const serviceResults: TestResult[] = await serviceTests();
-        allTestResults.serviceTests = serviceResults;
-        checkTestResults(serviceResults, "Service Tests", simplified);
-
-        //   console.log("\n=== Secret Tests ===");
-        const secretResults: TestResult[] = await secretTests();
-        allTestResults.secretTests = secretResults;
-        checkTestResults(secretResults, "Secret Tests", simplified);
-
+        finalResults.versionTests = await getTestSuiteResults(versionTests, "Version Tests");
+        finalResults.projectTests = await getTestSuiteResults(projectTests, "Project Tests");
+        finalResults.serviceTests = await getTestSuiteResults(serviceTests, "Service Tests");
+        finalResults.secretTests = await getTestSuiteResults(secretTests, "Secret Tests");
+        completeResult =  displayNumericTestResults(finalResults) as any;
     } catch (error: any) {
         console.error("An error occurred while running tests:", error);
-        allTestResults.error = `Test Failure: ${error.message}`;
+        errorMessage = `Test Failure: ${error.message}`; 
     }
 
-    console.log("All tests completed.");
-    return allTestResults;
+    return { ...finalResults, completeResult, error: errorMessage } as any;
 }
 
-function checkTestResults(results: TestResult[], suiteName: string, simplified: boolean): void {
+async function getTestSuiteResults(testFunction: () => Promise<TestResult[]>, suiteName: string): Promise<TestSuiteResults> {
+    const results = await testFunction();
     const passCount = results.filter(result => result.passed).length;
     const failCount = results.length - passCount;
-    if (simplified) {
-        //   console.log(`${suiteName}: ${failCount === 0 ? 'TRUE' : 'FALSE'} - Total: ${results.length}, Passed: ${passCount}, Failed: ${failCount}`);
-    } else {
-        results.forEach(result => {
-            //       console.log(`${result.test}: ${result.passed ? 'PASS' : 'FAIL'} - ${result.message}`);
-        });
-    }
-    if (failCount > 0) {
-        throw new Error(`${suiteName} had failures. Total: ${results.length}, Passed: ${passCount}, Failed: ${failCount}`);
+
+    const detailedResults = results;
+    const simplifiedResults = JSON.stringify({ suiteName, results: { passed: passCount, failed: failCount } });
+    const numericResults = { passed: passCount, failed: failCount };
+
+    return { detailedResults, simplifiedResults, numericResults };
+}
+
+// Function to display numeric test results
+function displayNumericTestResults(testResults:any) {
+    const suites = ['versionTests', 'projectTests', 'serviceTests', 'secretTests'];
+    suites.forEach(suiteName => {
+        const suiteResult = testResults[suiteName];
+        if (suiteResult && suiteResult.numericResults) {
+            const { passed, failed } = suiteResult.numericResults;
+            console.log(`${suiteName}: Passed: ${passed}, Failed: ${failed}`);
+        }
+    });
+    if (testResults.error) {
+        console.log('Error during tests:', testResults.error);
     }
 }
