@@ -84,17 +84,35 @@ const projects = {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
         }
     },
-    
-
     delete: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
         try {
-            const operationResult = await dbClient.db(projectName).dropDatabase();
-            return {
-                status: true,
-                message: `Project '${projectName}' dropped successfully.`,
-                project: { name: projectName as string, services: [] } as Project,
-            };
+            const databasesBeforeDeletion = await dbClient.db().admin().listDatabases();
+            const existsBeforeDeletion = databasesBeforeDeletion.databases.some(db => db.name === projectName);
+    
+            if (!existsBeforeDeletion) {
+                return {
+                    status: false,
+                    message: `Project '${projectName}' does not exist.`,
+                };
+            }
+    
+            await dbClient.db(projectName).dropDatabase();
+    
+            const databasesAfterDeletion = await dbClient.db().admin().listDatabases();
+            const existsAfterDeletion = databasesAfterDeletion.databases.some(db => db.name === projectName);
+    
+            if (existsAfterDeletion) {
+                return {
+                    status: false,
+                    message: `Failed to delete project '${projectName}'.`,
+                };
+            } else {
+                return {
+                    status: true,
+                    message: `Project '${projectName}' dropped successfully.`,
+                };
+            }
         } catch (error: any) {
             return { status: false, message: error.message };
         }
