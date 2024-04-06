@@ -1,7 +1,7 @@
 import ReadlineManager from "../utils/ReadlineManager";
 import { runAllTests } from "./tests/runAllTests";
 import { projectManagementMenu } from "../menu/projectManagementMenu";
-import { serviceManagementMenu } from "../menu/serviceManagementMenu"; 
+import { serviceManagementMenu } from "../menu/serviceManagementMenu"; // Ensure this is the correct path
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { checkAndGenerateEncryptionKey } from "../utils/encryptionInit";
 

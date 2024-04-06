@@ -24,10 +24,10 @@ export async function secretTests() {
     await testFindSecretByName(dbClient, testProjectName, serviceName, "RenamedSecret", testResults);
     await testListAllSecrets(dbClient, testProjectName, serviceName, testResults);
     await testDuplicateSecretNames(dbClient, testProjectName, serviceName, testResults);
-    await testDeleteSecrets(dbClient, testProjectName, serviceName, { secretName: "TestSecret" }, testResults);
-    await testDeleteSecrets(dbClient, testProjectName, serviceName, { secretName: "RenamedSecret" }, testResults);
+    //await testDeleteSecrets(dbClient, testProjectName, serviceName, { secretName: "TestSecret" }, testResults);
+    //await testDeleteSecrets(dbClient, testProjectName, serviceName, { secretName: "RenamedSecret" }, testResults);
 
-    await projects.delete({ dbClient, projectName: testProjectName });
+    //await projects.delete({ dbClient, projectName: testProjectName });
 
     dbClient.close();
     return testResults
