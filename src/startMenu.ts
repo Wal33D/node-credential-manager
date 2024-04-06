@@ -1,84 +1,106 @@
-// startMenu.ts
-const inquirerPromise = import('inquirer');
-import { MongoClient } from 'mongodb';
-import { initializeDbConnection } from './database/initializeDbConnection';
-import { checkAndGenerateEncryptionKey } from './encryptionInit';
-import { runAllTests } from './tests/runAllTests';
-import { createDatabaseManager } from './DatabaseManager';
+// Import necessary modules and functions
+import { runAllTests } from "./tests/runAllTests";
+import { MongoClient } from "mongodb";
+import { createDatabaseManager } from "./DatabaseManager";
+import { initializeDbConnection } from "./database/initializeDbConnection";
+import { checkAndGenerateEncryptionKey } from "./encryptionInit";
+import readline from "readline";
+const databaseManager = await createDatabaseManager(dbClient);
 
-type MainMenuOptions = 'Services' | 'Secrets' | 'Projects' | 'Run Tests' | 'Exit';
-type ServiceMenuOptions = 'List Services' | 'Add Service' | 'Rename Service' | 'Remove Service' | 'Back';
-type SecretMenuOptions = 'List Secrets' | 'Add Secret' | 'Rename Secret' | 'Remove Secret' | 'Back';
-type ProjectMenuOptions = 'List Projects' | 'Create Project' | 'Delete Project' | 'Copy Project' | 'Back';
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 
-const startMenu = async () => {
-    console.log("Credential Manager");
-    console.log("Initializing database connection...");
-    await checkAndGenerateEncryptionKey();
+const mainMenu = async () => {
+    console.log('\nProject Management Menu:');
+    console.log('1. List Projects');
+    console.log('2. Create Project');
+    console.log('3. Delete Project');
+    console.log('4. Copy Project');
+    console.log('5. Check if Project Exists');
+    console.log('6. Exit');
 
-    const connectionResult = await initializeDbConnection({});
-    if (!connectionResult.status) {
-        console.error("Failed to initialize database connection:", connectionResult.message);
-        return;
-    }
-
-    const dbClient: MongoClient = connectionResult.client;
-    const databaseManager = await createDatabaseManager(dbClient);
-    const inquirer = await inquirerPromise;
-
-    const mainMenu:any = async () => {
-        const answer = await inquirer.prompt({
-            name: 'mainMenuChoice',
-            type: 'list',
-            message: 'Welcome to Credential Manager. Select an option:',
-            choices: ['Services', 'Secrets', 'Projects', 'Run Tests', 'Exit'],
-        });
-
-        switch (answer.mainMenuChoice) {
-            case 'Services':
-                return servicesMenu();
-            case 'Secrets':
-                return secretsMenu();
-            case 'Projects':
-                return projectsMenu();
-            case 'Run Tests':
-                await runAllTests();
-                return mainMenu();
-            case 'Exit':
-                console.log('Exiting Credential Manager.');
-                dbClient.close();
-                process.exit();
+    rl.question('Enter your choice: ', async (choice) => {
+        switch (choice) {
+            case '1':
+                await listProjects();
+                break;
+            case '2':
+                await createProject();
+                break;
+            case '3':
+                await deleteProject();
+                break;
+            case '4':
+                await copyProject();
+                break;
+            case '5':
+                await checkProjectExists();
+                break;
+            case '6':
+                console.log('Exiting Project Management...');
+                rl.close();
+                return;
+            default:
+                console.log('Invalid choice. Please select a valid option.');
+                mainMenu();
         }
-    };
-
-    const servicesMenu = async () => {
-        const answer = await inquirer.prompt({
-            name: 'serviceMenuChoice',
-            type: 'list',
-            message: 'Services Menu:',
-            choices: ['List Services', 'Add Service', 'Rename Service', 'Remove Service', 'Back'],
-        });
-
-        // Placeholder for actual implementation
-        console.log(`You selected: ${answer.serviceMenuChoice}`);
-        // Add implementation logic here
-        
-        if (answer.serviceMenuChoice === 'Back') {
-            return mainMenu();
-        }
-    };
-
-    const secretsMenu = async () => {
-        // Similar structure to servicesMenu
-        // Add implementation logic here
-    };
-
-    const projectsMenu = async () => {
-        // Similar structure to servicesMenu
-        // Add implementation logic here
-    };
-
-    await mainMenu();
+    });
 };
 
-startMenu();
+const listProjects = async () => {
+    // Assuming databaseManager is available in this scope
+    const response = await databaseManager.projects.list({});
+    console.log('Projects List:', JSON.stringify(response, null, 2));
+    mainMenu();
+};
+
+const createProject = async () => {
+    rl.question('Enter project name: ', async (projectName) => {
+        const response = await databaseManager.projects.create({
+            projectName
+            // Other necessary params here
+        });
+        console.log('Create Project Response:', JSON.stringify(response, null, 2));
+        mainMenu();
+    });
+};
+
+const deleteProject = async () => {
+    rl.question('Enter project name to delete: ', async (projectName) => {
+        const response = await databaseManager.projects.delete({
+            projectName
+            // Other necessary params here
+        });
+        console.log('Delete Project Response:', JSON.stringify(response, null, 2));
+        mainMenu();
+    });
+};
+
+const copyProject = async () => {
+    rl.question('Enter source project name: ', (sourceProjectName) => {
+        rl.question('Enter target project name: ', async (targetProjectName) => {
+            const response = await databaseManager.projects.copy({
+                projectName: sourceProjectName,
+                targetProjectName
+                // Other necessary params here
+            });
+            console.log('Copy Project Response:', JSON.stringify(response, null, 2));
+            mainMenu();
+        });
+    });
+};
+
+const checkProjectExists = async () => {
+    rl.question('Enter project name to check: ', async (projectName) => {
+        const response = await databaseManager.projects.exists({
+            projectName
+            // Other necessary params here
+        });
+        console.log('Check Project Exists Response:', JSON.stringify(response, null, 2));
+        mainMenu();
+    });
+};
+
+mainMenu();
