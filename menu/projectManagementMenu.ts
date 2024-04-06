@@ -1,13 +1,13 @@
-import ReadlineManager from "./utils/ReadlineManager"; 
-import { projects } from "./database/projects";
+import ReadlineManager from "../utils/ReadlineManager";
+import { projects } from "../src/database/projects";
 
-const listProjects = async (dbClient:any) => {
+const listProjects = async (dbClient: any) => {
     const response = await projects.list({ dbClient });
     console.log('Projects List:', JSON.stringify(response, null, 2));
     projectManagementMenu(dbClient);
 };
 
-const createProject = async (dbClient:any) => {
+const createProject = async (dbClient: any) => {
     const projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
     const serviceName = await ReadlineManager.askQuestion('Enter the first service\'s name: ') as string;
     const response = await projects.create({
@@ -19,7 +19,7 @@ const createProject = async (dbClient:any) => {
     projectManagementMenu(dbClient);
 };
 
-const deleteProject = async (dbClient:any) => {
+const deleteProject = async (dbClient: any) => {
     const projectName = await ReadlineManager.askQuestion('Enter project name to delete: ') as string;
     const response = await projects.delete({
         dbClient,
@@ -29,7 +29,7 @@ const deleteProject = async (dbClient:any) => {
     projectManagementMenu(dbClient);
 };
 
-const copyProject = async (dbClient:any) => {
+const copyProject = async (dbClient: any) => {
     const sourceProjectName = await ReadlineManager.askQuestion('Enter source project name: ') as string;
     const targetProjectName = await ReadlineManager.askQuestion('Enter target project name: ') as string;
     const response = await projects.copy({
@@ -41,7 +41,7 @@ const copyProject = async (dbClient:any) => {
     projectManagementMenu(dbClient);
 };
 
-const checkProjectExists = async (dbClient:any) => {
+const checkProjectExists = async (dbClient: any) => {
     const projectName = await ReadlineManager.askQuestion('Enter project name to check: ') as string;
     const response = await projects.exists({
         dbClient,
@@ -51,7 +51,7 @@ const checkProjectExists = async (dbClient:any) => {
     projectManagementMenu(dbClient);
 };
 
-export const projectManagementMenu = async (dbClient:any) => {
+export const projectManagementMenu = async (dbClient: any) => {
     console.log('\nProject Management Menu:');
     console.log('1. List Projects');
     console.log('2. Create Project');
@@ -79,11 +79,11 @@ export const projectManagementMenu = async (dbClient:any) => {
             await checkProjectExists(dbClient);
             break;
         case '6':
-                // Return to the main menu needs to be handled outside this module
+            await mainMenuCallback(dbClient); // Call the passed mainMenu function
             break;
         default:
             console.log('Invalid choice. Please select a valid option.');
-            await projectManagementMenu(dbClient); 
+            await projectManagementMenu(dbClient, mainMenuCallback);
     }
 };
 

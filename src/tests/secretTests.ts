@@ -6,7 +6,6 @@ import { projects } from "../database/projects";
 export async function secretTests() {
     let testResults = [] as any;
 
-   // console.log("Initializing database connection...");
     const connectionResult = await initializeDbConnection({});
     if (!connectionResult.status) {
         console.error("Failed to initialize database connection:", connectionResult.message);
@@ -31,7 +30,6 @@ export async function secretTests() {
     await projects.delete({ dbClient, projectName: testProjectName });
 
     dbClient.close();
-    //console.log(JSON.stringify(testResults, null, 2));
     return testResults
 }
 

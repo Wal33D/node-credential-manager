@@ -6,15 +6,18 @@ export interface TestResult {
 
 export interface TestSuiteResults {
     detailedResults: TestResult[];
-    simplifiedResults: string;
-    numericResults: { passed: number; failed: number; };
+    simplifiedResults: string; 
+    numericResults: {
+        passed: number;
+        failed: number;
+    };
 }
 
 export interface AllTestResults {
-    versionTests: TestSuiteResults;
-    projectTests: TestSuiteResults;
-    serviceTests: TestSuiteResults;
-    secretTests: TestSuiteResults;
-    completeResult: any;
+    versionTests?: TestSuiteResults;
+    projectTests?: TestSuiteResults;
+    serviceTests?: TestSuiteResults;
+    secretTests?: TestSuiteResults;
+    completeResult: string[]; 
     error: string | null;
 }

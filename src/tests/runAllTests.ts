@@ -5,7 +5,7 @@ import { serviceTests } from './serviceTests';
 import { TestResult, TestSuiteResults, AllTestResults } from './testsTypes';
 
 export async function runAllTests(): Promise<AllTestResults> {
-    let finalResults: Partial<AllTestResults> = {};
+    let finalResults: any | Partial<AllTestResults> = {};
     let errorMessage: string | null = null;
 
     try {
@@ -16,7 +16,7 @@ export async function runAllTests(): Promise<AllTestResults> {
             secretTests: secretTests
         };
 
-        for (const [key, testFunction] of Object.entries(suites)) {
+        for (const [key, testFunction]  of Object.entries(suites)) {
             finalResults[key] = await getTestSuiteResults(testFunction, key);
         }
     } catch (error: any) {
@@ -40,7 +40,7 @@ async function getTestSuiteResults(testFunction: () => Promise<TestResult[]>, su
     };
 }
 
-function displayNumericTestResults(testResults: Partial<AllTestResults>): string[] {
+function displayNumericTestResults(testResults: Partial<AllTestResults|any>): string[] {
     return Object.entries(testResults).reduce((acc, [suiteName, suiteResult]) => {
         if (suiteResult && suiteResult.numericResults) {
             const { passed, failed } = suiteResult.numericResults;

@@ -1,8 +1,8 @@
-import ReadlineManager from "./utils/ReadlineManager"; 
+import ReadlineManager from "../utils/ReadlineManager"; 
 import { runAllTests } from "./tests/runAllTests";
-import { projectManagementMenu } from "./projectManagementMenu";
+import { projectManagementMenu } from "../menu/projectManagementMenu";
 import { initializeDbConnection } from "./database/initializeDbConnection";
-import { checkAndGenerateEncryptionKey } from "./utils/encryptionInit";
+import { checkAndGenerateEncryptionKey } from "../utils/encryptionInit";
 
 const startApplication = async () => {
     console.log("Initializing database connection...");

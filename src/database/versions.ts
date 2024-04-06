@@ -1,5 +1,5 @@
 import { EncryptionResult } from "../types";
-import { encrypt, decrypt } from "../utils/encryptionInit";
+import { encrypt, decrypt } from "../../utils/encryptionInit";
 import { Secret, LatestVersionParams, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./databaseTypes";
 
 const versions = {
