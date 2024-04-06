@@ -1,5 +1,4 @@
 import { decrypt, encrypt } from "../encryptionInit";
-import { EncryptionResult } from "../types";
 import { Secret, SecretOperationParams, SecretOperationResponse, Version } from "./databaseTypes";
 
 const secrets = {
@@ -22,13 +21,13 @@ const secrets = {
             if (existingSecretByName) {
                 return { status: false, message: `Secret '${secretName}' already exists. No new secret added.`, projectName, serviceName };
             }
-            const encryptedVersions = versions.map(async version => {
+            const encryptedVersions: Version[] = versions.map(version => {
                 if (typeof version.value !== 'string') {
                     throw new Error(`Version value must be a string. Found: ${typeof version.value}`);
-                } 
-                const encrypted:EncryptionResult = await encrypt({ value: version.value });
-                return { ...version, value: encrypted.content, iv: encrypted.iv }
-            } ) as any;
+                }
+                const encrypted = encrypt({ value: version.value });
+                return { ...version, value: encrypted.content, iv: encrypted.iv };
+            });
 
             const secretData: Secret = {
                 secretName,

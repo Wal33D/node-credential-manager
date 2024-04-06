@@ -31,13 +31,13 @@ export async function secretTests() {
     await projects.delete({ dbClient, projectName: testProjectName });
 
     dbClient.close();
-    console.log(JSON.stringify(testResults,null,2));
+    console.log(JSON.stringify(testResults, null, 2));
     return testResults
 }
 
 async function testAddSecret(dbClient: any, projectName: any, serviceName: any, secretName: any, envName: any, envType: any, testResults: any) {
     const response = await secrets.add({ dbClient, projectName, serviceName, secretName, envName, envType, versions: [{ versionName: '1.0', value: 'initialValue' }] });
-    testResults.push({ test: "Adding Secret: " + secretName, passed: response.status, message: response.message , response });
+    testResults.push({ test: "Adding Secret: " + secretName, passed: response.status, message: response.message, response });
 }
 
 async function testFindSecretByName(dbClient: any, projectName: any, serviceName: any, secretName: any, testResults: any) {
@@ -47,12 +47,12 @@ async function testFindSecretByName(dbClient: any, projectName: any, serviceName
 
 async function testListAllSecrets(dbClient: any, projectName: any, serviceName: any, testResults: any) {
     const response = await secrets.list({ dbClient, projectName, serviceName });
-    testResults.push({ test: "Listing All Secrets", passed: response.status, message: response.message , response });
+    testResults.push({ test: "Listing All Secrets", passed: response.status, message: response.message, response });
 }
 
 async function testDeleteSecrets(dbClient: any, projectName: any, serviceName: any, filter: any, testResults: any) {
     const response = await secrets.delete({ dbClient, projectName, serviceName, filter });
-    testResults.push({ test: "Deleting Secret: " + JSON.stringify(filter), passed: response.status, message: response.message , response });
+    testResults.push({ test: "Deleting Secret: " + JSON.stringify(filter), passed: response.status, message: response.message, response });
 }
 
 async function testRenameSecret(dbClient: any, projectName: any, serviceName: any, originalSecretName: any, newSecretName: any, testResults: any) {
@@ -73,12 +73,12 @@ async function testDuplicateSecretNames(dbClient: any, projectName: any, service
         const duplicates = secretNames.filter((name, index) => secretNames.indexOf(name) !== index);
 
         if (duplicates.length > 0) {
-            testResults.push({ test: "Check for Duplicate Secret Names", passed: false, message: `Duplicate secret names found: ${duplicates.join(', ')}.` , response });
+            testResults.push({ test: "Check for Duplicate Secret Names", passed: false, message: `Duplicate secret names found: ${duplicates.join(', ')}.`, response });
         } else {
-            testResults.push({ test: "Check for Duplicate Secret Names", passed: true, message: "No duplicate secret names found." , response });
+            testResults.push({ test: "Check for Duplicate Secret Names", passed: true, message: "No duplicate secret names found.", response });
         }
     } else {
-        testResults.push({ test: "Check for Duplicate Secret Names", passed: false, message: "Failed to retrieve secrets for duplicate name check." , response });
+        testResults.push({ test: "Check for Duplicate Secret Names", passed: false, message: "Failed to retrieve secrets for duplicate name check.", response });
     }
 }
 

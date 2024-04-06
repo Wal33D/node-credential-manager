@@ -6,7 +6,6 @@ const projects = {
         const { dbClient, projectName } = params;
         return dbClient.db(projectName);
     },
-
     exists: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
         try {
@@ -21,7 +20,6 @@ const projects = {
             return { status: false, message: error.message };
         }
     },
-
     list: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient } = params;
         try {
@@ -32,7 +30,6 @@ const projects = {
             return { status: false, message: error.message };
         }
     },
-
     create: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, serviceName } = params;
         try {
@@ -57,7 +54,6 @@ const projects = {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
         }
     },
-
     delete: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName } = params;
         try {
@@ -71,7 +67,6 @@ const projects = {
             return { status: false, message: error.message };
         }
     },
-
     copy: async (params: ProjectOperationParams): Promise<ProjectOperationResponse> => {
         const { dbClient, projectName, targetProjectName } = params;
         try {
@@ -97,7 +92,6 @@ const projects = {
             return { status: false, message: error.message };
         }
     },
-    
 };
 
 export { projects };

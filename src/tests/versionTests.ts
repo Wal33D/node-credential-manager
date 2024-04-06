@@ -1,6 +1,6 @@
 import { secrets } from "../database/secrets";
 import { MongoClient } from "mongodb";
-import { version } from "../database/version";
+import { version } from "../database/versions";
 import { initializeDbConnection } from "../database/initializeDbConnection";
 import { projects } from "../database/projects";
 
