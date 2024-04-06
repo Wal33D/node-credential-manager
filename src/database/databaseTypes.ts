@@ -88,9 +88,12 @@ export interface SecretOperationParams {
 export interface SecretOperationResponse {
     status: boolean;
     message: string;
+    projectName: string;
+    serviceName: string;
     secret?: Secret | null;
     secrets?: Secret[];
 }
+
 export interface Project {
     name: string;
     services?: string[];
