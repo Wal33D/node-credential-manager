@@ -1,10 +1,10 @@
 import { runAllTests } from "./tests/runAllTests";
 import { MongoClient } from "mongodb";
-import { DatabaseManager } from "./DatabaseManager";
+import { createDatabaseManager } from "./DatabaseManager";
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { checkAndGenerateEncryptionKey } from "./encryptionInit";
 import { SecretOperationParams } from "./database/databaseTypes";
-runAllTests();
+import {secrets} from "./database/secrets";
 
 export async function startMenu() {
     console.log("Initializing database connection...");
@@ -14,10 +14,21 @@ export async function startMenu() {
         return;
     }
     const dbClient: MongoClient = connectionResult.client;
-    const databaseManager = new DatabaseManager(dbClient);
-   const secretTest =  await databaseManager.projects.services.secrets.list({ dbClient:dbClient, projectName: "TestProject", serviceName: "TestService", secretName:"RenamedSecret" } as SecretOperationParams);
+    const projectName = "TestProject";
+    const serviceName = "TestService";
+    const databaseManager = await createDatabaseManager(dbClient);
+    const secretTest = await databaseManager.projects.services.secrets.list({
+        dbClient,
+        projectName,
+        serviceName,
+    });
+    const response = await secrets.list({ dbClient, projectName, serviceName });
+
+    console.log(response);
+
     console.log(secretTest);
 }
 startMenu();
 //checkAndGenerateEncryptionKey();
+//runAllTests();
 

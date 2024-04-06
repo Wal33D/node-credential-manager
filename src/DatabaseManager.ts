@@ -1,43 +1,45 @@
 import { Db, MongoClient } from "mongodb";
-import { projects } from "./database/projects";
-import { services } from "./database/services";
-import { secrets } from "./database/secrets";
-import { versions } from "./database/versions";
+import { projects as originalProjects } from "./database/projects";
+import { services as originalServices } from "./database/services";
+import { secrets as originalSecrets } from "./database/secrets";
+import { versions as originalVersions } from "./database/versions";
 
-export class DatabaseManager {
-  dbClient: MongoClient;
-  projects: typeof projects & { services: typeof services & { secrets: typeof secrets & { versions: typeof versions } } };
+function bindDbClient(module:any , dbClient:any ) {
+  const boundModule = {} as any;
 
-  constructor(dbClient: MongoClient) {
-    this.dbClient = dbClient;
-
-    const servicesWithNestedAccess = this.bindDbClient({
-      ...services,
-      secrets: this.bindDbClient({
-        ...secrets,
-        versions: this.bindDbClient(versions)
-      })
-    });
-
-    this.projects = this.bindDbClient({
-      ...projects,
-      services: servicesWithNestedAccess,
-    });
-  }
-
-  bindDbClient(module: any): any {
-    const boundModule: any = {};
-
-    for (let key in module) {
-      if (typeof module[key] === 'function') {
-        boundModule[key] = module[key].bind(null, { dbClient: this.dbClient });
-      } else if (typeof module[key] === 'object' && key !== 'services') { 
-        boundModule[key] = this.bindDbClient(module[key]);
-      } else {
-        boundModule[key] = module[key];
-      }
+  for (let key in module ) {
+    if (typeof module[key] === 'function') {
+      boundModule[key] = module[key].bind(null, { dbClient });
+    } else if (typeof module[key] === 'object' && key !== 'services') { 
+      boundModule[key] = bindDbClient(module[key], dbClient);
+    } else {
+      boundModule[key] = module[key];
     }
-
-    return boundModule;
   }
+
+  return boundModule;
 }
+
+export function createDatabaseManager(dbClient: MongoClient) {
+  const servicesWithNestedAccess = bindDbClient({
+    ...originalServices,
+    secrets: bindDbClient({
+      ...originalSecrets,
+      versions: bindDbClient(originalVersions, dbClient)
+    }, dbClient)
+  }, dbClient);
+
+  const projects = bindDbClient({
+    ...originalProjects,
+    services: servicesWithNestedAccess,
+  }, dbClient);
+
+  return {
+    projects,
+    services: servicesWithNestedAccess,
+    secrets: servicesWithNestedAccess.secrets,
+    versions: servicesWithNestedAccess.secrets.versions,
+  };
+}
+
+
