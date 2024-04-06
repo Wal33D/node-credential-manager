@@ -45,7 +45,7 @@ export interface VersionOperationResponse {
 }
 
 export interface Version {
-    iv: string;
+    iv?: string;
     versionName: string;
     value: string;
 }
@@ -58,6 +58,10 @@ export interface VersionOperationResponse {
     versions?: Version[];
 }
 
+export interface EncryptionResult {
+    iv: string;
+    content: string;
+}
 export interface Secret {
     _id?: ObjectId;
     secretName: string;

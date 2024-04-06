@@ -1,21 +1,8 @@
-import { Secret, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, LatestVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./databaseTypes";
+import { Secret, EncryptionResult, LatestVersionParams, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./databaseTypes";
 import { encrypt, decrypt } from "../encryptionInit";
 
-interface EncryptionInput {
-    value: string;
-}
-
-interface DecryptionInput {
-    hash: EncryptionResult;
-}
-
-interface EncryptionResult {
-    iv: string;
-    content: string;
-}
 
 const version = {
-
     list: async (params: ListVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
@@ -120,7 +107,7 @@ const version = {
             return { status: false, message: error.message };
         }
     },
-
+    
     latest: async (params: LatestVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName } = params;
         try {
@@ -131,24 +118,36 @@ const version = {
                     message: `No versions found for secret '${secretName}'.`,
                 };
             }
-
+    
             const sortedVersions = secret.versions.sort((a, b) =>
                 b.versionName.localeCompare(a.versionName, undefined, { numeric: true, sensitivity: 'base' })
             );
             const latestVersion = sortedVersions[0];
-            const decryptedValue = decrypt({ iv: latestVersion.iv, content: latestVersion.value } as any);
+    
+            if (!latestVersion.iv) {
+                return {
+                    status: false,
+                    message: "Latest version's value is not encrypted or missing IV.",
+                };
+            }
+    
+            const decryptedValue = decrypt({
+                hash: { iv: latestVersion.iv, content: latestVersion.value }
+            });
+    
             const decryptedLatestVersion = {
                 ...latestVersion,
                 value: decryptedValue
             };
-
+    
             return {
                 status: true,
-                message: `Latest version '${decryptedLatestVersion.versionName}' retrieved successfully.`,
+                message: `Latest version '${decryptedLatestVersion.versionName}' retrieved and decrypted successfully.`,
                 version: decryptedLatestVersion
             };
-        } catch (error: any) {
-            return { status: false, message: error.message };
+        } catch (error:any) {
+            console.error("Error retrieving or decrypting the latest version:", error);
+            return { status: false, message: `Failed to retrieve or decrypt the latest version due to an error: ${error.message}` };
         }
     },
 

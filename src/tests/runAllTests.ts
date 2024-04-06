@@ -16,10 +16,7 @@ export async function runAllTests(simplified: boolean = false): Promise<void> {
         const versionResults: TestResult[] = await versionTests();
         checkTestResults(versionResults, "Version Tests", simplified);
 
-        console.log("\n=== Secret Tests ===");
-        const secretResults: TestResult[] = await secretTests();
-        checkTestResults(secretResults, "Secret Tests", simplified);
-
+      
 
         console.log("\n=== Project Tests ===");
         const projectResults: TestResult[] = await projectTests();
@@ -29,6 +26,10 @@ export async function runAllTests(simplified: boolean = false): Promise<void> {
         const serviceResults: TestResult[] = await serviceTests();
         checkTestResults(serviceResults, "Service Tests", simplified);
         
+        console.log("\n=== Secret Tests ===");
+        const secretResults: TestResult[] = await secretTests();
+        checkTestResults(secretResults, "Secret Tests", simplified);
+
     } catch (error:any) {
         console.error("An error occurred while running tests:", error);
         throw new Error(`Test Failure: ${error.message}`);

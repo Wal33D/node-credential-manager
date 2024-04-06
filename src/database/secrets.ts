@@ -1,5 +1,5 @@
 import { encrypt } from "../encryptionInit";
-import { Secret, SecretOperationParams, SecretOperationResponse } from "./databaseTypes";
+import { Secret, SecretOperationParams, SecretOperationResponse, Version } from "./databaseTypes";
 
 const secrets = {
     delete: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
@@ -48,19 +48,20 @@ const secrets = {
 
     add: async (params: SecretOperationParams): Promise<SecretOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, envName, envType, versions = [] } = params;
+    
         try {
             const existingSecretByName = await dbClient.db(projectName).collection(serviceName).findOne({ secretName });
             if (existingSecretByName) {
                 return { status: false, message: `Secret '${secretName}' already exists. No new secret added.` };
             }
     
-            // Encrypt each version's value
-            const encryptedVersions = versions.map(version => {
+            // Encrypt each version's value if versions are provided
+            const encryptedVersions: Version[] = versions.map(version => {
                 if (typeof version.value !== 'string') {
                     throw new Error(`Version value must be a string. Found: ${typeof version.value}`);
                 }
-                const { iv, content } = encrypt({ value: version.value });
-                return { ...version, value: content, iv: iv };
+                const encrypted = encrypt({ value: version.value });
+                return { ...version, value: encrypted.content, iv: encrypted.iv };
             });
     
             const secretData: Secret = {
@@ -70,7 +71,7 @@ const secrets = {
                 versions: encryptedVersions,
                 updatedAt: new Date(),
                 createdAt: new Date(),
-                lastAccessAt: new Date()
+                lastAccessAt: new Date(),
             } as Secret;
     
             await dbClient.db(projectName).collection(serviceName).insertOne(secretData);
