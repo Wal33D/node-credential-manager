@@ -1,4 +1,4 @@
-import { askQuestion } from "./utils/askQuestion";
+import ReadlineManager from "./utils/ReadlineManager"; 
 import { runAllTests } from "./tests/runAllTests";
 import { projectManagementMenu } from "./projectManagementMenu";
 import { initializeDbConnection } from "./database/initializeDbConnection";
@@ -7,7 +7,7 @@ import { checkAndGenerateEncryptionKey } from "./utils/encryptionInit";
 const startApplication = async () => {
     console.log("Initializing database connection...");
 
-    const connectionResult = await initializeDbConnection({}); 
+    const connectionResult = await initializeDbConnection({});
     if (!connectionResult.status) {
         console.error("Failed to initialize database connection:", connectionResult.message);
         process.exit(1);
@@ -24,7 +24,8 @@ const mainMenu = async (dbClient: any) => {
     console.log('3. Check and Generate Encryption Key');
     console.log('4. Exit');
 
-    const choice = await askQuestion('Enter your choice: ');
+    const choice = await ReadlineManager.askQuestion('Enter your choice: ');
+    let result;
 
     switch (choice) {
         case '1':
@@ -40,11 +41,11 @@ const mainMenu = async (dbClient: any) => {
             console.log('Checking and generating encryption key...');
             await checkAndGenerateEncryptionKey();
             console.log('Operation completed.');
-            await mainMenu(dbClient);
+            resut await mainMenu(dbClient);
             break;
         case '4':
             console.log('Exiting application...');
-            rl.close();
+            ReadlineManager.close();
             if (dbClient && dbClient.close) {
                 dbClient.close();
             }

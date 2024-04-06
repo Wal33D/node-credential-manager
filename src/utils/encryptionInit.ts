@@ -8,7 +8,7 @@ const algorithm: string = 'aes-256-ctr';
 
 const generateEncryptionKey = (): string => crypto.randomBytes(32).toString('hex');
 
-export const checkAndGenerateEncryptionKey = (): void => {
+export const checkAndGenerateEncryptionKey = (): { status: boolean, message: string, filePath: string } => {
     let keyData: KeyData = {};
 
     if (fs.existsSync(keyFilePath)) {
@@ -23,6 +23,7 @@ export const checkAndGenerateEncryptionKey = (): void => {
     } else {
         console.log('Encryption key already exists.');
     }
+    return { status: true, message: 'Encryption key check and generation completed.', filePath: keyFilePath };
 };
 
 const getEncryptionKey = (): string => {
