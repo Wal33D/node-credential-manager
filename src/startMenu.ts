@@ -68,19 +68,21 @@ const startApplication = async () => {
         console.log('Projects List:', JSON.stringify(response, null, 2));
         mainMenu();
     };
-
+    
     const createProject = async (dbClient:any) => {
         rl.question('Enter project name: ', async (projectName) => {
-            const response = await projects.create({ 
-                dbClient,
-                projectName,
-                serviceName: 'TestService'
+            rl.question('Enter the first service\'s name: ', async (serviceName) => {
+                const response = await projects.create({
+                    dbClient,
+                    projectName,
+                    serviceName 
+                });
+                console.log('Create Project Response:', JSON.stringify(response, null, 2));
+                mainMenu(); 
             });
-            console.log('Create Project Response:', response);
-            mainMenu();
         });
     };
-
+    
     const deleteProject = async (dbClient:any) => {
         rl.question('Enter project name to delete: ', async (projectName) => {
             const response = await projects.delete({

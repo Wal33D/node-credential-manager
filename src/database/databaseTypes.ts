@@ -94,7 +94,7 @@ export interface Project {
     name: string;
     sizeOnDisk?: number;
     empty?: boolean;
-    services?: string[];
+    services?: Service[];
 }
 
 export interface ProjectOperationParams {

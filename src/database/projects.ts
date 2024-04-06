@@ -1,5 +1,5 @@
 import { Db } from "mongodb";
-import { Project, ProjectOperationParams, ProjectOperationResponse } from "./databaseTypes";
+import { Project, ProjectOperationParams, Service, ProjectOperationResponse } from "./databaseTypes";
 
 const projects = {
     getConnection: (params: ProjectOperationParams): Db => {
@@ -69,11 +69,13 @@ const projects = {
                 },
                 { upsert: true }
             );
-
+            const collections:Service[] = await dbClient.db(projectName).listCollections().toArray() as any;
+            const services: Service[] = collections.filter(collection => collection.serviceName !== '_app_metadata');
+                        
             return {
                 status: true,
                 message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata created.`,
-                project: { name: projectName } as Project,
+                project: { name: projectName, services } as Project,
             };
         } catch (error: any) {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
@@ -98,14 +100,14 @@ const projects = {
         try {
             const databasesList = await dbClient.db().admin().listDatabases();
             const targetDatabaseExists = databasesList.databases.some(db => db.name === targetProjectName);
-    
+
             if (targetDatabaseExists) {
                 return {
                     status: false,
                     message: `Target project '${targetProjectName}' already exists. Copy operation aborted.`
                 };
             }
-    
+
             const operationResults = [];
             const sourceProject = dbClient.db(projectName);
             const targetProject = dbClient.db(targetProjectName);
@@ -128,7 +130,7 @@ const projects = {
             return { status: false, message: error.message };
         }
     },
-    
+
 };
 
 export { projects };
