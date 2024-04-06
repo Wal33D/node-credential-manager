@@ -1,7 +1,6 @@
 import ReadlineManager from "../utils/ReadlineManager";
 import { services } from "../src/database/services";
 
-// Simplify by removing redundant projectName passing for 'list' action
 const performServiceAction = async (dbClient: any, projectName: string, action: string, mainMenuCallback: (dbClient: any) => Promise<void>) => {
     let serviceName = '', newServiceName = '';
     action = action as 'add', 'rename', 'remove', 'exists', 'getService';
@@ -21,7 +20,6 @@ const performServiceAction = async (dbClient: any, projectName: string, action: 
         console.error(`An error occurred during ${action}:`, error.message);
     }
 
-    // Return back to service menu after performing action
     await serviceManagementMenu(dbClient, mainMenuCallback);
 };
 
@@ -39,7 +37,6 @@ export const serviceManagementMenu = async (dbClient: any, mainMenuCallback: (db
 let projectName ;
     switch (choice) {
         case '1':
-            // For listing, the projectName is needed upfront
             if (!projectName) projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
             await performServiceAction(dbClient, projectName, 'list', mainMenuCallback);
             break;
@@ -48,7 +45,6 @@ let projectName ;
         case '4':
         case '5':
         case '6':
-            // For actions other than list, ensure projectName is set
             if (!projectName) projectName = await ReadlineManager.askQuestion('Enter project name for service management: ') as string;
             await performServiceAction(dbClient, projectName, choiceToAction(choice), mainMenuCallback);
             break;
@@ -61,7 +57,6 @@ let projectName ;
     }
 };
 
-// Helper to map choice to action string
 const choiceToAction = (choice:any) => {
     switch(choice) {
         case '2': return 'add';

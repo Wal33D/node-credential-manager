@@ -2,6 +2,7 @@ import ReadlineManager from "../utils/ReadlineManager";
 import { runAllTests } from "./tests/runAllTests";
 import { projectManagementMenu } from "../menu/projectManagementMenu";
 import { serviceManagementMenu } from "../menu/serviceManagementMenu"; // Ensure this is the correct path
+import { secretManagementMenu } from "../menu/secretManagementMenu"; // Import the secretManagementMenu
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { checkAndGenerateEncryptionKey } from "../utils/encryptionInit";
 
@@ -22,9 +23,10 @@ const mainMenu = async (dbClient: any) => {
     console.log('\nMain Menu:');
     console.log('1. Project Management');
     console.log('2. Service Management');
-    console.log('3. Run All Tests');
-    console.log('4. Check and Generate Encryption Key');
-    console.log('5. Exit');
+    console.log('3. Secret Management'); // Newly added option
+    console.log('4. Run All Tests');
+    console.log('5. Check and Generate Encryption Key');
+    console.log('6. Exit');
 
     const choice = await ReadlineManager.askQuestion('Enter your choice: ');
 
@@ -36,18 +38,22 @@ const mainMenu = async (dbClient: any) => {
             await serviceManagementMenu(dbClient, mainMenu);
             break;
         case '3':
+            // Directly call the secretManagementMenu with the dbClient and the main menu callback
+            await secretManagementMenu(dbClient, mainMenu);
+            break;
+        case '4':
             console.log('Running all tests...');
             const result = await runAllTests();
             console.log('Tests completed.', result.completeResult);
             await mainMenu(dbClient);
             break;
-        case '4':
+        case '5':
             console.log('Checking and generating encryption key...');
             const encryptionResult = await checkAndGenerateEncryptionKey();
             console.log('Operation completed.', encryptionResult.filePath);
             await mainMenu(dbClient);
             break;
-        case '5':
+        case '6':
             console.log('Exiting application...');
             ReadlineManager.close();
             if (dbClient && dbClient.close) {
