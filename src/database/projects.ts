@@ -72,14 +72,17 @@ const projects = {
                 },
                 { upsert: true }
             );
-            const collections= await dbClient.db(projectName).listCollections().toArray() as any;
-            const services: Service[] = collections.filter((collection: { name: string; }) => collection.name !== '_app_metadata') as any;
-                        
-            return {
-                status: true,
-                message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata created.`,
-                project: { name: projectName, services } as Project,
-            };
+const collections = await dbClient.db(projectName).listCollections().toArray();
+const serviceNames = collections
+  .filter((collection: { name: string; }) => collection.name !== '_app_metadata')
+  .map((collection: { name: string; }) => collection.name);
+
+return {
+  status: true,
+  message: `Project '${projectName}' created with service '${serviceName}'. _app_metadata created.`,
+  project: { name: projectName, services: serviceNames as Service[] },
+};
+
         } catch (error: any) {
             return { status: false, message: `Failed to create project '${projectName}': ${error.message}` };
         }
