@@ -3,28 +3,36 @@ import { encrypt, decrypt } from "../../utils/encryptionInit";
 import { Secret, LatestVersionParams, VersionOperationResponse, AddVersionParams, Version, UpdateVersionParams, DeleteVersionParams, RollBackVersionParams, ListVersionParams } from "./databaseTypes";
 
 const versions = {
-    list: async (params: ListVersionParams): Promise<VersionOperationResponse> => {
-        const { dbClient, projectName, serviceName, secretName } = params;
+    list: async (params: ListVersionParams & { decrypted?: boolean }): Promise<VersionOperationResponse> => {
+        const { dbClient, projectName, serviceName, secretName, decrypted = false } = params;
         try {
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
-            if (!secret) {
+            if (!secret || !secret.versions || secret.versions.length === 0) {
                 return { status: false, message: `Secret '${secretName}' not found.` };
             }
-            if (!secret.versions || secret.versions.length === 0) {
-                return { status: false, message: `No versions found for secret '${secretName}'.` };
-            }
-
-            const decryptedVersions = secret.versions.map(version => ({
-                ...version,
-                value: decrypt({ hash: { iv: version.iv, content: version.value } as any})
-            }));
-
-            return { status: true, message: `Found ${decryptedVersions.length} version(s) for secret '${secretName}'.`, versions: decryptedVersions };
+    
+            const processedVersions = secret.versions.map(version => {
+                // Decrypt version value if requested and possible (iv is available)
+                if (decrypted && version.iv) {
+                    const decryptedValue = decrypt({ hash: { iv: version.iv, content: version.value }});
+                    const { iv, ...versionWithoutIv } = version;
+                    return { ...versionWithoutIv, value: decryptedValue };
+                } else {
+                    return version;
+                }
+            });
+    
+            return { 
+                status: true, 
+                message: `Found ${processedVersions.length} version(s) for secret '${secretName}'.`, 
+                versions: processedVersions 
+            };
         } catch (error: any) {
             console.error('Error listing secret versions:', error);
             return { status: false, message: error.message };
         }
     },
+    
     add: async (params: AddVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName: providedVersionName, value } = params;
 
@@ -108,8 +116,8 @@ const versions = {
         }
     },
     
-    latest: async (params: LatestVersionParams): Promise<VersionOperationResponse> => {
-        const { dbClient, projectName, serviceName, secretName } = params;
+    latest: async (params: LatestVersionParams & { decrypted?: boolean }): Promise<VersionOperationResponse> => {
+        const { dbClient, projectName, serviceName, secretName, decrypted = false } = params;
         try {
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
             if (!secret || !secret.versions || secret.versions.length === 0) {
@@ -124,33 +132,30 @@ const versions = {
             );
             const latestVersion = sortedVersions[0];
     
-            if (!latestVersion.iv) {
+            if (decrypted && latestVersion.iv) {
+                const decryptedValue = decrypt({
+                    hash: { iv: latestVersion.iv, content: latestVersion.value }
+                });
+    
+                const { iv, ...decryptedLatestVersion } = latestVersion;
                 return {
-                    status: false,
-                    message: "Latest version's value is not encrypted or missing IV.",
+                    status: true,
+                    message: `Latest version '${latestVersion.versionName}' retrieved and decrypted successfully.`,
+                    version: { ...decryptedLatestVersion, value: decryptedValue }
+                };
+            } else {
+                return {
+                    status: true,
+                    message: `Latest version '${latestVersion.versionName}' retrieved successfully.`,
+                    version: latestVersion
                 };
             }
-    
-            const decryptedValue = decrypt({
-                hash: { iv: latestVersion.iv, content: latestVersion.value }
-            });
-    
-            const decryptedLatestVersion = {
-                ...latestVersion,
-                value: decryptedValue
-            };
-    
-            return {
-                status: true,
-                message: `Latest version '${decryptedLatestVersion.versionName}' retrieved and decrypted successfully.`,
-                version: decryptedLatestVersion
-            };
-        } catch (error:any) {
+        } catch (error: any) {
             console.error("Error retrieving or decrypting the latest version:", error);
             return { status: false, message: `Failed to retrieve or decrypt the latest version due to an error: ${error.message}` };
         }
     },
-
+    
     delete: async (params: DeleteVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName } = params;
         try {
