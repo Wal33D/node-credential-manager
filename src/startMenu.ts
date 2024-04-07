@@ -6,7 +6,7 @@ import { secretManagementMenu } from "../menu/secretManagementMenu";
 import { versionManagementMenu } from "../menu/versionManagementMenu"; // Import the versionManagementMenu
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { checkAndGenerateEncryptionKey } from "../utils/encryptionInit";
-
+import { seedDemoDB } from "../menu/seedDemoDB";
 const startApplication = async () => {
     console.log("Initializing database connection...");
 
@@ -57,6 +57,7 @@ const mainMenu = async (dbClient: any) => {
             console.log('Checking and generating encryption key...');
             const encryptionResult = await checkAndGenerateEncryptionKey();
             console.log('Operation completed.', encryptionResult.filePath);
+            await seedDemoDB(dbClient);
             await mainMenu(dbClient);
             break;
         case '7':
