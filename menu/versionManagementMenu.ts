@@ -1,41 +1,14 @@
 import ReadlineManager from "../utils/ReadlineManager";
 import { versions } from "../src/database/versions";
 
-const performVersionAction = async (dbClient: any, action: string, mainMenuCallback: (dbClient: any) => Promise<void>) => {
-    // Prompt for project, service, and secret names at the start of the action
-    const projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
-    const serviceName = await ReadlineManager.askQuestion('Enter service name: ') as string;
-    const secretName = await ReadlineManager.askQuestion('Enter secret name: ') as string;
+let projectName = '';
+let serviceName = '';
+let secretName = '';
 
-    let versionName = '', value = '';
-    let decrypted: any;
-    // Extend the switch case for 'latest' action
-    switch (action) {
-        case 'list':
-            decrypted = await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as any;
-            decrypted = decrypted.trim().toLowerCase() === 'yes';
-            break;
-        case 'add':
-        case 'update':
-            versionName = await ReadlineManager.askQuestion('Enter number name: ') as string;
-            value = await ReadlineManager.askQuestion('Enter version value: ') as string;
-            break;
-        case 'delete':
-            versionName = await ReadlineManager.askQuestion('Enter version number to delete: ') as string;
-            break;
-        case 'rollback':
-        case 'latest':
-            decrypted = await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as any;
-            decrypted = decrypted.trim().toLowerCase() === 'yes';
-            break;
-        default:
-            console.log('Invalid action. Returning to main menu.');
-            mainMenuCallback(dbClient);
-            return;
-    }
-
+const performVersionAction = async (dbClient: any, action: string, mainMenuCallback: (dbClient: any) => Promise<void>, secretName: string, versionName: string = '', value: string = '', decrypted: boolean = false) => {
     try {
-        const params = { dbClient, projectName, serviceName, secretName, versionName, value, decrypted };
+        const params = { dbClient, projectName, serviceName, secretName, versionName, value, decrypted }
+        //@ts-ignore
         const response = await versions[action](params);
         console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} Version Response:`, JSON.stringify(response, null, 2));
     } catch (error: any) {
@@ -47,6 +20,17 @@ const performVersionAction = async (dbClient: any, action: string, mainMenuCallb
 
 export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (dbClient: any) => Promise<void>) => {
     console.log('\nVersion Management Menu:');
+
+    if (!projectName) {
+        projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
+    }
+    if (!serviceName) {
+        serviceName = await ReadlineManager.askQuestion('Enter service name: ') as string;
+    }
+    if (!secretName) {
+        secretName = await ReadlineManager.askQuestion('Enter secret name: ') as string;
+    }
+
     console.log('1. List Versions');
     console.log('2. Add Version');
     console.log('3. Update Version');
@@ -54,38 +38,46 @@ export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (db
     console.log('5. Rollback Version');
     console.log('6. Get Latest Version');
     console.log('7. Return to Main Menu');
+    // Menu options remain the same
 
-    const choice = await ReadlineManager.askQuestion('Enter your choice: ');
+    const choice = await ReadlineManager.askQuestion('Enter your choice: ') as string;
+    const action = choiceToAction(choice);
 
-    // Add a case for handling the 'latest' action
-    switch (choice) {
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6': // Handle the 'latest' action
-            const action = choiceToAction(choice);
-            await performVersionAction(dbClient, action, mainMenuCallback);
+    let versionName = '', value = '';
+    let decrypted = false;
+    let decryptResult = '';
+
+    switch (action) {
+        case 'list':
+        case 'rollback':
+        case 'latest':
+            decryptResult = await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as string;
+            decrypted = decryptResult.trim().toLowerCase() === 'yes';
             break;
-        case '7':
-            await mainMenuCallback(dbClient);
+        case 'add':
+        case 'update':
+            versionName = await ReadlineManager.askQuestion('Enter version name: ') as string;
+            value = await ReadlineManager.askQuestion('Enter version value: ') as string;
             break;
-        default:
-            console.log('Invalid choice. Please select a valid option.');
-            await versionManagementMenu(dbClient, mainMenuCallback);
+        case 'delete':
+            versionName = await ReadlineManager.askQuestion('Enter version number to delete: ') as string;
+            break;
     }
+
+    if (action !== 'list' && action !== 'rollback' && action !== 'latest') {
+    }
+
+    await performVersionAction(dbClient, action, mainMenuCallback, secretName, versionName, value, decrypted);
 };
 
-// Update choiceToAction to include the 'latest' option
-const choiceToAction = (choice: any) => {
+const choiceToAction = (choice: string) => {
     switch (choice) {
         case '1': return 'list';
         case '2': return 'add';
         case '3': return 'update';
         case '4': return 'delete';
         case '5': return 'rollback';
-        case '6': return 'latest'; // Map choice '6' to 'latest' action
+        case '6': return 'latest'; 
         default: throw new Error('Invalid choice for action mapping');
     }
 };
