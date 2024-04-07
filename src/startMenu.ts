@@ -47,17 +47,16 @@ const mainMenu = async (dbClient: any) => {
             await versionManagementMenu(dbClient,mainMenu);
             break;
         case '5':
+            startApplication();
             console.log('Running all tests...');
-            // Ensure runAllTests is properly implemented to handle async operations
-            await runAllTests();
-            console.log('Tests completed.');
+            const result = await runAllTests();
+            console.log('Tests completed.', result.completeResult);
             await mainMenu(dbClient);
             break;
         case '6':
             console.log('Checking and generating encryption key...');
-            // Assuming checkAndGenerateEncryptionKey is properly implemented for async
-            await checkAndGenerateEncryptionKey();
-            console.log('Operation completed.');
+            const encryptionResult = await checkAndGenerateEncryptionKey();
+            console.log('Operation completed.', encryptionResult.filePath);
             await mainMenu(dbClient);
             break;
         case '7':

@@ -25,7 +25,7 @@ export const initializeGlobals = async () => {
     let decryptedSelection;
     let decryptChoice;
     do {
-        decryptChoice = (await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ')).trim().toLowerCase();
+        decryptChoice = (await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as string).trim().toLowerCase();
         if (decryptChoice === 'exit') return null;
         if (decryptChoice !== 'yes' && decryptChoice !== 'no') {
             console.log('Invalid input. Please answer "yes" or "no" or type "exit" to quit.');

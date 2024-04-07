@@ -22,17 +22,20 @@ const performVersionAction = async (dbClient: any, action: string, mainMenuCallb
     }
 };
 
-
 export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (dbClient: any) => Promise<void>) => {
-    // Initialize or reinitialize globals if they are not yet set or when option 7 is selected
+    // Initialize globals only if they haven't been set yet
     if (!projectName || !serviceName || !secretName || decryptedSelection === null) {
         const globals = await initializeGlobals();
-        projectName = globals.projectName;
-        serviceName = globals.serviceName;
-        secretName = globals.secretName;
-        decryptedSelection = globals.decryptedSelection;
+        // Check if the user decided to exit the initialization process
+        if (globals) {
+            ({ projectName, serviceName, secretName, decryptedSelection } = globals);
+        } else {
+            console.log("Initialization skipped or exited. Please ensure all global settings are properly set.");
+            await mainMenuCallback(dbClient);
+            return;
+        }
     }
-    
+
     console.log('\nVersion Management Menu:');
     console.log('1. List Versions');
     console.log('2. Add Version');
@@ -43,18 +46,19 @@ export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (db
     console.log('7. Change Global Settings');
     console.log('8. Return to Main Menu');
 
-    const choice = (await ReadlineManager.askQuestion('Enter your choice: ') as string).trim()
+    const choice = (await ReadlineManager.askQuestion('Enter your choice: ') as string).trim();
     if (choice === '8') {
         await mainMenuCallback(dbClient);
         return;
     } else if (choice === '7') {
-        // Force reinitialize globals
-        const globals = await initializeGlobals(); 
-        projectName = globals.projectName;
-        serviceName = globals.serviceName;
-        secretName = globals.secretName;
-        decryptedSelection = globals.decryptedSelection;
-        
+        // Reinitialize globals anytime user selects to change global settings
+        const globals = await initializeGlobals();
+        if (globals) {
+            ({ projectName, serviceName, secretName, decryptedSelection } = globals);
+        } else {
+            console.log("Global settings update was skipped or exited. Current settings remain unchanged.");
+        }
+        // Display the menu again regardless of whether the user updated the globals or exited
         await versionManagementMenu(dbClient, mainMenuCallback);
         return;
     }
@@ -68,18 +72,18 @@ const handleVersionAction = async (choice: string, dbClient: any, mainMenuCallba
     switch (action) {
         case 'add':
         case 'update':
-   versionName = (await ReadlineManager.askQuestion(
-            'Enter version number (e.g., v1.0). It will be auto-incremented if not supplied: '
-        ) as string).trim();
-        value = (await ReadlineManager.askQuestion(
-            'Enter version value (Note: This will be encrypted automatically using AES-256-CTR algorithm for database storage): '
-        ) as string).trim();
-        break;
-    case 'delete':
-        versionName = (await ReadlineManager.askQuestion(
-            'Enter version number to delete (e.g., v1.0): '
-        ) as string).trim();
-        break;
+            versionName = (await ReadlineManager.askQuestion(
+                'Enter version number (e.g., v1.0). It will be auto-incremented if not supplied: '
+            ) as string).trim();
+            value = (await ReadlineManager.askQuestion(
+                'Enter version value (Note: This will be encrypted automatically using AES-256-CTR algorithm for database storage): '
+            ) as string).trim();
+            break;
+        case 'delete':
+            versionName = (await ReadlineManager.askQuestion(
+                'Enter version number to delete (e.g., v1.0): '
+            ) as string).trim();
+            break;
     }
 
     await performVersionAction(dbClient, action, mainMenuCallback, versionName, value);
