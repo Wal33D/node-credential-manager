@@ -3,24 +3,30 @@ import { versions } from "../src/database/versions";
 
 const performVersionAction = async (dbClient: any, action: string, mainMenuCallback: (dbClient: any) => Promise<void>) => {
     // Prompt for project, service, and secret names at the start of the action
-    const projectName = await ReadlineManager.askQuestion('Enter project name: ')as string;
-    const serviceName = await ReadlineManager.askQuestion('Enter service name: ')as string;
-    const secretName = await ReadlineManager.askQuestion('Enter secret name: ')as string;
+    const projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
+    const serviceName = await ReadlineManager.askQuestion('Enter service name: ') as string;
+    const secretName = await ReadlineManager.askQuestion('Enter secret name: ') as string;
 
     let versionName = '', value = '';
-
+    let decrypted: any;
     // Extend the switch case for 'latest' action
     switch (action) {
+        case 'list':
+            decrypted = await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as any;
+            decrypted = decrypted.trim().toLowerCase() === 'yes';
+            break;
         case 'add':
         case 'update':
-            versionName = await ReadlineManager.askQuestion('Enter version name: ')as string;
-            value = await ReadlineManager.askQuestion('Enter version value: ')as string;
+            versionName = await ReadlineManager.askQuestion('Enter number name: ') as string;
+            value = await ReadlineManager.askQuestion('Enter version value: ') as string;
             break;
         case 'delete':
-            versionName = await ReadlineManager.askQuestion('Enter version name to delete: ')as string;
+            versionName = await ReadlineManager.askQuestion('Enter version number to delete: ') as string;
             break;
         case 'rollback':
-        case 'latest': // No additional input required for 'latest'
+        case 'latest':
+            decrypted = await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as any;
+            decrypted = decrypted.trim().toLowerCase() === 'yes';
             break;
         default:
             console.log('Invalid action. Returning to main menu.');
@@ -29,15 +35,13 @@ const performVersionAction = async (dbClient: any, action: string, mainMenuCallb
     }
 
     try {
-        // For the 'latest' action, versionName and value are not used, so they won't affect the function call
-        const params = { dbClient, projectName, serviceName, secretName, versionName, value };
+        const params = { dbClient, projectName, serviceName, secretName, versionName, value, decrypted };
         const response = await versions[action](params);
         console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} Version Response:`, JSON.stringify(response, null, 2));
     } catch (error: any) {
         console.error(`An error occurred during ${action}:`, error.message);
     }
 
-    // Return to the version management menu after the action
     await versionManagementMenu(dbClient, mainMenuCallback);
 };
 
@@ -74,8 +78,8 @@ export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (db
 };
 
 // Update choiceToAction to include the 'latest' option
-const choiceToAction = (choice:any) => {
-    switch(choice) {
+const choiceToAction = (choice: any) => {
+    switch (choice) {
         case '1': return 'list';
         case '2': return 'add';
         case '3': return 'update';
