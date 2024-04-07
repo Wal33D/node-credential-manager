@@ -49,33 +49,31 @@ export async function seedDemoDB(dbClient: MongoClient) {
                         {
                             name: "Google Service Account",
                             envName: "GOOGLE_SERVICE_ACCOUNT",
-                            value: JSON.stringify({
+                            value: {
                                 "type": "service_account",
                                 "project_id": "weatherApp",
                                 "private_key_id": "someprivatekeyid",
-                                "private_key": "-----BEGIN PRIVATE KEY-----\\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBK...\\n-----END PRIVATE KEY-----\\n",
+                                "private_key": "-----BEGIN PRIVATE KEY-----MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBK...-----END PRIVATE KEY-----",
                                 "client_email": "demo@weatherApp.iam.gserviceaccount.com",
                                 "client_id": "1234567890",
                                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                                 "token_uri": "https://oauth2.googleapis.com/token",
                                 "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
                                 "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/demo%40example.iam.gserviceaccount.com"
-                            }, null, 2),
+                        },
                             envType: "production"
                         },
                         {
                             name: "Google OAuth Key",
                             envName: "GOOGLE_OAUTH2_KEY",
                             value: JSON.stringify({
-                                "installed": {
-                                    "client_id": "WeatherApp.apps.googleusercontent.com",
-                                    "project_id": "WeatherApp",
-                                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                                    "token_uri": "https://oauth2.googleapis.com/token",
-                                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                                    "client_secret": "weatherApp-client-secret",
-                                    "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
-                                }
+                                "client_id": "WeatherApp.apps.googleusercontent.com",
+                                "project_id": "WeatherApp",
+                                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                                "token_uri": "https://oauth2.googleapis.com/token",
+                                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                                "client_secret": "weatherApp-client-secret",
+                                "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
                             }, null, 2),
                             envType: "production"
                         }

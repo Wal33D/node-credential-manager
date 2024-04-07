@@ -12,7 +12,10 @@ const performVersionAction = async (dbClient: any, action: string, mainMenuCallb
         const params = { dbClient, projectName, serviceName, secretName, versionName, value, decrypted: decryptedSelection ?? false };
         //@ts-ignore
         const response = await versions[action](params);
-        console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} Version Response:`, JSON.stringify(response, null, 2));
+        console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} Status:`, JSON.stringify(response.status, null, 2));
+        console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} Message: Response:`, JSON.stringify(response.message, null, 2));
+        console.log(response?.version?.value || response?.versions);
+
     } catch (error: any) {
         console.error(`An error occurred during ${action}:`, error.message);
     }

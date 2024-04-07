@@ -47,7 +47,7 @@ export interface VersionOperationResponse {
 export interface Version {
     iv?: string;
     versionName: string;
-    value: string;
+    value: any;
 }
 
 export interface VersionOperationResponse {
