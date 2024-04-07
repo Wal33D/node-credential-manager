@@ -1,14 +1,15 @@
 import ReadlineManager from "../utils/ReadlineManager";
 import { versions } from "../src/database/versions";
+import { initializeGlobals } from "../utils/initializeGlobals";
 
 let projectName = '';
 let serviceName = '';
 let secretName = '';
-let decryptedGlobal: boolean | null = null;
+let decryptedSelection: boolean | null = null;
 
 const performVersionAction = async (dbClient: any, action: string, mainMenuCallback: (dbClient: any) => Promise<void>, versionName: string = '', value: string = '') => {
     try {
-        const params = { dbClient, projectName, serviceName, secretName, versionName, value, decrypted: decryptedGlobal ?? false };
+        const params = { dbClient, projectName, serviceName, secretName, versionName, value, decrypted: decryptedSelection ?? false };
         //@ts-ignore
         const response = await versions[action](params);
         console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} Version Response:`, JSON.stringify(response, null, 2));
@@ -21,25 +22,17 @@ const performVersionAction = async (dbClient: any, action: string, mainMenuCallb
     }
 };
 
-export const initializeGlobals = async () => {
-    projectName = (await ReadlineManager.askQuestion('Enter project name: ') as string).trim();
-    serviceName = (await ReadlineManager.askQuestion('Enter service name: ') as string).trim();
-    secretName = (await ReadlineManager.askQuestion('Enter secret name: ') as string).trim();
-    let decryptChoice;
-    do {
-        decryptChoice = (await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as string).trim().toLowerCase();
-        if (decryptChoice !== 'yes' && decryptChoice !== 'no') {
-            console.log('Invalid input. Please answer "yes" or "no".');
-        }
-    } while (decryptChoice !== 'yes' && decryptChoice !== 'no');
-    decryptedGlobal = decryptChoice === 'yes';
-};
 
 export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (dbClient: any) => Promise<void>) => {
-    // Call initializeGlobals at the start if globals are not yet set
-    if (!projectName || !serviceName || !secretName || decryptedGlobal === null) {
-        await initializeGlobals();
+    // Initialize or reinitialize globals if they are not yet set or when option 7 is selected
+    if (!projectName || !serviceName || !secretName || decryptedSelection === null) {
+        const globals = await initializeGlobals();
+        projectName = globals.projectName;
+        serviceName = globals.serviceName;
+        secretName = globals.secretName;
+        decryptedSelection = globals.decryptedSelection;
     }
+    
     console.log('\nVersion Management Menu:');
     console.log('1. List Versions');
     console.log('2. Add Version');
@@ -55,7 +48,13 @@ export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (db
         await mainMenuCallback(dbClient);
         return;
     } else if (choice === '7') {
-        await initializeGlobals();
+        // Force reinitialize globals
+        const globals = await initializeGlobals(); 
+        projectName = globals.projectName;
+        serviceName = globals.serviceName;
+        secretName = globals.secretName;
+        decryptedSelection = globals.decryptedSelection;
+        
         await versionManagementMenu(dbClient, mainMenuCallback);
         return;
     }
