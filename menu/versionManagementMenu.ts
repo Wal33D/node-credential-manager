@@ -4,6 +4,8 @@ import { versions } from "../src/database/versions";
 let projectName = '';
 let serviceName = '';
 let secretName = '';
+let decrypted = false;
+let decryptResult = '';
 
 const performVersionAction = async (dbClient: any, action: string, mainMenuCallback: (dbClient: any) => Promise<void>, versionName: string = '', value: string = '', decrypted: boolean = false) => {
     try {
@@ -55,6 +57,17 @@ export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (db
         }
     }
 
+    // Validate and initialize secretName if not already set
+    while (!decryptResult || !decryptResult.trim().length) {
+        decryptResult = await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as string;
+        if (!decryptResult.trim().length) {
+            decrypted = decryptResult.trim().toLowerCase() === 'yes';
+            console.log('Decryption choice must be a yes or no string. Please try again.');
+        } else {
+            decrypted = false;
+        }
+    }
+
     // Menu options
     console.log('1. List Versions');
     console.log('2. Add Version');
@@ -75,15 +88,11 @@ export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (db
     const action = choiceToAction(choice);
 
     let versionName = '', value = '';
-    let decrypted = false;
-    let decryptResult = '';
 
     switch (action) {
         case 'list':
         case 'rollback':
         case 'latest':
-            decryptResult = await ReadlineManager.askQuestion('Do you want the versions decrypted? (yes/no): ') as string;
-            decrypted = decryptResult.trim().toLowerCase() === 'yes';
             break;
         case 'add':
         case 'update':

@@ -172,7 +172,7 @@ const versions = {
         const { dbClient, projectName, serviceName, secretName, decrypted = false } = params;
         try {
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
-            if (!secret || secret.versions.length === 0) {
+            if (!secret || secret.versions.length <= 1) {
                 return { status: false, message: `No versions found for secret '${secretName}'.` };
             }
             
