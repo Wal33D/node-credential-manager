@@ -25,10 +25,12 @@ const mainMenu = async (dbClient: any) => {
     console.log('1. Project Management');
     console.log('2. Service Management');
     console.log('3. Secret Management');
-    console.log('4. Version Management'); // Add the Version Management option
+    console.log('4. Version Management');
     console.log('5. Run All Tests');
     console.log('6. Check and Generate Encryption Key');
-    console.log('7. Exit');
+    console.log('7. Seed DB w/Sample Project Data');
+
+    console.log('8. Exit');
 
     const choice = await ReadlineManager.askQuestion('Enter your choice: ');
 
@@ -44,7 +46,7 @@ const mainMenu = async (dbClient: any) => {
             break;
         case '4':
 
-            await versionManagementMenu(dbClient,mainMenu);
+            await versionManagementMenu(dbClient, mainMenu);
             break;
         case '5':
             startApplication();
@@ -57,10 +59,15 @@ const mainMenu = async (dbClient: any) => {
             console.log('Checking and generating encryption key...');
             const encryptionResult = await checkAndGenerateEncryptionKey();
             console.log('Operation completed.', encryptionResult.filePath);
-            await seedDemoDB(dbClient);
             await mainMenu(dbClient);
             break;
         case '7':
+            console.log('Starting database seeding...');
+            await seedDemoDB(dbClient);
+            console.log('Database seeding completed.');
+            await mainMenu(dbClient);            
+            break;
+        case '8':
             console.log('Exiting application...');
             ReadlineManager.close();
             if (dbClient && dbClient.close) {

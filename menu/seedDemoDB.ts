@@ -4,6 +4,27 @@ import { secrets } from "../src/database/secrets";
 import { versions } from "../src/database/versions";
 import { EnvType } from "../src/database/databaseTypes";
 
+function getRandomInt(min: any, max: any) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+async function addVersionsForSecret(dbClient: MongoClient, projectName: string, serviceName: string, secretName: string) {
+    // Decide randomly how many versions to add (between 0 and 5)
+    const versionsCount = getRandomInt(0, 5);
+    for (let i = 1; i <= versionsCount; i++) {
+        const versionName = `v1.${i}`;
+        const value = `Dummy value for ${versionName}`;
+        await versions.add({
+            dbClient,
+            projectName,
+            serviceName,
+            secretName,
+            versionName,
+            value,
+        });
+    }
+}
+
 export async function seedDemoDB(dbClient: MongoClient) {
     const projectsInfo = [
         {
@@ -53,57 +74,102 @@ export async function seedDemoDB(dbClient: MongoClient) {
                                     "token_uri": "https://oauth2.googleapis.com/token",
                                     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
                                     "client_secret": "weatherApp-client-secret",
-                                    "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob","http://localhost"]
+                                    "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
                                 }
                             }, null, 2),
+                            envType: "production"
+                        }
+                    ]
+                },
+                {
+                    name: "Azure",
+                    secrets: [
+                        {
+                            name: "Azure Web API Key 1",
+                            envName: "AZURE_WEB_API_KEY_1",
+                            value: "Initial Azure Web API Key 1",
+                            envType: "production"
+                        },
+                        {
+                            name: "Azure Web API Key 2",
+                            envName: "AZURE_WEB_API_KEY_2",
+                            value: "Initial Azure Web API Key 2",
+                            envType: "production"
+                        },
+                        {
+                            name: "Azure Endpoint",
+                            envName: "AZURE_ENDPOINT",
+                            value: "https://example.azure.com/api",
+                            envType: "production"
+                        }
+                    ]
+                },
+                {
+                    name: "AWS Services",
+                    secrets: [
+                        {
+                            name: "AWS Access Key",
+                            envName: "AWS_ACCESS_KEY_ID",
+                            value: "Initial AWS Access Key",
+                            envType: "production"
+                        },
+                        {
+                            name: "AWS Secret Access Key",
+                            envName: "AWS_SECRET_ACCESS_KEY",
+                            value: "Initial AWS Secret Access Key",
+                            envType: "production"
+                        },
+                        {
+                            name: "AWS S3 Bucket Name",
+                            envName: "AWS_S3_BUCKET_NAME",
+                            value: "weatherapp-bucket",
+                            envType: "production"
+                        }
+                    ]
+                },
+                {
+                    name: "Stripe",
+                    secrets: [
+                        {
+                            name: "Stripe Secret Key",
+                            envName: "STRIPE_SECRET_KEY",
+                            value: "Initial Stripe Secret Key",
+                            envType: "production"
+                        },
+                        {
+                            name: "Stripe Publishable Key",
+                            envName: "STRIPE_PUBLISHABLE_KEY",
+                            value: "Initial Stripe Publishable Key",
                             envType: "production"
                         }
                     ]
                 }
             ]
         },
-        {
-            name: "ToDoListApp",
-            services: [
-                {
-                    name: "Database",
-                    secrets: [
-                        { name: "Database Connection String", envName: "DB_CONNECTION_STRING", value: "Initial DB connection string", envType: "test" },
-                        { name: "Database User", envName: "DB_USER", value: "Initial DB user", envType: "development" },
-                        { name: "Database Password", envName: "DB_PASS", value: "Initial DB pass", envType: "production" }
-                    ]
-                },
-                {
-                    name: "Authentication",
-                    secrets: [
-                        { name: "Authentication Secret", envName: "AUTH_SECRET", value: "Initial auth secret", envType: "production" },
-                        { name: "Refresh Secret", envName: "REFRESH_SECRET", value: "Initial refresh secret", envType: "test" }
-                    ]
-                }
-            ]
-        }
+
     ];
 
     for (let project of projectsInfo) {
         for (let service of project.services) {
             await projects.create({ dbClient, projectName: project.name, serviceName: service.name });
 
-            for (let { name: secretName, value: initialValue, envName, envType } of service.secrets) {
+            for (let secret of service.secrets) {
                 // Add the secret with its initial version
                 await secrets.add({
                     dbClient,
                     projectName: project.name,
                     serviceName: service.name,
-                    secretName,
-                    envName: envName, // envName is the name of the secret
-                    envType: envType as EnvType,
-                    versions: [{ versionName: 'v1.0', value: initialValue }]
+                    secretName: secret.name,
+                    envName: secret.envName,
+                    envType: secret.envType as EnvType,
+                    versions: [{ versionName: 'v1.0', value: secret.value }]
                 });
 
-                // Optionally, add more versions if needed
+                // Dynamically add between 0 and 5 additional versions for each secret
+                await addVersionsForSecret(dbClient, project.name, service.name, secret.name);
             }
         }
     }
 
-    console.log("Realistic dummy data insertion complete.");
+    console.log("Realistic dummy data insertion complete with dynamic versions.");
 }
