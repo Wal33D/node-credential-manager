@@ -121,15 +121,25 @@ const projects = {
         const { dbClient, projectName, targetProjectName } = params;
         try {
             const databasesList = await dbClient.db().admin().listDatabases();
+    
+            // Check if the source project exists
+            const sourceDatabaseExists = databasesList.databases.some(db => db.name === projectName);
+            if (!sourceDatabaseExists) {
+                return {
+                    status: false,
+                    message: `Source project '${projectName}' does not exist. Copy operation aborted.`
+                };
+            }
+    
+            // Check if the target project already exists
             const targetDatabaseExists = databasesList.databases.some(db => db.name === targetProjectName);
-
             if (targetDatabaseExists) {
                 return {
                     status: false,
                     message: `Target project '${targetProjectName}' already exists. Copy operation aborted.`
                 };
             }
-
+    
             const operationResults = [];
             const sourceProject = dbClient.db(projectName);
             const targetProject = dbClient.db(targetProjectName);
@@ -140,7 +150,6 @@ const projects = {
                     const operationResult = await targetProject.collection(service.name).insertMany(docs);
                     operationResults.push(operationResult);
                 } else {
-                   // console.log(`No documents to copy for collection: ${service.name}`);
                 }
             }
             return {
@@ -149,10 +158,9 @@ const projects = {
                 project: { name: targetProjectName } as Project,
             };
         } catch (error: any) {
-            return { status: false, message: error.message };
+            return { status: false, message: `Error during copy operation: ${error.message}` };
         }
-    },
-
+    }
 };
 
 export { projects };
