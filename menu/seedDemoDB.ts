@@ -49,7 +49,7 @@ export async function seedDemoDB(dbClient: MongoClient) {
                         {
                             name: "Google Service Account",
                             envName: "GOOGLE_SERVICE_ACCOUNT",
-                            value: {
+                            value: JSON.stringify({
                                 "type": "service_account",
                                 "project_id": "weatherApp",
                                 "private_key_id": "someprivatekeyid",
@@ -60,7 +60,7 @@ export async function seedDemoDB(dbClient: MongoClient) {
                                 "token_uri": "https://oauth2.googleapis.com/token",
                                 "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
                                 "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/demo%40example.iam.gserviceaccount.com"
-                        },
+                            }, null, 2),
                             envType: "production"
                         },
                         {
@@ -141,10 +141,64 @@ export async function seedDemoDB(dbClient: MongoClient) {
                             envType: "production"
                         }
                     ]
+                },
+                {
+                    name: "PubSub",
+                    secrets: [
+                        {
+                            name: "PubSub Service Account",
+                            envName: "PUBSUB_SERVICE_ACCOUNT",
+                            value: JSON.stringify({
+                                "type": "service_account",
+                                "project_id": "weatherApp",
+                                "private_key_id": "pubsubprivatekeyid",
+                                "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg...-----END PRIVATE KEY-----",
+                                "client_email": "pubsub@weatherApp.iam.gserviceaccount.com",
+                                "client_id": "pubsub-client-id",
+                                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                                "token_uri": "https://oauth2.googleapis.com/token",
+                                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                                "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/pubsub%40example.iam.gserviceaccount.com"
+                            }, null, 2),
+                            envType: "production"
+                        }
+                    ]
+                },
+                {
+                    name: "MongoDB",
+                    secrets: [
+                        {
+                            name: "MongoDB Connection String",
+                            envName: "MONGODB_CONNECTION_STRING",
+                            value: "mongodb+srv://user:password@cluster.example.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+                            envType: "production"
+                        }
+                    ]
+                },
+                {
+                    name: "Firebase",
+                    secrets: [
+                        {
+                            name: "Firebase Admin SDK",
+                            envName: "FIREBASE_ADMIN_SDK",
+                            value: JSON.stringify({
+                                "type": "service_account",
+                                "project_id": "weatherapp-firebase",
+                                "private_key_id": "firebasekeyid",
+                                "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANB...-----END PRIVATE KEY-----",
+                                "client_email": "firebase-adminsdk@weatherapp-firebase.iam.gserviceaccount.com",
+                                "client_id": "firebase-client-id",
+                                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                                "token_uri": "https://oauth2.googleapis.com/token",
+                                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                                "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk%40weatherapp-firebase.iam.gserviceaccount.com"
+                            }, null, 2),
+                            envType: "production"
+                        }
+                    ]
                 }
             ]
-        },
-
+        }
     ];
 
     for (let project of projectsInfo) {

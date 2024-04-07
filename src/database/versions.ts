@@ -23,7 +23,6 @@ const versions = {
             return { status: false, message: error.message };
         }
     },
-    
     add: async (params: AddVersionParams & { decrypted?: boolean }): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName: providedVersionName, value, decrypted = false } = params;
     
@@ -71,7 +70,6 @@ const versions = {
             return { status: false, message: error.message };
         }
     },
-    
     update: async (params: UpdateVersionParams & { decrypted?: boolean }): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName, value, decrypted = false } = params;
         
@@ -210,7 +208,6 @@ const versions = {
             return { status: false, message: error.message };
         }
     },
-
     latest: async (params: LatestVersionParams & { decrypted?: boolean }): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, decrypted = false } = params;
         try {
