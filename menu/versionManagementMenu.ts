@@ -21,7 +21,7 @@ const performVersionAction = async (dbClient: any, action: string, mainMenuCallb
     }
 };
 
-const initializeGlobals = async () => {
+export const initializeGlobals = async () => {
     projectName = (await ReadlineManager.askQuestion('Enter project name: ') as string).trim();
     serviceName = (await ReadlineManager.askQuestion('Enter service name: ') as string).trim();
     secretName = (await ReadlineManager.askQuestion('Enter secret name: ') as string).trim();
@@ -69,12 +69,18 @@ const handleVersionAction = async (choice: string, dbClient: any, mainMenuCallba
     switch (action) {
         case 'add':
         case 'update':
-            versionName = (await ReadlineManager.askQuestion('Enter version name: ') as string).trim();
-            value = (await ReadlineManager.askQuestion('Enter version value: ') as string).trim();
-            break;
-        case 'delete':
-            versionName = (await ReadlineManager.askQuestion('Enter version number to delete: ') as string).trim();
-            break;
+   versionName = (await ReadlineManager.askQuestion(
+            'Enter version number (e.g., v1.0). It will be auto-incremented if not supplied: '
+        ) as string).trim();
+        value = (await ReadlineManager.askQuestion(
+            'Enter version value (Note: This will be encrypted automatically using AES-256-CTR algorithm for database storage): '
+        ) as string).trim();
+        break;
+    case 'delete':
+        versionName = (await ReadlineManager.askQuestion(
+            'Enter version number to delete (e.g., v1.0): '
+        ) as string).trim();
+        break;
     }
 
     await performVersionAction(dbClient, action, mainMenuCallback, versionName, value);
