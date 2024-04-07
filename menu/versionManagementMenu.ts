@@ -5,9 +5,10 @@ let projectName = '';
 let serviceName = '';
 let secretName = '';
 
-const performVersionAction = async (dbClient: any, action: string, mainMenuCallback: (dbClient: any) => Promise<void>, secretName: string, versionName: string = '', value: string = '', decrypted: boolean = false) => {
+const performVersionAction = async (dbClient: any, action: string, mainMenuCallback: (dbClient: any) => Promise<void>, versionName: string = '', value: string = '', decrypted: boolean = false) => {
     try {
-        const params = { dbClient, projectName, serviceName, secretName, versionName, value, decrypted }
+        // Note that we're now using `secretName` directly from the outer scope.
+        const params = { dbClient, projectName, serviceName, secretName, versionName, value, decrypted };
         //@ts-ignore
         const response = await versions[action](params);
         console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} Version Response:`, JSON.stringify(response, null, 2));
@@ -15,22 +16,46 @@ const performVersionAction = async (dbClient: any, action: string, mainMenuCallb
         console.error(`An error occurred during ${action}:`, error.message);
     }
 
-    await versionManagementMenu(dbClient, mainMenuCallback);
+    // Only call the versionManagementMenu if the action is not 'return to main menu'
+    if (action !== 'return') {
+        await versionManagementMenu(dbClient, mainMenuCallback);
+    }
 };
 
 export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (dbClient: any) => Promise<void>) => {
     console.log('\nVersion Management Menu:');
 
-    if (!projectName) {
+    // Validate and initialize projectName if not already set
+    while (!projectName || !projectName.trim().length) {
         projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
-    }
-    if (!serviceName) {
-        serviceName = await ReadlineManager.askQuestion('Enter service name: ') as string;
-    }
-    if (!secretName) {
-        secretName = await ReadlineManager.askQuestion('Enter secret name: ') as string;
+        if (!projectName.trim().length) {
+            console.log('Project name must be a non-empty string. Please try again.');
+        } else {
+            projectName = projectName.trim();
+        }
     }
 
+    // Validate and initialize serviceName if not already set
+    while (!serviceName || !serviceName.trim().length) {
+        serviceName = await ReadlineManager.askQuestion('Enter service name: ') as string;
+        if (!serviceName.trim().length) {
+            console.log('Service name must be a non-empty string. Please try again.');
+        } else {
+            serviceName = serviceName.trim();
+        }
+    }
+
+    // Validate and initialize secretName if not already set
+    while (!secretName || !secretName.trim().length) {
+        secretName = await ReadlineManager.askQuestion('Enter secret name: ') as string;
+        if (!secretName.trim().length) {
+            console.log('Secret name must be a non-empty string. Please try again.');
+        } else {
+            secretName = secretName.trim();
+        }
+    }
+
+    // Menu options
     console.log('1. List Versions');
     console.log('2. Add Version');
     console.log('3. Update Version');
@@ -38,9 +63,15 @@ export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (db
     console.log('5. Rollback Version');
     console.log('6. Get Latest Version');
     console.log('7. Return to Main Menu');
-    // Menu options remain the same
 
     const choice = await ReadlineManager.askQuestion('Enter your choice: ') as string;
+    
+    // Handle return to main menu without additional prompts
+    if (choice === '7') {
+        await mainMenuCallback(dbClient);
+        return; // Exit function to prevent further execution
+    }
+
     const action = choiceToAction(choice);
 
     let versionName = '', value = '';
@@ -64,10 +95,7 @@ export const versionManagementMenu = async (dbClient: any, mainMenuCallback: (db
             break;
     }
 
-    if (action !== 'list' && action !== 'rollback' && action !== 'latest') {
-    }
-
-    await performVersionAction(dbClient, action, mainMenuCallback, secretName, versionName, value, decrypted);
+    await performVersionAction(dbClient, action, mainMenuCallback, versionName, value, decrypted);
 };
 
 const choiceToAction = (choice: string) => {

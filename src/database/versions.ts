@@ -11,16 +11,7 @@ const versions = {
                 return { status: false, message: `Secret '${secretName}' not found.` };
             }
     
-            const processedVersions = secret.versions.map(version => {
-                // Decrypt version value if requested and possible (iv is available)
-                if (decrypted && version.iv) {
-                    const decryptedValue = decrypt({ hash: { iv: version.iv, content: version.value }});
-                    const { iv, ...versionWithoutIv } = version;
-                    return { ...versionWithoutIv, value: decryptedValue };
-                } else {
-                    return version;
-                }
-            });
+            const processedVersions = secret.versions.map(version => processVersionDecryption(version, decrypted));
     
             return { 
                 status: true, 
@@ -115,47 +106,7 @@ const versions = {
             return { status: false, message: error.message };
         }
     },
-    
-    latest: async (params: LatestVersionParams & { decrypted?: boolean }): Promise<VersionOperationResponse> => {
-        const { dbClient, projectName, serviceName, secretName, decrypted = false } = params;
-        try {
-            const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
-            if (!secret || !secret.versions || secret.versions.length === 0) {
-                return {
-                    status: false,
-                    message: `No versions found for secret '${secretName}'.`,
-                };
-            }
-    
-            const sortedVersions = secret.versions.sort((a, b) =>
-                b.versionName.localeCompare(a.versionName, undefined, { numeric: true, sensitivity: 'base' })
-            );
-            const latestVersion = sortedVersions[0];
-    
-            if (decrypted && latestVersion.iv) {
-                const decryptedValue = decrypt({
-                    hash: { iv: latestVersion.iv, content: latestVersion.value }
-                });
-    
-                const { iv, ...decryptedLatestVersion } = latestVersion;
-                return {
-                    status: true,
-                    message: `Latest version '${latestVersion.versionName}' retrieved and decrypted successfully.`,
-                    version: { ...decryptedLatestVersion, value: decryptedValue }
-                };
-            } else {
-                return {
-                    status: true,
-                    message: `Latest version '${latestVersion.versionName}' retrieved successfully.`,
-                    version: latestVersion
-                };
-            }
-        } catch (error: any) {
-            console.error("Error retrieving or decrypting the latest version:", error);
-            return { status: false, message: `Failed to retrieve or decrypt the latest version due to an error: ${error.message}` };
-        }
-    },
-    
+
     delete: async (params: DeleteVersionParams): Promise<VersionOperationResponse> => {
         const { dbClient, projectName, serviceName, secretName, versionName } = params;
         try {
@@ -195,33 +146,78 @@ const versions = {
             return { status: false, message: error.message };
         }
     },
-    rollback: async (params: RollBackVersionParams): Promise<VersionOperationResponse> => {
-        const { dbClient, projectName, serviceName, secretName } = params;
+     rollback: async (params: RollBackVersionParams & { decrypted?: boolean }): Promise<VersionOperationResponse> => {
+        const { dbClient, projectName, serviceName, secretName, decrypted = false } = params;
         try {
             const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
-            if (!secret || secret.versions.length === 0) {
+            if (!secret || secret.versions.length <= 1) {
                 return { status: false, message: `No versions found for secret '${secretName}'.` };
             }
-
+    
+            // Remove the latest version from the list
             const latestVersion = secret.versions.shift();
-
+            if (!latestVersion) {
+                return { status: false, message: `Failed to roll back because no versions exist.`, versions: secret.versions || [] };
+            }
+    
+            // Update the database to reflect the rollback
             await dbClient.db(projectName).collection(serviceName).updateOne(
                 { secretName },
                 { $set: { versions: secret.versions } }
             );
-
-            if (latestVersion) {
-                return { status: true, message: `Rolled back successfully, removing version '${latestVersion.versionName}'.`, versions: secret.versions };
-            } else {
-                return { status: false, message: `Failed to roll back.`, versions: secret.versions || [] };
-            }
+    
+            const processedLatestVersion = processVersionDecryption(latestVersion, decrypted);
+            const versionsForResponse = [processedLatestVersion, ...secret.versions.map(version => processVersionDecryption(version, decrypted))];
+    
+            return {
+                status: true,
+                message: `Rolled back successfully, removing version '${processedLatestVersion.versionName}'.`,
+                versions: versionsForResponse
+            };
         } catch (error: any) {
             console.error("Error rolling back secret version:", error);
             return { status: false, message: error.message };
         }
-    }
+    },
 
+    latest: async (params: LatestVersionParams & { decrypted?: boolean }): Promise<VersionOperationResponse> => {
+        const { dbClient, projectName, serviceName, secretName, decrypted = false } = params;
+        try {
+            const secret = await dbClient.db(projectName).collection(serviceName).findOne<Secret>({ secretName });
+            if (!secret || !secret.versions || secret.versions.length === 0) {
+                return {
+                    status: false,
+                    message: `No versions found for secret '${secretName}'.`,
+                };
+            }
+    
+            const sortedVersions = secret.versions.sort((a, b) =>
+                b.versionName.localeCompare(a.versionName, undefined, { numeric: true, sensitivity: 'base' })
+            );
+            const latestVersion = sortedVersions[0];
+    
+            const processedLatestVersion = processVersionDecryption(latestVersion, decrypted);
+    
+            return {
+                status: true,
+                message: `Latest version '${latestVersion.versionName}' retrieved${decrypted ? " and decrypted" : ""} successfully.`,
+                version: processedLatestVersion
+            };
+        } catch (error: any) {
+            console.error("Error retrieving or decrypting the latest version:", error);
+            return { status: false, message: `Failed to retrieve or decrypt the latest version due to an error: ${error.message}` };
+        }
+    },
 }
 
+const processVersionDecryption = (version: Version, decrypted: boolean): Version => {
+    if (decrypted && version.iv) {
+        const decryptedValue = decrypt({ hash: { iv: version.iv, content: version.value } });
+        const { iv, ...versionWithoutIv } = version;
+        return { ...versionWithoutIv, value: decryptedValue };
+    } else {
+        return version;
+    }
+};
 
 export { versions };
