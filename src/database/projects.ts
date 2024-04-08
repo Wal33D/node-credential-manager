@@ -131,7 +131,6 @@ const projects = {
                 };
             }
     
-            // Check if the target project already exists
             const targetDatabaseExists = databasesList.databases.some(db => db.name === targetProjectName);
             if (targetDatabaseExists) {
                 return {

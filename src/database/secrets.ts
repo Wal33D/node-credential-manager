@@ -147,7 +147,7 @@ const secrets = {
             console.error("Error finding secret by name:", error);
             return { status: false, message: `Failed to find secret '${secretName}'.`, projectName, serviceName };
         }
-    },
+    }
     
 }
 
