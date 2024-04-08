@@ -1,5 +1,6 @@
 import { Secret, ServiceOperationParams, ServiceOperationResponse,Service  } from "./databaseTypes";
-
+import { writeFile } from "fs/promises"; // Correct import for writeFile
+import { join } from "path"; // Correct import for join
 const services = {
     list: async ({ dbClient, projectName }: ServiceOperationParams): Promise<ServiceOperationResponse> => {
         try {
