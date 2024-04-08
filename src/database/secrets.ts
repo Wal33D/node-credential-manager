@@ -147,7 +147,38 @@ const secrets = {
             console.error("Error finding secret by name:", error);
             return { status: false, message: `Failed to find secret '${secretName}'.`, projectName, serviceName };
         }
-    }
+    },    
+    export: async (params: SecretOperationParams & { outputPath?: string, decrypted?: boolean }): Promise<{ status: boolean, message: string }> => {
+        const { dbClient, projectName, serviceName, outputPath = '.', decrypted = true } = params;
+        try {
+            // Use the 'list' method to fetch all secrets
+            const response = await secrets.list({ dbClient, projectName, serviceName, decrypted });
+
+            if (!response.status || !response.secrets || response.secrets.length === 0) {
+                throw new Error("No secrets found or unable to retrieve secrets.");
+            }
+
+            // Format the secrets into .env file content
+            const envFileContent = response.secrets.map(secret => {
+                // Assuming the most recent version is the first one
+                const latestVersion = secret.versions[0];
+                return `${secret.envName}=${latestVersion.value}`;
+            }).join('\n');
+
+            // Define the file name and path
+            const fileName = `${projectName}_${serviceName}.env`;
+            const filePath = path.join(outputPath, fileName);
+
+            // Write the .env content to a file
+            fs.writeFileSync(filePath, envFileContent, 'utf8');
+
+            return { status: true, message: `Successfully exported secrets to '${filePath}'.` };
+        } catch (error:any) {
+            console.error("Error exporting secrets:", error);
+            return { status: false, message: `Failed to export secrets: ${error.message}` };
+        }
+    },
+
     
 }
 
