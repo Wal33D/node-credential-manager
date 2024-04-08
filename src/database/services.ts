@@ -1,7 +1,8 @@
-import { decrypt } from "dotenv";
 import { Secret, ServiceOperationParams, ServiceOperationResponse,Service  } from "./databaseTypes";
 import { writeFile } from "fs/promises"; 
 import { join } from "path"; 
+import { decrypt } from "../../utils/encryptionInit";
+
 const services = {
     list: async ({ dbClient, projectName }: ServiceOperationParams): Promise<ServiceOperationResponse> => {
         try {
@@ -78,7 +79,7 @@ const services = {
             return { status: false, message: error.message };
         }
     },
-    exportAllServicesToEnv: async ({ dbClient, projectName, outputDir = '.', decrypted = false }: ServiceOperationParams & { outputDir?: string, decrypted?: boolean }): Promise<ServiceOperationResponse> => {
+    exportAllServicesToEnv: async ({ dbClient, projectName, outputDir = '.', decrypted = true }: ServiceOperationParams & { outputDir?: string, decrypted?: boolean }): Promise<ServiceOperationResponse> => {
         try {
             const allServicesResponse = await services.list({ dbClient, projectName }) as any;
             if (!allServicesResponse.status) {
