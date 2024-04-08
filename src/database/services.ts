@@ -1,3 +1,4 @@
+import { decrypt } from "dotenv";
 import { Secret, ServiceOperationParams, ServiceOperationResponse,Service  } from "./databaseTypes";
 import { writeFile } from "fs/promises"; 
 import { join } from "path"; 
@@ -77,7 +78,7 @@ const services = {
             return { status: false, message: error.message };
         }
     },
-    exportAllServicesToEnv: async ({ dbClient, projectName, outputDir = '.' }: ServiceOperationParams & { outputDir?: string }): Promise<ServiceOperationResponse> => {
+    exportAllServicesToEnv: async ({ dbClient, projectName, outputDir = '.', decrypted = false }: ServiceOperationParams & { outputDir?: string, decrypted?: boolean }): Promise<ServiceOperationResponse> => {
         try {
             const allServicesResponse = await services.list({ dbClient, projectName }) as any;
             if (!allServicesResponse.status) {
@@ -92,7 +93,8 @@ const services = {
                     const secretsEnv = serviceResponse.service.secrets.map((secret: { versions: string | any[]; envName: any; }) => {
                         // Assuming the latest version is the last in the versions array
                         const latestVersion = secret.versions[secret.versions.length - 1];
-                        return `${secret.envName}=${latestVersion.value}`;
+                        const valueToUse = decrypted && latestVersion.iv ? decrypt({ hash: { iv: latestVersion.iv, content: latestVersion.value } }) : latestVersion.value;
+                        return `${secret.envName}=${valueToUse}`;
                     }).join('\n');
 
                     envContent += secretsEnv + '\n';
@@ -104,7 +106,7 @@ const services = {
                 const filePath = join(outputDir, `${projectName}.env`);
                 await writeFile(filePath, envContent, 'utf8');
 
-                return { status: true, message: `All services and secrets exported to .env file at '${filePath}'.` };
+                return { status: true, message: `All services and secrets exported to .env file at '${filePath}'${decrypted ? " with decryption" : ""}.` };
             } else {
                 return { status: false, message: "No secrets found to export." };
             }
