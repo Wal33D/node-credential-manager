@@ -1,9 +1,9 @@
 import ReadlineManager from "../utils/ReadlineManager";
 import { services } from "../src/database/services";
 
-const performServiceAction = async (dbClient: any, projectName: string, action: string, mainMenuCallback: (dbClient: any) => Promise<void>) => {
+const performServiceAction = async (dbClient: any, projectName: string, action: string, mainMenuCallback: (dbClient: any) => Promise<void>, outputDir: string = '.') => {
     let serviceName = '', newServiceName = '';
-    action = action as 'add', 'rename', 'remove', 'exists', 'getService';
+
     if (['add', 'rename', 'remove', 'exists', 'getService'].includes(action)) {
         serviceName = await ReadlineManager.askQuestion('Enter service name: ') as string;
         if (action === 'rename') {
@@ -12,14 +12,23 @@ const performServiceAction = async (dbClient: any, projectName: string, action: 
     }
 
     try {
-        const params = { dbClient, projectName, serviceName, newServiceName };
-        //@ts-ignore
-        const response = await services[action](params) ;
+        let params = { dbClient, projectName, serviceName, newServiceName };
+        let response;
+
+        if (action === 'exportAllServicesToEnv') {
+            // Special handling for exportAllServicesToEnv which requires outputDir parameter
+            response = await services.exportAllServicesToEnv({ dbClient, projectName, outputDir });
+        } else {
+            //@ts-ignore
+            response = await services[action](params);
+        }
+
         console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} Service Response:`, JSON.stringify(response, null, 2));
     } catch (error:any) {
         console.error(`An error occurred during ${action}:`, error.message);
     }
 
+    // Return to the service management menu after action
     await serviceManagementMenu(dbClient, mainMenuCallback);
 };
 
@@ -31,13 +40,15 @@ export const serviceManagementMenu = async (dbClient: any, mainMenuCallback: (db
     console.log('4. Remove Service');
     console.log('5. Check if Service Exists');
     console.log('6. Get Service');
-    console.log('7. Return to Main Menu');
+    console.log('7. Export All Services to .env File');
+    console.log('8. Return to Main Menu');
 
+    let projectName = '';
     const choice = await ReadlineManager.askQuestion('Enter your choice: ');
-let projectName ;
+
     switch (choice) {
         case '1':
-            if (!projectName) projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
+            projectName = await ReadlineManager.askQuestion('Enter project name: ') as string;
             await performServiceAction(dbClient, projectName, 'list', mainMenuCallback);
             break;
         case '2':
@@ -49,6 +60,11 @@ let projectName ;
             await performServiceAction(dbClient, projectName, choiceToAction(choice), mainMenuCallback);
             break;
         case '7':
+            projectName = await ReadlineManager.askQuestion('Enter project name for exporting services: ') as string;
+            const outputDir = await ReadlineManager.askQuestion('Enter output directory (default is current directory): ') as string || '.';
+            await performServiceAction(dbClient, projectName, 'exportAllServicesToEnv', mainMenuCallback, outputDir);
+            break;
+        case '8':
             await mainMenuCallback(dbClient);
             break;
         default:
@@ -57,7 +73,7 @@ let projectName ;
     }
 };
 
-const choiceToAction = (choice:any) => {
+const choiceToAction = (choice: string) => {
     switch(choice) {
         case '2': return 'add';
         case '3': return 'rename';
