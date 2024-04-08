@@ -1,8 +1,8 @@
 import { MongoClient } from "mongodb";
-import { projects } from "../src/database/projects";
-import { secrets } from "../src/database/secrets";
-import { versions } from "../src/database/versions";
-import { EnvType } from "../src/database/databaseTypes";
+import { projects } from "../database/projects";
+import { secrets } from "../database/secrets";
+import { versions } from "../database/versions";
+import { EnvType } from "../database/databaseTypes";
 
 function getRandomInt(min: any, max: any) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

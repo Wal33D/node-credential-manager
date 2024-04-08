@@ -6,7 +6,7 @@ import { secretManagementMenu } from "../menu/secretManagementMenu";
 import { versionManagementMenu } from "../menu/versionManagementMenu"; // Import the versionManagementMenu
 import { initializeDbConnection } from "./database/initializeDbConnection";
 import { checkAndGenerateEncryptionKey } from "../utils/encryptionInit";
-import { seedDemoDB } from "../menu/seedDemoDB";
+import { seedDemoDB } from "./functions/seedDemoDB";
 const startApplication = async () => {
     console.log("Initializing database connection...");
 
